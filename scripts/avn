@@ -1,0 +1,4 @@
+#! /usr/bin/env $PYTHON
+from aiven.client.cli import AivenCLI
+
+AivenCLI().main()

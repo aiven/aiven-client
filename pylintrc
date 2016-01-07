@@ -1,0 +1,23 @@
+[MESSAGES CONTROL]
+disable=
+    duplicate-code,
+    fixme,
+    invalid-name,
+    locally-disabled,
+    missing-docstring,
+    no-self-use,
+    star-args,
+    too-many-arguments,
+    too-many-branches,
+    too-many-locals,
+    too-many-public-methods,
+    ungrouped-imports,
+    wrong-import-order,
+    wrong-import-position
+
+[FORMAT]
+max-line-length=125
+
+[REPORTS]
+output-format=text
+reports=no
