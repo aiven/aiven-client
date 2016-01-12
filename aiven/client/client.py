@@ -30,7 +30,7 @@ class AivenClientBase(object):
         self.base_url = base_url
         self.log.debug("using %r", self.base_url)
         self.session = requests.Session()
-        self.session.verify = "/etc/pki/tls/certs/ca-bundle.crt"
+        self.session.verify = True
         self.session.headers = {
             "content-type": "application/json",
             "user-agent": "aiven-client/" + __version__,
