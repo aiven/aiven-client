@@ -49,9 +49,55 @@ Platform requirements
 
 Aiven Client has been tested and developed on Linux and Mac OS X systems.
 It is a Python program that works with Python 2.7 or 3.4 or newer versions.
-The only external dependency is Requests_.
+The only external dependency is Requests_ (and certifi_ on Windows/OSX).
 
 .. _`Requests`: http://www.python-requests.org/
+.. _`certifi`: https://certifi.io/
+
+Installation
+============
+
+From PyPI (Linux/OSX)::
+
+  $ python -m pip install aiven-client
+
+From PyPI (Windows)::
+
+  c:\> python -m pip install aiven-client
+
+Build an RPM package (Linux)::
+
+ $ make rpm
+
+Basic Usage
+===========
+NOTE: On Windows you may need to use ``python -m aiven.client`` instead of
+``avn``.
+
+Login::
+
+  $ avn user login <your@email>
+
+List projects::
+
+  $ avn project list
+
+
+Switch a project as the default one::
+
+  $ avn project switch <projectname>
+
+List services (of the default project)::
+
+  $ avn service list -v
+
+More help::
+
+  $ avn -h
+  $ avn user -h
+  $ avn service -h
+  $ avn service create -h
+  $ avn project -h
 
 License
 =======
