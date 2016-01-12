@@ -1,5 +1,9 @@
-*~
+/.cache/
 *.pyc
-__pycache__/
+*~
 /aiven/client/version.py
+/aiven_client.egg-info/
+/build/
+/dist/
 /rpms/
+__pycache__/
