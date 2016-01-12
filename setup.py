@@ -5,6 +5,7 @@
 
 from setuptools import setup, find_packages
 import os
+import sys
 import version
 
 LATEST = [
@@ -25,6 +26,7 @@ else:
     # default to latest version on unknown platforms
     REQUIRES = LATEST
 
+
 setup(
     author="Aiven",
     author_email="support@aiven.io",
@@ -37,6 +39,18 @@ setup(
     license="Apache 2.0",
     name="aiven-client",
     packages=find_packages(exclude=["tests"]),
+    platforms=["POSIX", "MacOS", "Windows"],
+    description="Aiven.io client library / command-line client",
+    long_description=open("README.rst").read(),
     url="https://aiven.io/",
     version=version.get_project_version("aiven/client/version.py"),
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: Developers',
+        'Topic :: Software Development :: Libraries',
+        'License :: OSI Approved :: Apache Software License',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+    ],
 )
