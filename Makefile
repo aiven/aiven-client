@@ -6,7 +6,7 @@ PYTHON ?= python
 all: $(generated)
 
 aiven/client/version.py: .git/index
-	echo "__version__ = '$(long_ver)'" > $@
+	$(PYTHON) version.py $@
 
 test: flake8 pylint pytest
 
