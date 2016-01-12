@@ -9,7 +9,9 @@ Configurable parameters via environment variables
 
 import os
 
-AIVEN_CONFIG_DIR = os.environ.get("AIVEN_CONFIG_DIR", os.path.join(os.getenv("HOME"), ".config", "aiven"))
+USER_HOME = os.path.expanduser("~")
+
+AIVEN_CONFIG_DIR = os.environ.get("AIVEN_CONFIG_DIR", os.path.join(USER_HOME, ".config", "aiven"))
 
 AIVEN_AUTH_TOKEN = os.environ.get("AIVEN_AUTH_TOKEN")
 AIVEN_CA_CERT = os.environ.get("AIVEN_CA_CERT")
