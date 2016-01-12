@@ -90,16 +90,39 @@ class AivenCLI(argx.CommandLineTool):
 
     def get_project(self):
         """Return project given as cmdline argument or the default project from config file"""
-        if self.args.project:
+        if getattr(self.args, "project", None) and self.args.project:
             return self.args.project
         return self.config.get("default_project")
 
-    @arg.email
+    @arg("email", nargs="?", help="User email address")
     def user_login(self):
         """Login as a user"""
-        password = self.enter_password("{}'s Aiven password: ".format(self.args.email))
-        result = self.client.authenticate_user(email=self.args.email, password=password)
-        self._write_auth_token_file(token=result["token"], email=self.args.email)
+        email = self.args.email
+        if not email:
+            email = raw_input_func("Username (email): ")
+
+        password = self.enter_password("{}'s Aiven password: ".format(email))
+        result = self.client.authenticate_user(email=email, password=password)
+        self._write_auth_token_file(token=result["token"], email=email)
+
+        # ensure that there is a working default project
+        auth_token = self._get_auth_token()
+        if auth_token:
+            self.client.set_auth_token(auth_token)
+
+        project = self.get_project()
+        projects = self.client.get_projects()
+        if project and any(p["project_name"] == project for p in projects):
+            # default project exists
+            return
+
+        if projects:
+            default_project = projects[0]["project_name"]
+            self.config["default_project"] = default_project
+            self.config.save()
+            self.log.info("Default project set as '%s' (change with 'avn project switch <project>')", default_project)
+        else:
+            self.log.info("No projects exists. You should probably create one with 'avn project create <name>'")
 
     @arg.project
     def data_list(self):
