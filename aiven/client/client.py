@@ -302,8 +302,8 @@ class AivenClient(AivenClientBase):
     def get_stripe_key(self):
         return self.verify(self.get, "/config/stripe_key")
 
-    def list_credits(self):
-        return self.verify(self.get, "/credits", result_key="credits")
+    def list_project_credits(self, project):
+        return self.verify(self.get, "/project/{}/credits".format(project), result_key="credits")
 
-    def claim_credit(self, credit_code):
-        return self.verify(self.post, "/credits", body={"code": credit_code}, result_key="credit")
+    def claim_project_credit(self, project, credit_code):
+        return self.verify(self.post, "/project/{}/credits".format(project), body={"code": credit_code}, result_key="credit")

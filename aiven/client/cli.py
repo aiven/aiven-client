@@ -831,16 +831,21 @@ class AivenCLI(argx.CommandLineTool):
             self.print_response(result, json=True)
 
     @arg.json
+    @arg.project
     def credits_list(self):
         """List claimed credits"""
+        project_name = self.get_project()
+        project_credits = self.client.list_project_credits(project=project_name)
         layout = [["code", "remaining_value"]]
-        self.print_response(self.client.list_credits(), json=self.args.json, table_layout=layout)
+        self.print_response(project_credits, json=self.args.json, table_layout=layout)
 
     @arg.json
+    @arg.project
     @arg("code", help="Credit code")
     def credits_claim(self):
         """Claim a credit code"""
-        result = self.client.claim_credit(self.args.code)
+        project_name = self.get_project()
+        result = self.client.claim_project_credit(project=project_name, credit_code=self.args.code)
         if self.args.json:
             self.print_response(result, json=True)
 
