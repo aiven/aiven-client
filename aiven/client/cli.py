@@ -271,7 +271,7 @@ class AivenCLI(argx.CommandLineTool):
 
     SERVICE_LAYOUT = [["service_name", "service_type", "state", "cloud_name", "plan",
                        "group_list", "create_time", "update_time"]]
-    EXT_SERVICE_LAYOUT = ["service_uri", "user_config.*"]
+    EXT_SERVICE_LAYOUT = ["service_uri", "user_config.*", "databases", "users"]
 
     @arg.project
     @arg("name", nargs="*", default=[], help="Service name")
@@ -323,6 +323,50 @@ class AivenCLI(argx.CommandLineTool):
         if self.args.verbose:
             layout.extend(["service_uri", "user_config.*"])
         self.print_response([service], format=self.args.format, json=self.args.json, table_layout=layout)
+
+
+    @arg.project
+    @arg("name", help="Service name")
+    @arg("--dbname", help="Service database name", required=True)
+    @arg("--format", help="Format string for output, e.g. '{service_name} {service_uri}'")
+    @arg.json
+    def service_create_database(self):
+        """Create a database within a given service"""
+        self.client.create_service_database(project=self.get_project(), service=self.args.name,
+                                            dbname=self.args.dbname)
+
+    @arg.project
+    @arg("name", help="Service name")
+    @arg("--dbname", help="Service database name", required=True)
+    @arg("--format", help="Format string for output, e.g. '{service_name} {service_uri}'")
+    @arg.json
+    def service_delete_database(self):
+        """Delete a database within a given service"""
+        self.client.delete_service_database(project=self.get_project(), service=self.args.name,
+                                            dbname=self.args.dbname)
+
+    @arg.project
+    @arg("name", help="Service name")
+    @arg("--username", help="Service user username", required=True)
+    @arg("--format", help="Format string for output, e.g. '{service_name} {service_uri}'")
+    @arg.json
+    def service_create_service_user(self):
+        """Create service user"""
+        user = self.client.create_service_user(project=self.get_project(), service=self.args.name,
+                                               username=self.args.username)
+        layout = ["username", "password"]
+        self.print_response(user, format=self.args.format, json=self.args.json,
+                            table_layout=layout, single_item=True)
+
+    @arg.project
+    @arg("name", help="Service name")
+    @arg("--username", help="Service user username", required=True)
+    @arg("--format", help="Format string for output, e.g. '{service_name} {service_uri}'")
+    @arg.json
+    def service_delete_service_user(self):
+        """Delete a service user"""
+        self.client.delete_service_user(project=self.get_project(), service=self.args.name,
+                                        username=self.args.username)
 
     @arg.project
     @arg("name", help="Service name")
