@@ -145,6 +145,21 @@ class AivenClient(AivenClientBase):
             "password": password,
         })
 
+    def create_service_database(self, project, service, dbname):
+        return self.verify(self.post, "/project/{}/service/{}/db".format(project, service),
+                           body={"database": dbname})
+
+    def delete_service_database(self, project, service, dbname):
+        return self.verify(self.delete, "/project/{}/service/{}/db/{}".format(project, service, dbname))
+
+    def create_service_user(self, project, service, username):
+        return self.verify(self.post, "/project/{}/service/{}/user".format(project, service), body={
+            "username": username,
+            }, result_key="user")
+
+    def delete_service_user(self, project, service, username):
+        return self.verify(self.delete, "/project/{}/service/{}/user/{}".format(project, service, username))
+
     def create_service(self, project, service, service_type, group_name, plan,
                        cloud=None, user_config=None):
         user_config = user_config or {}

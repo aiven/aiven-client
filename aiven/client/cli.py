@@ -271,7 +271,7 @@ class AivenCLI(argx.CommandLineTool):
 
     SERVICE_LAYOUT = [["service_name", "service_type", "state", "cloud_name", "plan",
                        "group_list", "create_time", "update_time"]]
-    EXT_SERVICE_LAYOUT = ["service_uri", "user_config.*"]
+    EXT_SERVICE_LAYOUT = ["service_uri", "user_config.*", "databases", "users"]
 
     @arg.project
     @arg("name", nargs="*", default=[], help="Service name")
@@ -295,7 +295,7 @@ class AivenCLI(argx.CommandLineTool):
                             table_layout=layout)
 
     @arg.project
-    @arg("name", help="Service name")
+    @arg.service_name
     @arg("--format", help="Format string for output, e.g. '{service_name} {service_uri}'")
     @arg.verbose
     @arg.json
@@ -311,7 +311,7 @@ class AivenCLI(argx.CommandLineTool):
                             table_layout=layout, single_item=True)
 
     @arg.project
-    @arg("name", help="Service name")
+    @arg.service_name
     @arg("--format", help="Format string for output, e.g. '{service_name} {service_uri}'")
     @arg.verbose
     @arg.json
@@ -325,7 +325,63 @@ class AivenCLI(argx.CommandLineTool):
         self.print_response([service], format=self.args.format, json=self.args.json, table_layout=layout)
 
     @arg.project
-    @arg("name", help="Service name")
+    @arg.service_name
+    @arg("--dbname", help="Service database name", required=True)
+    @arg.json
+    def service_database_create(self):
+        """Create a database within a given service"""
+        self.client.create_service_database(project=self.get_project(), service=self.args.name,
+                                            dbname=self.args.dbname)
+
+    @arg.project
+    @arg.service_name
+    @arg("--dbname", help="Service database name", required=True)
+    @arg.json
+    def service_database_delete(self):
+        """Delete a database within a given service"""
+        self.client.delete_service_database(project=self.get_project(), service=self.args.name,
+                                            dbname=self.args.dbname)
+
+    @arg.project
+    @arg.service_name
+    @arg("--username", help="Service user username", required=True)
+    @arg.json
+    def service_user_create(self):
+        """Create service user"""
+        self.client.create_service_user(project=self.get_project(), service=self.args.name,
+                                        username=self.args.username)
+
+    @arg.project
+    @arg.service_name
+    @arg("--username", help="Service user username", required=True)
+    @arg.json
+    def service_user_delete(self):
+        """Delete a service user"""
+        self.client.delete_service_user(project=self.get_project(), service=self.args.name,
+                                        username=self.args.username)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output, e.g. '{username} {password}'")
+    @arg.json
+    def service_user_list(self):
+        """List service users """
+        service = self.client.get_service(project=self.get_project(), service_name=self.args.name)
+        layout = [["username", "type"]]
+        self.print_response(service["users"], format=self.args.format, json=self.args.json,
+                            table_layout=layout)
+
+    @arg.project
+    @arg.service_name
+    @arg.json
+    def service_database_list(self):
+        """List service databases"""
+        service = self.client.get_service(project=self.get_project(), service_name=self.args.name)
+        layout = [["database"]]
+        self.print_response(service["databases"], json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg.service_name
     @arg("--format", help="Format string for output, e.g. '{calls} {total_time}'")
     @arg.verbose
     @arg.json
@@ -335,7 +391,7 @@ class AivenCLI(argx.CommandLineTool):
         self.print_response(queries, format=self.args.format, json=self.args.json)
 
     @arg.project
-    @arg("name", help="Service name")
+    @arg.service_name
     @arg("--format", help="Format string for output, e.g. '{query} {backend_start}'")
     @arg.verbose
     @arg.json
@@ -351,7 +407,7 @@ class AivenCLI(argx.CommandLineTool):
         self.print_response(queries, format=self.args.format, json=self.args.json, table_layout=layout)
 
     @arg.project
-    @arg("name", help="Service name")
+    @arg.service_name
     @arg("--format", help="Format string for output, e.g. '{calls} {total_time}'")
     @arg.verbose
     @arg.json
@@ -472,7 +528,7 @@ class AivenCLI(argx.CommandLineTool):
         return user_config
 
     @arg.project
-    @arg("name", help="Service name")
+    @arg.service_name
     @arg("--group-name", help="service group", default="default")
     @arg("-t", "--service-type", help="type of service (see 'service types')", required=True)
     @arg("-p", "--plan", help="subscription plan of service", required=False)
@@ -521,7 +577,7 @@ class AivenCLI(argx.CommandLineTool):
             return None
 
     @arg.project
-    @arg("name", help="Service name")
+    @arg.service_name
     @arg("--group-name", help="New service group")
     @arg.cloud
     @arg.user_config
