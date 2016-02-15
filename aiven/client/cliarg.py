@@ -14,6 +14,7 @@ arg.force = arg("-f", "--force", help="Force action without interactive confirma
 arg.json = arg("--json", help="Raw json output", action="store_true", default=False)
 arg.project = arg("--project", help="Project name to use, default %(default)r",
                   default=os.environ.get("AIVEN_PROJECT"))
+arg.service_name = arg("name", help="Service name")
 arg.service_type = arg("-t", "--service-type", help="Type of service (see 'service list-types')")
 arg.timeout = arg("--timeout", type=int, help="Wait for up to N seconds (default: infinite)")
 arg.user_config = arg("-c", dest="user_config", action="append", default=[],
