@@ -327,7 +327,6 @@ class AivenCLI(argx.CommandLineTool):
     @arg.project
     @arg.service_name
     @arg("--dbname", help="Service database name", required=True)
-    @arg("--format", help="Format string for output, e.g. '{service_name} {service_uri}'")
     @arg.json
     def service_database_create(self):
         """Create a database within a given service"""
@@ -337,7 +336,6 @@ class AivenCLI(argx.CommandLineTool):
     @arg.project
     @arg.service_name
     @arg("--dbname", help="Service database name", required=True)
-    @arg("--format", help="Format string for output, e.g. '{service_name} {service_uri}'")
     @arg.json
     def service_database_delete(self):
         """Delete a database within a given service"""
@@ -347,25 +345,40 @@ class AivenCLI(argx.CommandLineTool):
     @arg.project
     @arg.service_name
     @arg("--username", help="Service user username", required=True)
-    @arg("--format", help="Format string for output, e.g. '{service_name} {service_uri}'")
     @arg.json
     def service_user_create(self):
         """Create service user"""
-        user = self.client.create_service_user(project=self.get_project(), service=self.args.name,
-                                               username=self.args.username)
-        layout = ["username", "password"]
-        self.print_response(user, format=self.args.format, json=self.args.json,
-                            table_layout=layout, single_item=True)
+        self.client.create_service_user(project=self.get_project(), service=self.args.name,
+                                        username=self.args.username)
 
     @arg.project
     @arg.service_name
     @arg("--username", help="Service user username", required=True)
-    @arg("--format", help="Format string for output, e.g. '{service_name} {service_uri}'")
     @arg.json
     def service_user_delete(self):
         """Delete a service user"""
         self.client.delete_service_user(project=self.get_project(), service=self.args.name,
                                         username=self.args.username)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output, e.g. '{username} {password}'")
+    @arg.json
+    def service_user_list(self):
+        """List service users """
+        service = self.client.get_service(project=self.get_project(), service_name=self.args.name)
+        layout = [["username", "type"]]
+        self.print_response(service["users"], format=self.args.format, json=self.args.json,
+                            table_layout=layout)
+
+    @arg.project
+    @arg.service_name
+    @arg.json
+    def service_database_list(self):
+        """List service databases"""
+        service = self.client.get_service(project=self.get_project(), service_name=self.args.name)
+        layout = [["database"]]
+        self.print_response(service["databases"], json=self.args.json, table_layout=layout)
 
     @arg.project
     @arg.service_name
