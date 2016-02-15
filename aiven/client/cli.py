@@ -324,13 +324,12 @@ class AivenCLI(argx.CommandLineTool):
             layout.extend(["service_uri", "user_config.*"])
         self.print_response([service], format=self.args.format, json=self.args.json, table_layout=layout)
 
-
     @arg.project
     @arg("name", help="Service name")
     @arg("--dbname", help="Service database name", required=True)
     @arg("--format", help="Format string for output, e.g. '{service_name} {service_uri}'")
     @arg.json
-    def service_create_database(self):
+    def service_database_create(self):
         """Create a database within a given service"""
         self.client.create_service_database(project=self.get_project(), service=self.args.name,
                                             dbname=self.args.dbname)
@@ -340,7 +339,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg("--dbname", help="Service database name", required=True)
     @arg("--format", help="Format string for output, e.g. '{service_name} {service_uri}'")
     @arg.json
-    def service_delete_database(self):
+    def service_database_delete(self):
         """Delete a database within a given service"""
         self.client.delete_service_database(project=self.get_project(), service=self.args.name,
                                             dbname=self.args.dbname)
@@ -350,7 +349,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg("--username", help="Service user username", required=True)
     @arg("--format", help="Format string for output, e.g. '{service_name} {service_uri}'")
     @arg.json
-    def service_create_service_user(self):
+    def service_user_create(self):
         """Create service user"""
         user = self.client.create_service_user(project=self.get_project(), service=self.args.name,
                                                username=self.args.username)
@@ -363,7 +362,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg("--username", help="Service user username", required=True)
     @arg("--format", help="Format string for output, e.g. '{service_name} {service_uri}'")
     @arg.json
-    def service_delete_service_user(self):
+    def service_user_delete(self):
         """Delete a service user"""
         self.client.delete_service_user(project=self.get_project(), service=self.args.name,
                                         username=self.args.username)
