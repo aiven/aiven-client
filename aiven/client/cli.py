@@ -124,11 +124,16 @@ class AivenCLI(argx.CommandLineTool):
         else:
             self.log.info("No projects exists. You should probably create one with 'avn project create <name>'")
 
+    @arg("--format", help="Format string for output, e.g. '{filename} {size}'")
+    @arg.json
     @arg.project
     def data_list(self):
         """List project data files"""
-        result = self.client.list_data(project=self.get_project())
-        print(result)
+        files = self.client.list_data(project=self.get_project())["files"]
+        layout = ["filename", "size", "create_time"]
+
+        self.print_response(files, format=self.args.format, json=self.args.json,
+                            table_layout=layout)
 
     @arg.project
     @arg("filename", help="Name of the file to download", nargs="+")
