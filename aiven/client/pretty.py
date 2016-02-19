@@ -32,18 +32,15 @@ def format_item(key, value):
     return json.dumps(value)
 
 
-def print_list(result):
-    for item in result:
-        print(format_item(None, item))
-
-
-def print_table(result, drop_fields=None, table_layout=None):
-    """print a list of dicts in a nicer table format"""
+def yield_table(result, drop_fields=None, table_layout=None):
+    """format a list of dicts in a nicer table format yielding string rows"""
     if not result:
         return
 
     if not isinstance(result[0], dict):
-        return print_list(result)
+        for item in result:
+            yield format_item(None, item)
+        return
 
     drop_fields = set(drop_fields or [])
 
@@ -80,13 +77,19 @@ def print_table(result, drop_fields=None, table_layout=None):
         return max(lengths) if lengths else 0
 
     vertical_width = max(longest(f) for f in table_layout[1:]) if len(table_layout) > 1 else 0
-    print("  ".join(f.upper().ljust(widths[f]) for f in horizontal_fields))
-    print("  ".join("=" * widths[f] for f in horizontal_fields))
+    yield "  ".join(f.upper().ljust(widths[f]) for f in horizontal_fields)
+    yield "  ".join("=" * widths[f] for f in horizontal_fields)
     for row_num, formatted_row in enumerate(formatted_values):
         if len(table_layout) > 1 and row_num > 0:
-            print("")
-        print("  ".join(formatted_row.get(f, "").ljust(widths[f]) for f in horizontal_fields))
+            yield ""
+        yield "  ".join(formatted_row.get(f, "").ljust(widths[f]) for f in horizontal_fields)
         for vertical_field in table_layout[1:]:
             for key, value in sorted(formatted_row.items()):
                 if fnmatch.fnmatch(key, vertical_field):
-                    print("    {:{}} = {}".format(key.split(".", 1)[-1], vertical_width, value))
+                    yield "    {:{}} = {}".format(key.split(".", 1)[-1], vertical_width, value)
+
+
+def print_table(result, drop_fields=None, table_layout=None):
+    """print a list of dicts in a nicer table format"""
+    for row in yield_table(result, drop_fields=drop_fields, table_layout=table_layout):
+        print(row)
