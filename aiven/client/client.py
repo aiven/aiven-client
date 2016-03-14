@@ -135,8 +135,8 @@ class AivenClient(AivenClientBase):
     def get_clouds(self, project):
         return self.verify(self.get, "/project/{}/clouds".format(project), result_key="clouds")
 
-    def get_service(self, project, service_name):
-        return self.verify(self.get, "/project/{}/service/{}".format(project, service_name),
+    def get_service(self, project, service):
+        return self.verify(self.get, "/project/{}/service/{}".format(project, service),
                            result_key="service")
 
     def authenticate_user(self, email, password):

@@ -306,7 +306,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg.json
     def service_get(self):
         """Show a single service"""
-        service = self.client.get_service(project=self.get_project(), service_name=self.args.name)
+        service = self.client.get_service(project=self.get_project(), service=self.args.name)
 
         layout = self.SERVICE_LAYOUT[:]
         if self.args.verbose:
@@ -371,7 +371,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg.json
     def service_user_list(self):
         """List service users """
-        service = self.client.get_service(project=self.get_project(), service_name=self.args.name)
+        service = self.client.get_service(project=self.get_project(), service=self.args.name)
         layout = [["username", "type"]]
         self.print_response(service["users"], format=self.args.format, json=self.args.json,
                             table_layout=layout)
@@ -381,7 +381,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg.json
     def service_database_list(self):
         """List service databases"""
-        service = self.client.get_service(project=self.get_project(), service_name=self.args.name)
+        service = self.client.get_service(project=self.get_project(), service=self.args.name)
         layout = [["database"]]
         self.print_response(service["databases"], json=self.args.json, table_layout=layout)
 
@@ -439,7 +439,7 @@ class AivenCLI(argx.CommandLineTool):
         while True:
             all_running = True
             for service in self.args.service:
-                info = self.client.get_service(project=self.get_project(), service_name=service)
+                info = self.client.get_service(project=self.get_project(), service=service)
                 if info["state"] != last.get(service):
                     self.log.info("Service %r state is now %r", service, info["state"])
                 last[service] = info["state"]
@@ -593,7 +593,7 @@ class AivenCLI(argx.CommandLineTool):
         """Update service settings"""
         powered = self._get_powered()
         project = self.get_project()
-        service = self.client.get_service(project=project, service_name=self.args.name)
+        service = self.client.get_service(project=project, service=self.args.name)
         plan = self.args.plan or service["plan"]
         user_config = self.create_user_config(project, service["service_type"], self.args.user_config)
         try:
