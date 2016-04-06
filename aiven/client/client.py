@@ -181,6 +181,7 @@ class AivenClient(AivenClientBase):
                        service,
                        group_name=None,
                        cloud=None,
+                       maintenance=None,
                        user_config=None,
                        plan=None,
                        powered=None):
@@ -188,6 +189,7 @@ class AivenClient(AivenClientBase):
         return self.verify(self.put, "/project/{}/service/{}".format(project, service), body={
             "group_name": group_name,
             "cloud": cloud,
+            "maintenance": maintenance,
             "plan": plan,
             "powered": powered,
             "user_config": user_config,
