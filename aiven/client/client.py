@@ -328,3 +328,6 @@ class AivenClient(AivenClientBase):
 
     def claim_project_credit(self, project, credit_code):
         return self.verify(self.post, "/project/{}/credits".format(project), body={"code": credit_code}, result_key="credit")
+
+    def start_service_maintenance(self, project, service):
+        return self.verify(self.put, "/project/{}/service/{}/maintenance/start".format(project, service))

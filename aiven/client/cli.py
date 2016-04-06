@@ -356,6 +356,13 @@ class AivenCLI(argx.CommandLineTool):
 
     @arg.project
     @arg.service_name
+    def service_maintenance_start(self):
+        """Start service maintenance updates"""
+        response = self.client.start_service_maintenance(project=self.get_project(), service=self.args.name)
+        print(response["message"])
+
+    @arg.project
+    @arg.service_name
     @arg("--username", help="Service user username", required=True)
     @arg.json
     def service_user_create(self):
