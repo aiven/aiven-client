@@ -139,6 +139,10 @@ class AivenClient(AivenClientBase):
         return self.verify(self.get, "/project/{}/service/{}".format(project, service),
                            result_key="service")
 
+    def get_service_graphs(self, project, service):
+        return self.verify(self.get, "/project/{}/service/{}/graphs".format(project, service),
+                           result_key="graph_data")
+
     def authenticate_user(self, email, password):
         return self.verify(self.post, "/userauth", body={
             "email": email,
@@ -177,6 +181,7 @@ class AivenClient(AivenClientBase):
                        service,
                        group_name=None,
                        cloud=None,
+                       maintenance=None,
                        user_config=None,
                        plan=None,
                        powered=None):
@@ -184,6 +189,7 @@ class AivenClient(AivenClientBase):
         return self.verify(self.put, "/project/{}/service/{}".format(project, service), body={
             "group_name": group_name,
             "cloud": cloud,
+            "maintenance": maintenance,
             "plan": plan,
             "powered": powered,
             "user_config": user_config,
@@ -322,3 +328,6 @@ class AivenClient(AivenClientBase):
 
     def claim_project_credit(self, project, credit_code):
         return self.verify(self.post, "/project/{}/credits".format(project), body={"code": credit_code}, result_key="credit")
+
+    def start_service_maintenance(self, project, service):
+        return self.verify(self.put, "/project/{}/service/{}/maintenance/start".format(project, service))

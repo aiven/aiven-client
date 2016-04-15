@@ -331,6 +331,13 @@ class AivenCLI(argx.CommandLineTool):
 
     @arg.project
     @arg.service_name
+    def service_graphs(self):
+        """Get service graph data"""
+        graph_data = self.client.get_service_graphs(project=self.get_project(), service=self.args.name)
+        print(jsonlib.dumps(graph_data, indent=2, sort_keys=True))
+
+    @arg.project
+    @arg.service_name
     @arg("--dbname", help="Service database name", required=True)
     @arg.json
     def service_database_create(self):
@@ -346,6 +353,13 @@ class AivenCLI(argx.CommandLineTool):
         """Delete a database within a given service"""
         self.client.delete_service_database(project=self.get_project(), service=self.args.name,
                                             dbname=self.args.dbname)
+
+    @arg.project
+    @arg.service_name
+    def service_maintenance_start(self):
+        """Start service maintenance updates"""
+        response = self.client.start_service_maintenance(project=self.get_project(), service=self.args.name)
+        print(response["message"])
 
     @arg.project
     @arg.service_name
@@ -589,6 +603,9 @@ class AivenCLI(argx.CommandLineTool):
     @arg("-p", "--plan", help="subscription plan of service", required=False)
     @arg("--power-on", action="store_true", default=False, help="Power-on the service")
     @arg("--power-off", action="store_true", default=False, help="Temporarily power-off the service")
+    @arg("--maintenance-dow", help="automatic maintenance day of week",
+         choices=["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "never"])
+    @arg("--maintenance-time", help="automatic maintenance time of day (HH:MM:SS)")
     def service_update(self):
         """Update service settings"""
         powered = self._get_powered()
@@ -596,10 +613,16 @@ class AivenCLI(argx.CommandLineTool):
         service = self.client.get_service(project=project, service=self.args.name)
         plan = self.args.plan or service["plan"]
         user_config = self.create_user_config(project, service["service_type"], self.args.user_config)
+        maintenance = {}
+        if self.args.maintenance_dow:
+            maintenance["dow"] = self.args.maintenance_dow
+        if self.args.maintenance_time:
+            maintenance["time"] = self.args.maintenance_time
         try:
             self.client.update_service(
                 cloud=self.args.cloud,
                 group_name=self.args.group_name,
+                maintenance=maintenance or None,
                 plan=plan,
                 powered=powered,
                 project=project,
