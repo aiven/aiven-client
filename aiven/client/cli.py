@@ -331,10 +331,10 @@ class AivenCLI(argx.CommandLineTool):
 
     @arg.project
     @arg.service_name
-    def service_graphs(self):
-        """Get service graph data"""
-        graph_data = self.client.get_service_graphs(project=self.get_project(), service=self.args.name)
-        print(jsonlib.dumps(graph_data, indent=2, sort_keys=True))
+    def service_metrics(self):
+        """Get service metrics"""
+        metrics = self.client.get_service_metrics(project=self.get_project(), service=self.args.name)
+        print(jsonlib.dumps(metrics, indent=2, sort_keys=True))
 
     @arg.project
     @arg.service_name
