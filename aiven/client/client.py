@@ -115,7 +115,7 @@ class AivenClientBase(object):
 
     def verify(self, op, path, body=None, params=None, result_key=None):
         path = self.api_prefix + path
-        if body:
+        if body is not None:
             response = op(path=path, body=body, params=params)
         else:
             response = op(path=path, params=params)
@@ -132,6 +132,32 @@ class AivenClientBase(object):
 
 class AivenClient(AivenClientBase):
     """Aiven Client with high-level operations"""
+    def get_service_alerts(self, project, service):
+        return self.verify(self.get, "/project/{}/service/{}/alerts".format(project, service),
+                           result_key="service_alerts")
+
+    def create_service_alert(self, project, service, alert_name, alert_endpoints, query,
+                             threshold=None, operator=None):
+        metadata = {
+            "query": query
+        }
+        if threshold is not None and threshold >= 0:
+            metadata["alert_threshold"] = threshold
+
+        if operator:
+            metadata["operator"] = operator
+
+        body = {
+            "alert_name": alert_name,
+            "metadata": metadata,
+            "alert_endpoints": alert_endpoints,
+        }
+        return self.verify(self.post, "/project/{}/service/{}/alerts".format(project, service),
+                           body=body, result_key="service_alert")
+
+    def delete_service_alert(self, project, service, alert_name):
+        return self.verify(self.delete, "/project/{}/service/{}/alerts/{}".format(project, service, alert_name))
+
     def get_clouds(self, project):
         return self.verify(self.get, "/project/{}/clouds".format(project), result_key="clouds")
 
@@ -259,7 +285,6 @@ class AivenClient(AivenClientBase):
             "cloud": cloud,
         }, result_key="project")
 
-
     def get_project_ca(self, project):
         return self.verify(self.get, "/project/{}/kms/ca".format(project))
 
@@ -271,6 +296,20 @@ class AivenClient(AivenClientBase):
 
     def delete_project_certificate(self, project, certname):
         return self.verify(self.delete, "/project/{}/kms/certificates/{}".format(project, certname))
+
+    def get_project_alert_endpoints(self, project):
+        return self.verify(self.get, "/project/{}/alert_endpoint".format(project),
+                           result_key="alert_endpoints")
+
+    def create_project_alert_endpoint(self, project, alert_endpoint_name, metadata):
+        return self.verify(
+            self.post, "/project/{}/alert_endpoint/{}".format(project, alert_endpoint_name),
+            body=metadata,
+            result_key="alert_endpoint")
+
+    def delete_project_alert_endpoint(self, project, alert_endpoint_name):
+        return self.verify(self.delete, "/project/{}/alert_endpoint/{}".format(
+            project, alert_endpoint_name))
 
     def invite_project_user(self, project, user_email):
         return self.verify(self.post, "/project/{}/user/invite".format(project), body={
