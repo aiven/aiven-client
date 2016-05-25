@@ -82,7 +82,7 @@ def yield_table(result, drop_fields=None, table_layout=None):
     for row_num, formatted_row in enumerate(formatted_values):
         if len(table_layout) > 1 and row_num > 0:
             yield ""
-        yield "  ".join(formatted_row.get(f, "").ljust(widths[f]) for f in horizontal_fields)
+        yield "  ".join(formatted_row.get(f, "").ljust(widths[f]) for f in horizontal_fields).strip()
         for vertical_field in table_layout[1:]:
             for key, value in sorted(formatted_row.items()):
                 if fnmatch.fnmatch(key, vertical_field):
