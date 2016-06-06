@@ -442,6 +442,56 @@ class AivenCLI(argx.CommandLineTool):
         self.print_response(queries, format=self.args.format, json=self.args.json, table_layout=layout)
 
     @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output, e.g. '{name} {retention_hours}'")
+    @arg.json
+    def service_topic_list(self):
+        """List Kafka service topics"""
+        service = self.client.get_service(project=self.get_project(), service=self.args.name)
+        layout = [["name", "partitions", "replication", "retention_hours"]]
+        self.print_response(service["topics"], format=self.args.format, json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg.service_name
+    @arg.topic
+    @arg.partitions
+    @arg.replication
+    @arg.retention
+    def service_topic_create(self):
+        """Create a Kafka topic"""
+        response = self.client.create_service_topic(project=self.get_project(),
+                                                    service=self.args.name,
+                                                    topic=self.args.topic,
+                                                    partitions=self.args.partitions,
+                                                    replication=self.args.replication,
+                                                    retention_hours=self.args.retention)
+        print(response["message"])
+
+    @arg.project
+    @arg.service_name
+    @arg.topic
+    @arg.partitions
+    @arg.retention
+    def service_topic_update(self):
+        """Update a Kafka topic"""
+        response = self.client.update_service_topic(project=self.get_project(),
+                                                    service=self.args.name,
+                                                    topic=self.args.topic,
+                                                    partitions=self.args.partitions,
+                                                    retention_hours=self.args.retention)
+        print(response["message"])
+
+    @arg.project
+    @arg.service_name
+    @arg.topic
+    def service_topic_delete(self):
+        """Delete a Kafka topic"""
+        response = self.client.delete_service_topic(project=self.get_project(),
+                                                    service=self.args.name,
+                                                    topic=self.args.topic)
+        print(response["message"])
+
+    @arg.project
     @arg("service", nargs="+", help="Service to wait for")
     @arg.timeout
     def service_wait(self):
