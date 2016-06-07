@@ -9,6 +9,7 @@ disable=
     star-args,
     too-many-arguments,
     too-many-branches,
+    too-many-lines,
     too-many-locals,
     too-many-public-methods,
     ungrouped-imports,
