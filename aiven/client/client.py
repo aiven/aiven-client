@@ -259,6 +259,19 @@ class AivenClient(AivenClientBase):
             "cloud": cloud,
         }, result_key="project")
 
+
+    def get_project_ca(self, project):
+        return self.verify(self.get, "/project/{}/kms/ca".format(project))
+
+    def list_project_certificates(self, project):
+        return self.verify(self.get, "/project/{}/kms/certificates".format(project))["certificates"]
+
+    def create_project_certificate(self, project, certname):
+        return self.verify(self.post, "/project/{}/kms/certificates/{}".format(project, certname))
+
+    def delete_project_certificate(self, project, certname):
+        return self.verify(self.delete, "/project/{}/kms/certificates/{}".format(project, certname))
+
     def invite_project_user(self, project, user_email):
         return self.verify(self.post, "/project/{}/user/invite".format(project), body={
             "user_email": user_email,
