@@ -448,7 +448,7 @@ class AivenCLI(argx.CommandLineTool):
     def service_topic_list(self):
         """List Kafka service topics"""
         service = self.client.get_service(project=self.get_project(), service=self.args.name)
-        layout = [["name", "partitions", "replication", "retention_hours"]]
+        layout = [["name", "partitions", "replication", "retention_hours", "state"]]
         self.print_response(service["topics"], format=self.args.format, json=self.args.json, table_layout=layout)
 
     @arg.project
@@ -771,6 +771,60 @@ class AivenCLI(argx.CommandLineTool):
                       project_name,
                       project["default_cloud"],
                       self._project_credit_card(project))
+
+    @arg.project
+    @arg("--target-filepath", help="Project CA filepath", required=True)
+    def project_ca_get(self):
+        """Get project CA certificate"""
+        project_name = self.get_project()
+        try:
+            result = self.client.get_project_ca(project=project_name)
+        except client.Error as ex:
+            print(ex.response.text)
+            raise argx.UserError("Project '{}' CA get failed".format(project_name))
+        with open(self.args.target_filepath, "w") as fp:
+            fp.write(result["certificate"])
+
+    @arg.project
+    @arg("--cert-name", help="Project SSL certificate name", required=True)
+    @arg("--target-cert-filepath", help="Project SSL certificate filepath", required=True)
+    @arg("--target-key-filepath", help="Project SSL key filepath", required=True)
+    def project_cert_create(self):
+        """Create project certificate"""
+        project_name = self.get_project()
+        try:
+            result = self.client.create_project_certificate(project=project_name, certname=self.args.cert_name)
+        except client.Error as ex:
+            print(ex.response.text)
+            raise argx.UserError("Project '{}' certificate {} create failed".format(project_name, self.args.cert_name))
+        with open(self.args.target_cert_filepath, "w") as fp:
+            fp.write(result["certificate"])
+        with open(self.args.target_key_filepath, "w") as fp:
+            fp.write(result["key"])
+
+    @arg.json
+    @arg.project
+    def project_cert_list(self):
+        """List project certificates"""
+        project_name = self.get_project()
+        try:
+            result = self.client.list_project_certificates(project=project_name)
+        except client.Error as ex:
+            print(ex.response.text)
+            raise argx.UserError("Project '{}' certificate {} create failed".format(project_name, self.args.cert_name))
+        layout = [["name", "create_time"]]
+        self.print_response(result, json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg("--cert-name", help="Project SSL certificate name", required=True)
+    def project_cert_delete(self):
+        """Delete project certificate"""
+        project_name = self.get_project()
+        try:
+            self.client.delete_project_certificate(project=project_name, certname=self.args.cert_name)
+        except client.Error as ex:
+            print(ex.response.text)
+            raise argx.UserError("Project '{}' certificate {} delete failed".format(project_name, self.args.cert_name))
 
     @arg.project
     @arg.email
