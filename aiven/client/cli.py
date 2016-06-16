@@ -448,7 +448,7 @@ class AivenCLI(argx.CommandLineTool):
     def service_topic_list(self):
         """List Kafka service topics"""
         service = self.client.get_service(project=self.get_project(), service=self.args.name)
-        layout = [["name", "partitions", "replication", "retention_hours", "state"]]
+        layout = [["topic_name", "partitions", "replication", "retention_hours", "state"]]
         self.print_response(service["topics"], format=self.args.format, json=self.args.json, table_layout=layout)
 
     @arg.project
