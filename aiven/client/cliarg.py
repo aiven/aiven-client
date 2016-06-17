@@ -11,6 +11,7 @@ arg.cloud = arg("--cloud", help="Cloud to use (see 'cloud list' command)")
 arg.email = arg("email", help="User email address")
 arg.force = arg("-f", "--force", help="Force action without interactive confirmation",
                 action="store_true", default=False)
+arg.index_name = arg("index_name", help="Index name")
 arg.json = arg("--json", help="Raw json output", action="store_true", default=False)
 arg.partitions = arg("--partitions", type=int, help="Number of partitions")
 arg.project = arg("--project", help="Project name to use, default %(default)r",

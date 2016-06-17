@@ -132,6 +132,14 @@ class AivenClientBase(object):
 
 class AivenClient(AivenClientBase):
     """Aiven Client with high-level operations"""
+
+    def get_service_indexes(self, project, service):
+        return self.verify(self.get, "/project/{}/service/{}/index".format(project, service),
+                           result_key="indexes")
+
+    def delete_service_index(self, project, service, index_name):
+        return self.verify(self.delete, "/project/{}/service/{}/index/{}".format(project, service, index_name))
+
     def get_service_alerts(self, project, service):
         return self.verify(self.get, "/project/{}/service/{}/alerts".format(project, service),
                            result_key="service_alerts")

@@ -508,6 +508,26 @@ class AivenCLI(argx.CommandLineTool):
     @arg.service_name
     @arg("--format", help="Format string for output, e.g. '{name} {retention_hours}'")
     @arg.json
+    def service_index_list(self):
+        """List Elasticsearch service indexes"""
+        indexes = self.client.get_service_indexes(project=self.get_project(), service=self.args.name)
+        layout = [["index_name", "number_of_shards", "number_of_replicas", "create_time"]]
+        self.print_response(indexes, format=self.args.format, json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg.service_name
+    @arg.index_name
+    @arg("--format", help="Format string for output, e.g. '{name} {retention_hours}'")
+    @arg.json
+    def service_index_delete(self):
+        """Delete Elasticsearch service index"""
+        self.client.delete_service_index(project=self.get_project(), service=self.args.name,
+                                         index_name=self.args.index_name)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output, e.g. '{name} {retention_hours}'")
+    @arg.json
     def service_topic_list(self):
         """List Kafka service topics"""
         service = self.client.get_service(project=self.get_project(), service=self.args.name)
