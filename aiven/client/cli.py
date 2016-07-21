@@ -7,6 +7,7 @@ from __future__ import print_function
 from . import argx, client
 from aiven.client import envdefault
 from aiven.client.cliarg import arg
+from decimal import Decimal
 import errno
 import getpass
 import json as jsonlib
@@ -210,10 +211,43 @@ class AivenCLI(argx.CommandLineTool):
                 opts[full_name] = spec
         return opts
 
+    @staticmethod
+    def describe_plan(plan):
+        """Describe a plan based on their specs as published in the api, returning strings like:
+        "Basic-0 (4 CPU, 123 MB RAM) "
+        "Basic-1 (4 CPU, 1 GB RAM, 9 GB disk) "
+        "Dual-1 (4 CPU, 1 GB RAM, 9 GB disk) high availability pair"
+        "Quad-2 (4 CPU, 2 GB RAM, 9 GB disk) 4-node high availability set"
+        """
+        if plan["node_memory_mb"] < 1024:
+            ram_amount = "{} MB".format(plan["node_memory_mb"])
+        else:
+            ram_amount = "{:.0f} GB".format(plan["node_memory_mb"] / 1024.0)
+
+        if plan["disk_space_mb"]:
+            disk_desc = ", {:.0f} GB disk".format(plan["disk_space_mb"] / 1024.0)
+        else:
+            disk_desc = ""
+
+        if plan["node_count"] == 2:
+            plan_qual = " high availability pair"
+        elif plan["node_count"] > 2:
+            plan_qual = " {}-node high availability set".format(plan["node_count"])
+        else:
+            plan_qual = ""
+
+        return "{name} ({cpu_count} CPU, {ram_amount} RAM{disk_desc}){qual}".format(
+            name=plan["service_plan"].title(),
+            cpu_count=plan["node_cpu_count"],
+            ram_amount=ram_amount,
+            disk_desc=disk_desc,
+            qual=plan_qual,
+        )
+
     @arg.project
     @arg.json
     def service_plans(self):
-        """List service types"""
+        """List service plans"""
         service_types = self.client.get_service_types(project=self.get_project())
         if self.args.json:
             return print(jsonlib.dumps(service_types, indent=4, sort_keys=True))
@@ -224,12 +258,15 @@ class AivenCLI(argx.CommandLineTool):
             entry["service_type"] = service_type
             output.append(entry)
 
+        dformat = Decimal("0.000")
+
         for info in sorted(output, key=lambda s: s["description"]):
             print("{} Plans:\n".format(info["description"]))
             for plan in info["service_plans"]:
                 args = "{}:{}".format(plan["service_type"], plan["service_plan"])
-                price = "${}/h".format(plan["price_usd"])
-                print("    {:<20}  {:>12}  {}".format(args, price, plan["description"]))
+                price_dec = Decimal(plan["price_usd"])
+                price = "${}/h".format(price_dec.quantize(dformat))
+                print("    {:<28} {:>10}  {}".format(args, price, self.describe_plan(plan)))
 
             if not info["service_plans"]:
                 print("    (no plans available)")
