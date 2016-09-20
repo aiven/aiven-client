@@ -312,18 +312,15 @@ class AivenClient(AivenClientBase):
             project, alert_endpoint_name))
 
     def invite_project_user(self, project, user_email):
-        return self.verify(self.post, "/project/{}/user/invite".format(project), body={
+        return self.verify(self.post, "/project/{}/invite".format(project), body={
             "user_email": user_email,
         })
 
     def remove_project_user(self, project, user_email):
-        return self.verify(self.put, "/project/{}/user/remove".format(project), body={
-            "user_email": user_email,
-        })
+        return self.verify(self.delete, "/project/{}/user/{}".format(project, user_email))
 
     def list_project_users(self, project):
-        return self.verify(self.get, "/project/{}/user/list".format(project), body={},
-                           result_key="users")
+        return self.verify(self.get, "/project/{}/users".format(project), result_key="users")
 
     def create_user(self, email, password, real_name):
         request = {
