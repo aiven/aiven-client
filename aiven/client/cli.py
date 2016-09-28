@@ -1095,7 +1095,7 @@ class AivenCLI(argx.CommandLineTool):
             if auth_token:
                 self.client.set_auth_token(auth_token)
             elif not getattr(func, "optional_auth", False):
-                raise argx.UserError("auth_token is required for all commands")
+                raise argx.UserError("not authenticated: please login first with 'avn user login'")
 
     @arg.json
     @arg.verbose
