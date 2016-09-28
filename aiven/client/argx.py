@@ -145,6 +145,10 @@ class CommandLineTool(object):
             pretty.print_table(result, drop_fields=drop_fields, table_layout=table_layout)
 
     def run(self, args=None):
+        args = args or sys.argv[1:]
+        if not args:
+            args = ['--help']
+
         self.parse_args(args=args)
         self.config = Config(self.args.config)
         expected_errors = [requests.exceptions.ConnectionError, UserError, aiven.client.client.Error]
