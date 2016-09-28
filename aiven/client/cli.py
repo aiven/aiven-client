@@ -3,7 +3,7 @@
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 from . import argx, client
 from aiven.client import envdefault
 from aiven.client.cliarg import arg

@@ -5,7 +5,7 @@
 
 """Pretty-print JSON objects and lists as tables"""
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 import datetime
 import fnmatch
 import json
