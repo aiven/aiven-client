@@ -11,7 +11,7 @@ aiven/client/version.py: .git/index
 test: flake8 pylint pytest
 
 flake8:
-	$(PYTHON) -m flake8.main --max-line-length=125 aiven/ tests/
+	$(PYTHON) -m flake8 --max-line-length=125 aiven/ tests/
 
 pylint:
 	$(PYTHON) -m pylint aiven/ --rcfile pylintrc tests/
