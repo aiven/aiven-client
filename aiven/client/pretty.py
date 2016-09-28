@@ -10,13 +10,19 @@ import datetime
 import fnmatch
 import json
 
+# string type checking must work on python 2.x and 3.x
+try:
+    basestring
+except NameError:
+    basestring = str  # pylint: disable=redefined-builtin
+
 
 def format_item(key, value):
     if isinstance(value, list):
         return ", ".join(format_item(None, entry) for entry in value)
     elif isinstance(value, dict):
         return json.dumps(value, sort_keys=True)
-    elif isinstance(value, str):
+    elif isinstance(value, basestring):
         if key and key.endswith("_time") and value.endswith("Z") and "." in value:
             # drop microseconds from timestamps
             value = value.split(".", 1)[0] + "Z"
