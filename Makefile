@@ -19,6 +19,10 @@ pylint:
 pytest:
 	$(PYTHON) -m pytest -vv tests/
 
+coverage: $(generated)
+	$(PYTHON) -m coverage run --source aiven -m pytest $(PYTEST_ARG) tests/
+	$(PYTHON) -m coverage report --show-missing
+
 clean:
 	$(RM) -r rpms
 

@@ -57,6 +57,16 @@ def convert_str_to_value(schema, str_value):
         raise argx.UserError("Supported for option value type(s) {!r} is unimplemented".format(schema["type"]))
 
 
+def no_auth(fun):
+    fun.no_auth = True
+    return fun
+
+
+def optional_auth(fun):
+    fun.optional_auth = True
+    return fun
+
+
 class AivenCLI(argx.CommandLineTool):
     def __init__(self):
         argx.CommandLineTool.__init__(self, "avn")
@@ -95,6 +105,7 @@ class AivenCLI(argx.CommandLineTool):
             return self.args.project
         return self.config.get("default_project")
 
+    @no_auth
     @arg("email", nargs="?", help="User email address")
     def user_login(self):
         """Login as a user"""
@@ -189,11 +200,15 @@ class AivenCLI(argx.CommandLineTool):
                 time.sleep(10.0)
             previous_offset = new_offset
 
+    @optional_auth
     @arg.project
     @arg.json
     def cloud_list(self):
         """List cloud types"""
-        self.print_response(self.client.get_clouds(project=self.get_project()), json=self.args.json)
+        project = self.get_project()
+        if project and not self.client.auth_token:
+            raise argx.UserError("authentication is required to list clouds for a specific project")
+        self.print_response(self.client.get_clouds(project=project), json=self.args.json)
 
     def collect_user_config_options(self, obj_def, prefix=""):
         opts = {}
@@ -244,11 +259,16 @@ class AivenCLI(argx.CommandLineTool):
             qual=plan_qual,
         )
 
+    @optional_auth
     @arg.project
     @arg.json
     def service_plans(self):
         """List service plans"""
-        service_types = self.client.get_service_types(project=self.get_project())
+        project = self.get_project()
+        if project and not self.client.auth_token:
+            raise argx.UserError("authentication is required to list service plans for a specific project")
+
+        service_types = self.client.get_service_types(project=project)
         if self.args.json:
             return print(jsonlib.dumps(service_types, indent=4, sort_keys=True))
 
@@ -1070,12 +1090,11 @@ class AivenCLI(argx.CommandLineTool):
             # "user create" doesn't use authentication (yet)
             return
 
-        # "user login" does not use client token everything else does
-        if func != self.user_login:
+        if not getattr(func, "no_auth", False):
             auth_token = self._get_auth_token()
             if auth_token:
                 self.client.set_auth_token(auth_token)
-            else:
+            elif not getattr(func, "optional_auth", False):
                 raise argx.UserError("auth_token is required for all commands")
 
     @arg.json
