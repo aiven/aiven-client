@@ -14,3 +14,11 @@ def test_cli():
     with pytest.raises(SystemExit) as excinfo:
         AivenCLI().run(args=["--help"])
     assert excinfo.value.code == 0
+
+
+def test_cloud_list():
+    AivenCLI().run(args=["cloud", "list"])
+
+
+def test_service_plans():
+    AivenCLI().run(args=["service", "plans"])

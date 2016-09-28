@@ -159,7 +159,11 @@ class AivenClient(AivenClientBase):
         return self.verify(self.delete, "/project/{}/service/{}/alerts/{}".format(project, service, alert_name))
 
     def get_clouds(self, project):
-        return self.verify(self.get, "/project/{}/clouds".format(project), result_key="clouds")
+        if project is None:
+            path = "/clouds"
+        else:
+            path = "/project/{}/clouds".format(project)
+        return self.verify(self.get, path, result_key="clouds")
 
     def get_service(self, project, service):
         return self.verify(self.get, "/project/{}/service/{}".format(project, service),
@@ -261,7 +265,11 @@ class AivenClient(AivenClientBase):
         return self.verify(self.get, "/project/{}/service".format(project), result_key="services")
 
     def get_service_types(self, project):
-        return self.verify(self.get, "/project/{}/service_types".format(project), result_key="service_types")
+        if project is None:
+            path = "/service_types"
+        else:
+            path = "/project/{}/service_types".format(project)
+        return self.verify(self.get, path, result_key="service_types")
 
     def create_project(self, project, card_id=None, cloud=None):
         return self.verify(self.post, "/project", body={
@@ -312,18 +320,15 @@ class AivenClient(AivenClientBase):
             project, alert_endpoint_name))
 
     def invite_project_user(self, project, user_email):
-        return self.verify(self.post, "/project/{}/user/invite".format(project), body={
+        return self.verify(self.post, "/project/{}/invite".format(project), body={
             "user_email": user_email,
         })
 
     def remove_project_user(self, project, user_email):
-        return self.verify(self.put, "/project/{}/user/remove".format(project), body={
-            "user_email": user_email,
-        })
+        return self.verify(self.delete, "/project/{}/user/{}".format(project, user_email))
 
     def list_project_users(self, project):
-        return self.verify(self.get, "/project/{}/user/list".format(project), body={},
-                           result_key="users")
+        return self.verify(self.get, "/project/{}/users".format(project), result_key="users")
 
     def create_user(self, email, password, real_name):
         request = {
