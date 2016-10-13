@@ -187,6 +187,17 @@ class AivenClient(AivenClientBase):
             "password": password,
         })
 
+    def create_service_connection_pool(self, project, service, pool_name, dbname, username, pool_size=None, pool_mode=None):
+        body = {"database": dbname, "username": username, "pool_name": pool_name}
+        if pool_size:
+            body["pool_size"] = pool_size
+        if pool_mode:
+            body["pool_mode"] = pool_mode
+        return self.verify(self.post, "/project/{}/service/{}/connection_pool".format(project, service), body=body)
+
+    def delete_service_connection_pool(self, project, service, pool_name):
+        return self.verify(self.delete, "/project/{}/service/{}/connection_pool/{}".format(project, service, pool_name))
+
     def create_service_database(self, project, service, dbname):
         return self.verify(self.post, "/project/{}/service/{}/db".format(project, service),
                            body={"database": dbname})
