@@ -339,6 +339,9 @@ class AivenClient(AivenClientBase):
             request["password"] = password
         return self.verify(self.post, "/user", body=request)
 
+    def expire_user_tokens(self):
+        return self.verify(self.post, "/me/expire_tokens")
+
     def get_logs(self, project, limit=100, offset=None):
         params = {"limit": limit}
         if offset:
