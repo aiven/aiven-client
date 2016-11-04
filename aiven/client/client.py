@@ -339,6 +339,9 @@ class AivenClient(AivenClientBase):
             request["password"] = password
         return self.verify(self.post, "/user", body=request)
 
+    def get_user_info(self):
+        return self.verify(self.get, "/me", result_key="user")
+
     def expire_user_tokens(self):
         return self.verify(self.post, "/me/expire_tokens")
 
