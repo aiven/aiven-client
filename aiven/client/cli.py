@@ -136,6 +136,12 @@ class AivenCLI(argx.CommandLineTool):
         else:
             self.log.info("No projects exists. You should probably create one with 'avn project create <name>'")
 
+    @arg.verbose
+    def user_tokens_expire(self):
+        """Expire all authorization tokens"""
+        message = self.client.expire_user_tokens()["message"]
+        print(message)
+
     @arg("--format", help="Format string for output, e.g. '{filename} {size}'")
     @arg.json
     @arg.project
