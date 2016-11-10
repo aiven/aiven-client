@@ -1120,8 +1120,7 @@ class AivenCLI(argx.CommandLineTool):
 
     def _open_auth_token_file(self, mode="r"):
         default_token_file_path = os.path.join(envdefault.AIVEN_CONFIG_DIR, "aiven-credentials.json")
-        auth_token_file_path = (os.environ.get("AIVEN_CREDENTIALS_FILE")
-                                or default_token_file_path)
+        auth_token_file_path = (os.environ.get("AIVEN_CREDENTIALS_FILE") or default_token_file_path)
         try:
             return open(auth_token_file_path, mode)
         except IOError as ex:
