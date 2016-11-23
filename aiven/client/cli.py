@@ -423,17 +423,38 @@ class AivenCLI(argx.CommandLineTool):
     @arg("--pool-name", help="Connection pool name", required=True)
     @arg("--dbname", help="Service database name", required=True)
     @arg("--username", help="Service username", required=True)
-    @arg("--pool-size", help="Connection pool size")
+    @arg("--pool-size", type=int, help="Connection pool size")
     @arg("--pool-mode", help="Connection pool mode")
     @arg.json
     def service_connection_pool_create(self):
         """Create a connection pool for a given PostgreSQL service"""
-        self.client.create_service_connection_pool(project=self.get_project(), service=self.args.name,
-                                                   pool_name=self.args.pool_name,
-                                                   dbname=self.args.dbname,
-                                                   username=self.args.username,
-                                                   pool_size=self.args.pool_size,
-                                                   pool_mode=self.args.pool_mode)
+        self.client.create_service_connection_pool(
+            project=self.get_project(),
+            service=self.args.name,
+            pool_name=self.args.pool_name,
+            dbname=self.args.dbname,
+            username=self.args.username,
+            pool_size=self.args.pool_size,
+            pool_mode=self.args.pool_mode)
+
+    @arg.project
+    @arg.service_name
+    @arg("--pool-name", help="Connection pool name", required=True)
+    @arg("--dbname", help="Service database name")
+    @arg("--username", help="Service username")
+    @arg("--pool-size", type=int, help="Connection pool size")
+    @arg("--pool-mode", help="Connection pool mode")
+    @arg.json
+    def service_connection_pool_update(self):
+        """Update a connection pool for a given PostgreSQL service"""
+        self.client.update_service_connection_pool(
+            project=self.get_project(),
+            service=self.args.name,
+            pool_name=self.args.pool_name,
+            dbname=self.args.dbname,
+            username=self.args.username,
+            pool_size=self.args.pool_size,
+            pool_mode=self.args.pool_mode)
 
     @arg.project
     @arg.service_name
