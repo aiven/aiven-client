@@ -1111,6 +1111,13 @@ class AivenCLI(argx.CommandLineTool):
 
         self._write_auth_token_file(token=result["token"], email=self.args.email)
 
+    @arg.json
+    def user_info(self):
+        """Show current user info"""
+        result = self.client.get_user_info()
+        layout = [["user", "real_name", "state", "token_validity_begin", "projects"]]
+        self.print_response([result], json=self.args.json, table_layout=layout)
+
     def _write_auth_token_file(self, token, email):
         with self._open_auth_token_file(mode="w") as fp:
             fp.write(jsonlib.dumps({"auth_token": token, "user_email": email}))
