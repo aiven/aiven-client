@@ -227,6 +227,10 @@ class AivenClient(AivenClientBase):
     def delete_service_user(self, project, service, username):
         return self.verify(self.delete, "/project/{}/service/{}/user/{}".format(project, service, username))
 
+    def get_service_topic(self, project, service, topic):
+        return self.verify(self.get, "/project/{}/service/{}/topic/{}".format(project, service, topic),
+                           result_key="topic")
+
     def create_service_topic(self, project, service, topic, partitions, replication, retention_hours):
         return self.verify(self.post, "/project/{}/service/{}/topic".format(project, service), body={
             "topic_name": topic,
