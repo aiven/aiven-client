@@ -205,6 +205,26 @@ class AivenCLI(argx.CommandLineTool):
                 time.sleep(10.0)
             previous_offset = new_offset
 
+    @arg.project
+    @arg.json
+    @arg("-n", "--limit", type=int, default=100, help="Get up to N rows of logs")
+    def events(self):
+        """View project event logs"""
+        events = self.client.get_events(
+            project=self.get_project(),
+            limit=self.args.limit)
+
+        if self.args.json:
+            return print(jsonlib.dumps(events, indent=4, sort_keys=True))
+
+        for msg in events:
+            if not msg["service_name"]:
+                msg["service_name"] = ""
+
+        layout = ["create_time", "actor", "event_type", "service_name", "event_desc"]
+        self.print_response(events["logs"], json=self.args.json,
+                            table_layout=layout)
+
     @optional_auth
     @arg.project
     @arg.json

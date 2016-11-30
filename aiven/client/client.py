@@ -370,6 +370,11 @@ class AivenClient(AivenClientBase):
             params["offset"] = offset
         return self.verify(self.get, "/project/{}/logs".format(project), params=params)
 
+    def get_events(self, project, limit=100):
+        params = {"limit": limit}
+        return self.verify(self.get, "/project/{}/events".format(project), params=params,
+                           result_key="events")
+
     def list_data(self, project):
         return self.verify(self.get, "/project/{}/data".format(project))
 
