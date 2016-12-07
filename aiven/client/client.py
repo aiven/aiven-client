@@ -195,6 +195,20 @@ class AivenClient(AivenClientBase):
             body["pool_mode"] = pool_mode
         return self.verify(self.post, "/project/{}/service/{}/connection_pool".format(project, service), body=body)
 
+    def update_service_connection_pool(self, project, service, pool_name,
+                                       dbname=None, username=None, pool_size=None, pool_mode=None):
+        body = {}
+        if username:
+            body["username"] = username
+        if dbname:
+            body["database"] = dbname
+        if pool_size:
+            body["pool_size"] = pool_size
+        if pool_mode:
+            body["pool_mode"] = pool_mode
+        return self.verify(self.put, "/project/{}/service/{}/connection_pool/{}".format(
+            project, service, pool_name), body=body)
+
     def delete_service_connection_pool(self, project, service, pool_name):
         return self.verify(self.delete, "/project/{}/service/{}/connection_pool/{}".format(project, service, pool_name))
 
@@ -212,6 +226,10 @@ class AivenClient(AivenClientBase):
 
     def delete_service_user(self, project, service, username):
         return self.verify(self.delete, "/project/{}/service/{}/user/{}".format(project, service, username))
+
+    def get_service_topic(self, project, service, topic):
+        return self.verify(self.get, "/project/{}/service/{}/topic/{}".format(project, service, topic),
+                           result_key="topic")
 
     def create_service_topic(self, project, service, topic, partitions, replication, retention_hours):
         return self.verify(self.post, "/project/{}/service/{}/topic".format(project, service), body={

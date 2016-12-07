@@ -423,17 +423,38 @@ class AivenCLI(argx.CommandLineTool):
     @arg("--pool-name", help="Connection pool name", required=True)
     @arg("--dbname", help="Service database name", required=True)
     @arg("--username", help="Service username", required=True)
-    @arg("--pool-size", help="Connection pool size")
+    @arg("--pool-size", type=int, help="Connection pool size")
     @arg("--pool-mode", help="Connection pool mode")
     @arg.json
     def service_connection_pool_create(self):
         """Create a connection pool for a given PostgreSQL service"""
-        self.client.create_service_connection_pool(project=self.get_project(), service=self.args.name,
-                                                   pool_name=self.args.pool_name,
-                                                   dbname=self.args.dbname,
-                                                   username=self.args.username,
-                                                   pool_size=self.args.pool_size,
-                                                   pool_mode=self.args.pool_mode)
+        self.client.create_service_connection_pool(
+            project=self.get_project(),
+            service=self.args.name,
+            pool_name=self.args.pool_name,
+            dbname=self.args.dbname,
+            username=self.args.username,
+            pool_size=self.args.pool_size,
+            pool_mode=self.args.pool_mode)
+
+    @arg.project
+    @arg.service_name
+    @arg("--pool-name", help="Connection pool name", required=True)
+    @arg("--dbname", help="Service database name")
+    @arg("--username", help="Service username")
+    @arg("--pool-size", type=int, help="Connection pool size")
+    @arg("--pool-mode", help="Connection pool mode")
+    @arg.json
+    def service_connection_pool_update(self):
+        """Update a connection pool for a given PostgreSQL service"""
+        self.client.update_service_connection_pool(
+            project=self.get_project(),
+            service=self.args.name,
+            pool_name=self.args.pool_name,
+            dbname=self.args.dbname,
+            username=self.args.username,
+            pool_size=self.args.pool_size,
+            pool_mode=self.args.pool_mode)
 
     @arg.project
     @arg.service_name
@@ -596,6 +617,38 @@ class AivenCLI(argx.CommandLineTool):
     @arg.project
     @arg.service_name
     @arg.topic
+    @arg("--format", help="Format string for output, e.g. '{name} {retention_hours}'")
+    @arg.json
+    @arg.verbose
+    def service_topic_get(self):
+        """Get Kafka service topic"""
+        topic = self.client.get_service_topic(project=self.get_project(), service=self.args.name,
+                                              topic=self.args.topic)
+        layout = [["partition", "isr", "size", "earliest_offset", "latest_offset", "groups"]]
+        for p in topic["partitions"]:
+            p["groups"] = len(p["consumer_groups"])
+
+        self.print_response(topic["partitions"], format=self.args.format, json=self.args.json, table_layout=layout)
+        print()
+
+        layout = [["partition", "consumer_group", "offset"]]
+        cgroups = []
+        for p in topic["partitions"]:
+            for cg in p["consumer_groups"]:
+                cgroups.append({
+                    "partition": p["partition"],
+                    "consumer_group": cg["group_name"],
+                    "offset": cg["offset"],
+                })
+
+        if not cgroups:
+            print("(No consumer groups)")
+        else:
+            self.print_response(cgroups, format=self.args.format, json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg.service_name
+    @arg.topic
     @arg.partitions
     @arg.replication
     @arg.retention
@@ -607,7 +660,7 @@ class AivenCLI(argx.CommandLineTool):
                                                     partitions=self.args.partitions,
                                                     replication=self.args.replication,
                                                     retention_hours=self.args.retention)
-        print(response["message"])
+        print(response)
 
     @arg.project
     @arg.service_name
