@@ -1014,9 +1014,9 @@ class AivenCLI(argx.CommandLineTool):
 
     @classmethod
     def _project_credit_card(cls, project):
-        payment_info = project.get("payment_info")
-        if payment_info:
-            return "{}/{}".format(project["payment_info"]["user_email"], project["payment_info"]["card_id"])
+        card_info = project.get("card_info")
+        if card_info:
+            return "{}/{}".format(project["card_info"]["user_email"], project["card_info"]["card_id"])
         else:
             return "N/A"
 
