@@ -1014,9 +1014,9 @@ class AivenCLI(argx.CommandLineTool):
 
     @classmethod
     def _project_credit_card(cls, project):
-        payment_info = project.get("payment_info")
-        if payment_info:
-            return "{}/{}".format(project["payment_info"]["user_email"], project["payment_info"]["card_id"])
+        card_info = project.get("card_info")
+        if card_info:
+            return "{}/{}".format(project["card_info"]["user_email"], project["card_info"]["card_id"])
         else:
             return "N/A"
 
@@ -1242,12 +1242,9 @@ class AivenCLI(argx.CommandLineTool):
                 raise argx.UserError("not authenticated: please login first with 'avn user login'")
 
     @arg.json
-    @arg.verbose
     def card_list(self):
         """List credit cards"""
         layout = [["card_id", "name", "country", "exp_year", "exp_month", "last4"]]
-        if self.args.verbose:
-            layout.append("address_*")
         self.print_response(self.client.get_cards(), json=self.args.json, table_layout=layout)
 
     def _card_get_stripe_token(self,
@@ -1298,24 +1295,12 @@ class AivenCLI(argx.CommandLineTool):
 
     @arg.json
     @arg("card-id", help="Card ID")
-    @arg("--address-city", help="Address city")
-    @arg("--address-country", help="Address country")
-    @arg("--address-line1", help="Address line #1")
-    @arg("--address-line2", help="Address line #2")
-    @arg("--address-state", help="Address state")
-    @arg("--address-zip", help="Address zip code")
     @arg("--exp-month", help="Card expiration month (1-12)", type=int)
     @arg("--exp-year", help="Card expiration year", type=int)
     @arg("--name", help="Name on card")
     def card_update(self):
         """Update credit card information"""
         card = self.client.update_card(
-            address_city=self.args.address_city,
-            address_country=self.args.address_country,
-            address_line1=self.args.address_line1,
-            address_line2=self.args.address_line2,
-            address_state=self.args.address_state,
-            address_zip=self.args.address_zip,
             card_id=self.args.card_id,
             exp_month=self.args.exp_month,
             exp_year=self.args.exp_year,

@@ -419,9 +419,7 @@ class AivenClient(AivenClientBase):
         return self.verify(self.post, "/card", body=request, result_key="card")
 
     def update_card(self, card_id, **kwargs):
-        keys = {"address_city", "address_country", "address_line1",
-                "address_line2", "address_state", "address_zip",
-                "exp_month", "exp_year", "name"}
+        keys = {"exp_month", "exp_year", "name"}
         wrong = set(kwargs) - keys
         assert not wrong, "invalid arguments to update_card: {!r}".format(wrong)
         request = {}
