@@ -413,9 +413,11 @@ class AivenCLI(argx.CommandLineTool):
 
     @arg.project
     @arg.service_name
+    @arg("--period", help="Metrics period", default="hour", choices=["hour", "day", "week", "month", "year"])
     def service_metrics(self):
         """Get service metrics"""
-        metrics = self.client.get_service_metrics(project=self.get_project(), service=self.args.name)
+        metrics = self.client.get_service_metrics(project=self.get_project(), service=self.args.name,
+                                                  period=self.args.period)
         print(jsonlib.dumps(metrics, indent=2, sort_keys=True))
 
     @arg.project

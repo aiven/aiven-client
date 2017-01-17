@@ -177,9 +177,12 @@ class AivenClient(AivenClientBase):
         return self.verify(self.get, "/project/{}/service/{}".format(project, service),
                            result_key="service")
 
-    def get_service_metrics(self, project, service):
-        return self.verify(self.get, "/project/{}/service/{}/metrics".format(project, service),
-                           result_key="metrics")
+    def get_service_metrics(self, project, service, period):
+        return self.verify(
+            self.post, "/project/{}/service/{}/metrics".format(project, service),
+            result_key="metrics", body={
+                "period": period
+            })
 
     def authenticate_user(self, email, password):
         return self.verify(self.post, "/userauth", body={
