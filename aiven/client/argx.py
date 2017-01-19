@@ -131,7 +131,7 @@ class CommandLineTool(object):
         return []
 
     def print_response(self, result, json=True, format=None,   # pylint: disable=redefined-builtin
-                       drop_fields=None, table_layout=None, single_item=False):
+                       drop_fields=None, table_layout=None, single_item=False, header=True):
         """print request response in chosen format"""
         if format is not None:
             for item in result:
@@ -142,7 +142,8 @@ class CommandLineTool(object):
             if single_item:
                 result = [result]
 
-            pretty.print_table(result, drop_fields=drop_fields, table_layout=table_layout)
+            pretty.print_table(result, drop_fields=drop_fields, table_layout=table_layout,
+                               header=header)
 
     def run(self, args=None):
         args = args or sys.argv[1:]

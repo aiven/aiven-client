@@ -38,7 +38,7 @@ def format_item(key, value):
     return json.dumps(value)
 
 
-def yield_table(result, drop_fields=None, table_layout=None):
+def yield_table(result, drop_fields=None, table_layout=None, header=True):
     """format a list of dicts in a nicer table format yielding string rows"""
     if not result:
         return
@@ -83,8 +83,9 @@ def yield_table(result, drop_fields=None, table_layout=None):
         return max(lengths) if lengths else 0
 
     vertical_width = max(longest(f) for f in table_layout[1:]) if len(table_layout) > 1 else 0
-    yield "  ".join(f.upper().ljust(widths[f]) for f in horizontal_fields)
-    yield "  ".join("=" * widths[f] for f in horizontal_fields)
+    if header:
+        yield "  ".join(f.upper().ljust(widths[f]) for f in horizontal_fields)
+        yield "  ".join("=" * widths[f] for f in horizontal_fields)
     for row_num, formatted_row in enumerate(formatted_values):
         if len(table_layout) > 1 and row_num > 0:
             yield ""
@@ -95,7 +96,8 @@ def yield_table(result, drop_fields=None, table_layout=None):
                     yield "    {:{}} = {}".format(key.split(".", 1)[-1], vertical_width, value)
 
 
-def print_table(result, drop_fields=None, table_layout=None):
+def print_table(result, drop_fields=None, table_layout=None, header=True):
     """print a list of dicts in a nicer table format"""
-    for row in yield_table(result, drop_fields=drop_fields, table_layout=table_layout):
+    for row in yield_table(result, drop_fields=drop_fields, table_layout=table_layout,
+                           header=header):
         print(row)
