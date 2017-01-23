@@ -201,13 +201,13 @@ class AivenClient(AivenClientBase):
     def update_service_connection_pool(self, project, service, pool_name,
                                        dbname=None, username=None, pool_size=None, pool_mode=None):
         body = {}
-        if username:
+        if username is not None:
             body["username"] = username
-        if dbname:
+        if dbname is not None:
             body["database"] = dbname
-        if pool_size:
+        if pool_size is not None:
             body["pool_size"] = pool_size
-        if pool_mode:
+        if pool_mode is not None:
             body["pool_mode"] = pool_mode
         return self.verify(self.put, "/project/{}/service/{}/connection_pool/{}".format(
             project, service, pool_name), body=body)
@@ -273,14 +273,21 @@ class AivenClient(AivenClientBase):
                        plan=None,
                        powered=None):
         user_config = user_config or {}
-        return self.verify(self.put, "/project/{}/service/{}".format(project, service), body={
-            "group_name": group_name,
-            "cloud": cloud,
-            "maintenance": maintenance,
-            "plan": plan,
-            "powered": powered,
-            "user_config": user_config,
-        }, result_key="service")
+        body = {}
+        if group_name is not None:
+            body["group_name"] = group_name
+        if cloud is not None:
+            body["cloud"] = cloud
+        if maintenance is not None:
+            body["maintenance"] = maintenance
+        if plan is not None:
+            body["plan"] = plan
+        if powered is not None:
+            body["powered"] = powered
+        if user_config is not None:
+            body["user_config"] = user_config
+
+        return self.verify(self.put, "/project/{}/service/{}".format(project, service), body=body, result_key="service")
 
     def reset_service_credentials(self, project, service):
         return self.verify(self.put, "/project/{}/service/{}/credentials/reset".format(project, service),
@@ -328,10 +335,13 @@ class AivenClient(AivenClientBase):
         return self.verify(self.get, "/project", result_key="projects")
 
     def update_project(self, project, card_id=None, cloud=None):
-        return self.verify(self.put, "/project/{}".format(project), body={
-            "card_id": card_id,
-            "cloud": cloud,
-        }, result_key="project")
+        body = {}
+        if card_id is not None:
+            body["card_id"] = card_id
+        if cloud is not None:
+            body["cloud"] = cloud
+
+        return self.verify(self.put, "/project/{}".format(project), body=body, result_key="project")
 
     def get_project_ca(self, project):
         return self.verify(self.get, "/project/{}/kms/ca".format(project))
