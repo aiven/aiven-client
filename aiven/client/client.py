@@ -12,6 +12,7 @@ import json
 import logging
 import os
 import requests
+import time
 
 
 class Error(Exception):
@@ -113,12 +114,29 @@ class AivenClientBase(object):
         """HTTP DELETE"""
         return self._execute(self.session.delete, "DELETE", path, body, params)
 
-    def verify(self, op, path, body=None, params=None, result_key=None):
-        path = self.api_prefix + path
-        if body is not None:
-            response = op(path=path, body=body, params=params)
+    def verify(self, op, path, body=None, params=None, result_key=None, retry=None):
+        # Retry GET operations by default
+        if retry is None and op == self.get:
+            attempts = 3
         else:
-            response = op(path=path, params=params)
+            attempts = 1 + (retry or 0)
+
+        path = self.api_prefix + path
+
+        while attempts:
+            attempts -= 1
+            try:
+                if body is not None:
+                    response = op(path=path, body=body, params=params)
+                else:
+                    response = op(path=path, params=params)
+                break
+            except requests.exceptions.ConnectionError as ex:
+                if attempts <= 0:
+                    raise
+                self.log.warning("%s %s failed: %s: %s; retrying in 0.2 seconds, %s attempts left",
+                                 op.__name__.upper(), path, ex.__class__.__name__, ex, attempts)
+                time.sleep(0.2)
 
         result = response.json()
         if result.get("error"):
