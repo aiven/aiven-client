@@ -348,8 +348,10 @@ class AivenCLI(argx.CommandLineTool):
                             default = ",".join(default)
 
                         default_desc = "(default={!r})".format(default) if default is not None else ""
-                        type_str = spec["type"]
-                        type_str = " or ".join(type_str) if isinstance(type_str, list) else type_str
+                        types = spec["type"]
+                        if not isinstance(types, list):
+                            types = [types]
+                        type_str = " or ".join(t for t in types if t != "null")
                         print("  -c {name}=<{type}>  {default}\n"
                               "     => {title}"
                               .format(name=name, type=type_str,
