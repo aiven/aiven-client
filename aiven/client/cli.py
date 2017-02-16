@@ -221,9 +221,8 @@ class AivenCLI(argx.CommandLineTool):
             if not msg["service_name"]:
                 msg["service_name"] = ""
 
-        layout = ["create_time", "actor", "event_type", "service_name", "event_desc"]
-        self.print_response(events["logs"], json=self.args.json,
-                            table_layout=layout)
+        layout = ["time", "actor", "event_type", "service_name", "event_desc"]
+        self.print_response(events, json=self.args.json, table_layout=layout)
 
     @optional_auth
     @arg.project
