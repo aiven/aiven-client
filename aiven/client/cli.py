@@ -485,11 +485,14 @@ class AivenCLI(argx.CommandLineTool):
     @arg.project
     @arg.service_name
     @arg("--dbname", help="Service database name", required=True)
+    @arg("--lc-collate", help="Default PostgreSQL string sort order (LC_COLLATE) for the database")
+    @arg("--lc-ctype", help="Default PostgreSQL character classification (LC_CTYPE) for the database")
     @arg.json
     def service_database_create(self):
         """Create a database within a given service"""
         self.client.create_service_database(project=self.get_project(), service=self.args.name,
-                                            dbname=self.args.dbname)
+                                            dbname=self.args.dbname, lc_ctype=self.args.lc_ctype,
+                                            lc_collate=self.args.lc_collate)
 
     @arg.project
     @arg.service_name
@@ -542,8 +545,13 @@ class AivenCLI(argx.CommandLineTool):
     def service_database_list(self):
         """List service databases"""
         service = self.client.get_service(project=self.get_project(), service=self.args.name)
-        layout = [["database"]]
-        self.print_response(service["databases"], json=self.args.json, table_layout=layout)
+        db_list = [dict({"database": dbname}, **dbinfo) for dbname, dbinfo in service["databases"].items()]
+        db_list.sort(key=lambda item: item["database"])
+        if service["service_type"] == "pg":
+            layout = [["database", "lc_ctype", "lc_collate"]]
+        else:
+            layout = [["database"]]
+        self.print_response(db_list, json=self.args.json, table_layout=layout)
 
     @arg.project
     @arg.service_name

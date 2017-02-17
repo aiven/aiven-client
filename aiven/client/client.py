@@ -233,9 +233,13 @@ class AivenClient(AivenClientBase):
     def delete_service_connection_pool(self, project, service, pool_name):
         return self.verify(self.delete, "/project/{}/service/{}/connection_pool/{}".format(project, service, pool_name))
 
-    def create_service_database(self, project, service, dbname):
-        return self.verify(self.post, "/project/{}/service/{}/db".format(project, service),
-                           body={"database": dbname})
+    def create_service_database(self, project, service, dbname, lc_ctype=None, lc_collate=None):
+        body = {"database": dbname}
+        if lc_collate is not None:
+            body["lc_collate"] = lc_collate
+        if lc_ctype is not None:
+            body["lc_ctype"] = lc_ctype
+        return self.verify(self.post, "/project/{}/service/{}/db".format(project, service), body=body)
 
     def delete_service_database(self, project, service, dbname):
         return self.verify(self.delete, "/project/{}/service/{}/db/{}".format(project, service, dbname))
