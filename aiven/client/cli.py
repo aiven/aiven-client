@@ -600,8 +600,6 @@ class AivenCLI(argx.CommandLineTool):
     @arg.project
     @arg.service_name
     @arg.index_name
-    @arg("--format", help="Format string for output, e.g. '{name} {retention_hours}'")
-    @arg.json
     def service_index_delete(self):
         """Delete Elasticsearch service index"""
         self.client.delete_service_index(project=self.get_project(), service=self.args.name,
@@ -614,8 +612,12 @@ class AivenCLI(argx.CommandLineTool):
     def service_topic_list(self):
         """List Kafka service topics"""
         service = self.client.get_service(project=self.get_project(), service=self.args.name)
+        topics = service["topics"]
+        for topic in topics:
+            if topic["retention_hours"] == -1:
+                topic["retention_hours"] = "unlimited"
         layout = [["topic_name", "partitions", "replication", "retention_hours", "state"]]
-        self.print_response(service["topics"], format=self.args.format, json=self.args.json, table_layout=layout)
+        self.print_response(topics, format=self.args.format, json=self.args.json, table_layout=layout)
 
     @arg.project
     @arg.service_name
@@ -657,13 +659,13 @@ class AivenCLI(argx.CommandLineTool):
     @arg.retention
     def service_topic_create(self):
         """Create a Kafka topic"""
-        response = self.client.create_service_topic(project=self.get_project(),
-                                                    service=self.args.name,
-                                                    topic=self.args.topic,
-                                                    partitions=self.args.partitions,
-                                                    replication=self.args.replication,
-                                                    retention_hours=self.args.retention)
-        print(response)
+        self.client.create_service_topic(
+            project=self.get_project(),
+            service=self.args.name,
+            topic=self.args.topic,
+            partitions=self.args.partitions,
+            replication=self.args.replication,
+            retention_hours=self.args.retention)
 
     @arg.project
     @arg.service_name
