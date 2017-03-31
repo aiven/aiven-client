@@ -131,13 +131,24 @@ class CommandLineTool(object):
         return []
 
     def print_response(self, result, json=True, format=None,   # pylint: disable=redefined-builtin
-                       drop_fields=None, table_layout=None, single_item=False, header=True):
+                       drop_fields=None, table_layout=None, single_item=False, header=True,
+                       csv=False):
         """print request response in chosen format"""
         if format is not None:
             for item in result:
                 print(format.format(**item))
         elif json:
             print(jsonlib.dumps(result, indent=4, sort_keys=True))
+        elif csv:
+            fields = []
+            for field in table_layout:
+                if isinstance(field, str):
+                    fields.append(field)
+                else:
+                    fields.extend(field)
+            print(",".join(fields))
+            for item in result:
+                print(",".join(str(item.get(field, "")).strip() for field in fields))
         else:
             if single_item:
                 result = [result]
