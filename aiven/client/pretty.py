@@ -1,4 +1,5 @@
 # Copyright 2015, Aiven, https://aiven.io/
+# coding=utf-8
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
@@ -29,7 +30,8 @@ def format_item(key, value):
         # json encode strings, but if the input string is exactly the same
         # as the output without quotes we'll go with the original
         json_v = json.dumps(value)
-        if json_v == '"{}"'.format(value):
+        quoted_v = '"{}"'.format(value)
+        if json_v == quoted_v or json_v.replace("\\u00a3", "£").replace("\\u20ac", "€") == quoted_v:
             return value
         return json_v
     elif isinstance(value, datetime.datetime):

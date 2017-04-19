@@ -968,8 +968,11 @@ class AivenCLI(argx.CommandLineTool):
         project_name = self.get_project()
         endpoints = self.args.endpoints
         if not endpoints:
-            endpoints = [e["endpoint_name"] for e in self.client.get_project_alert_endpoints(project=project_name)]
-            if len(endpoints) == 0:
+            endpoints = [
+                e["endpoint_name"]
+                for e in self.client.get_project_alert_endpoints(project=project_name)
+            ]
+            if not endpoints:
                 raise argx.UserError("No project alert endpoints defined")
             elif len(endpoints) > 1:
                 raise argx.UserError("More than one alert endpoints exist, "
@@ -1020,10 +1023,10 @@ class AivenCLI(argx.CommandLineTool):
     @classmethod
     def _project_credit_card(cls, project):
         card_info = project.get("card_info")
-        if card_info:
-            return "{}/{}".format(project["card_info"]["user_email"], project["card_info"]["card_id"])
-        else:
+        if not card_info:
             return "N/A"
+
+        return "{}/{}".format(project["card_info"]["user_email"], project["card_info"]["card_id"])
 
     @arg("name", help="Project name")
     @arg.card_id

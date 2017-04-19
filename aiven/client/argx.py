@@ -185,7 +185,7 @@ class CommandLineTool(object):
             return 1
 
         self.pre_run(func)
-        return func()
+        return func()  # pylint: disable=not-callable
 
     def main(self):
         # TODO: configurable log level
