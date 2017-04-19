@@ -142,10 +142,10 @@ class AivenClientBase(object):
         if result.get("error"):
             raise Error("server returned error: {op} {base_url}{path} {result}".format(
                 op=op.__doc__, base_url=self.base_url, path=path, result=result))
+
         if result_key is not None:
             return result[result_key]
-        else:
-            return result
+        return result
 
 
 class AivenClient(AivenClientBase):
