@@ -252,8 +252,9 @@ class AivenClient(AivenClientBase):
         return self.verify(self.get, "/project/{}/service/{}/topic/{}".format(project, service, topic),
                            result_key="topic")
 
-    def create_service_topic(self, project, service, topic, partitions, replication, retention_hours):
+    def create_service_topic(self, project, service, topic, partitions, replication, retention_hours, cleanup_policy):
         return self.verify(self.post, "/project/{}/service/{}/topic".format(project, service), body={
+            "cleanup_policy": cleanup_policy,
             "topic_name": topic,
             "partitions": partitions,
             "replication": replication,
