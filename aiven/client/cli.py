@@ -657,15 +657,18 @@ class AivenCLI(argx.CommandLineTool):
     @arg.partitions
     @arg.replication
     @arg.retention
+    @arg("--cleanup-policy", help="Topic cleanup policy", choices=["delete", "compact"], default="delete")
     def service_topic_create(self):
         """Create a Kafka topic"""
-        self.client.create_service_topic(
+        response = self.client.create_service_topic(
             project=self.get_project(),
             service=self.args.name,
             topic=self.args.topic,
             partitions=self.args.partitions,
             replication=self.args.replication,
-            retention_hours=self.args.retention)
+            retention_hours=self.args.retention,
+            cleanup_policy=self.args.cleanup_policy)
+        print(response)
 
     @arg.project
     @arg.service_name
