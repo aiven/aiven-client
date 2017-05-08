@@ -578,6 +578,49 @@ class AivenCLI(argx.CommandLineTool):
                                                 username=self.args.username)
 
     @arg.project
+    @arg("-s", "--source-service", help="Source service name", required=True)
+    @arg("-d", "--dest-service", help="Destination service name", required=True)
+    @arg("-t", "--integration-type", help="Integration type", required=True)
+    @arg.json
+    def service_integration_create(self):
+        """Create a service integration"""
+        self.client.create_service_integration(
+            project=self.get_project(),
+            source_service=self.args.source_service,
+            dest_service=self.args.dest_service,
+            integration_type=self.args.integration_type,
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg("integration-id", help="Service integration ID")
+    @arg.json
+    def service_integration_delete(self):
+        """Delete a service integration"""
+        self.client.delete_service_integration(
+            project=self.get_project(),
+            service=self.args.name,
+            integration_id=self.args.integration_id,
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output, e.g. '{username} {password}'")
+    @arg.verbose
+    @arg.json
+    def service_integration_list(self):
+        """List service integrations"""
+        service_integrations = self.client.get_service_integrations(project=self.get_project(), service=self.args.name)
+        for integration in service_integrations:
+            integration["service_integration_id"] = integration["service_integration_id"] or "(integration not enabled)"
+
+        layout = [["service_integration_id", "source_service", "dest_service",
+                   "integration_type", "enabled", "active", "description"]]
+        if self.args.verbose:
+            layout.extend(["source_project", "dest_project"])
+        self.print_response(service_integrations, format=self.args.format, json=self.args.json, table_layout=layout)
+
+    @arg.project
     @arg.service_name
     @arg.json
     def service_database_list(self):
