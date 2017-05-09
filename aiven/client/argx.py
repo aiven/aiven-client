@@ -7,6 +7,7 @@ from __future__ import print_function
 from aiven.client import envdefault, pretty
 import aiven.client.client
 import argparse
+import csv as csvlib
 import errno
 import json as jsonlib
 import logging
@@ -146,9 +147,11 @@ class CommandLineTool(object):
                     fields.append(field)
                 else:
                     fields.extend(field)
-            print(",".join(fields))
+
+            writer = csvlib.DictWriter(sys.stdout, extrasaction="ignore", fieldnames=fields)
+            writer.writeheader()
             for item in result:
-                print(",".join(str(item.get(field, "")).strip() for field in fields))
+                writer.writerow(item)
         else:
             if single_item:
                 result = [result]
