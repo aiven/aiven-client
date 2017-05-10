@@ -149,7 +149,8 @@ class CommandLineTool(object):
                     fields.extend(field)
 
             writer = csvlib.DictWriter(sys.stdout, extrasaction="ignore", fieldnames=fields)
-            writer.writeheader()
+            if header:
+                writer.writeheader()
             for item in result:
                 writer.writerow(item)
         else:
