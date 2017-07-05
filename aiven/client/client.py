@@ -248,6 +248,9 @@ class AivenClient(AivenClientBase):
     def delete_service_user(self, project, service, username):
         return self.verify(self.delete, "/project/{}/service/{}/user/{}".format(project, service, username))
 
+    def reset_service_user_password(self, project, service, username):
+        return self.verify(self.put, "/project/{}/service/{}/user/{}/credentials/reset".format(project, service, username))
+
     def get_service_topic(self, project, service, topic):
         return self.verify(self.get, "/project/{}/service/{}/topic/{}".format(project, service, topic),
                            result_key="topic")
@@ -388,10 +391,13 @@ class AivenClient(AivenClientBase):
         return self.verify(self.delete, "/project/{}/alert_endpoint/{}".format(
             project, alert_endpoint_name))
 
-    def invite_project_user(self, project, user_email):
-        return self.verify(self.post, "/project/{}/invite".format(project), body={
+    def invite_project_user(self, project, user_email, member_type=None):
+        body = {
             "user_email": user_email,
-        })
+        }
+        if member_type is not None:
+            body["member_type"] = member_type
+        return self.verify(self.post, "/project/{}/invite".format(project), body=body)
 
     def remove_project_user(self, project, user_email):
         return self.verify(self.delete, "/project/{}/user/{}".format(project, user_email))

@@ -538,6 +538,15 @@ class AivenCLI(argx.CommandLineTool):
 
     @arg.project
     @arg.service_name
+    @arg("--username", help="Service user username", required=True)
+    @arg.json
+    def service_user_password_reset(self):
+        """Reset service user password"""
+        self.client.reset_service_user_password(project=self.get_project(), service=self.args.name,
+                                                username=self.args.username)
+
+    @arg.project
+    @arg.service_name
     @arg.json
     def service_database_list(self):
         """List service databases"""
@@ -1148,11 +1157,16 @@ class AivenCLI(argx.CommandLineTool):
 
     @arg.project
     @arg.email
+    @arg("--role", help="Project role for new invited user ('admin', 'operator', 'developer')")
     def project_user_invite(self):
         """Invite a new user to the project"""
         project_name = self.get_project()
         try:
-            self.client.invite_project_user(project=project_name, user_email=self.args.email)
+            self.client.invite_project_user(
+                project=project_name,
+                user_email=self.args.email,
+                member_type=self.args.role,
+            )
         except client.Error as ex:
             print(ex.response.text)
             raise argx.UserError("Project '{}' invite for {} failed".format(project_name, self.args.email))
