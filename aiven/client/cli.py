@@ -7,7 +7,6 @@ from . import argx, client
 from aiven.client import envdefault
 from aiven.client.cliarg import arg
 from decimal import Decimal
-from http import HTTPStatus
 import errno
 import getpass
 import json as jsonlib
@@ -116,7 +115,7 @@ class AivenCLI(argx.CommandLineTool):
         try:
             result = self.client.authenticate_user(email=email, password=password)
         except client.Error as ex:
-            if ex.status == HTTPStatus.NOT_EXTENDED:
+            if ex.status == 510:  # NOT_EXTENDED
                 # Two-factor auth OTP required
                 otp = raw_input_func("Two-factor authentication OTP: ")
                 result = self.client.authenticate_user(email=email, password=password, otp=otp)
