@@ -202,11 +202,15 @@ class AivenClient(AivenClientBase):
                 "period": period
             })
 
-    def authenticate_user(self, email, password):
-        return self.verify(self.post, "/userauth", body={
+    def authenticate_user(self, email, password, otp=None):
+        body = {
             "email": email,
             "password": password,
-        })
+        }
+        if otp is not None:
+            body["otp"] = otp
+
+        return self.verify(self.post, "/userauth", body=body)
 
     def create_service_connection_pool(self, project, service, pool_name, dbname, username, pool_size=None, pool_mode=None):
         body = {"database": dbname, "username": username, "pool_name": pool_name}

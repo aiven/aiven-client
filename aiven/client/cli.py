@@ -7,13 +7,13 @@ from . import argx, client
 from aiven.client import envdefault
 from aiven.client.cliarg import arg
 from decimal import Decimal
+from http import HTTPStatus
 import errno
 import getpass
 import json as jsonlib
 import os
 import requests
 import time
-
 
 PLUGINS = []
 
@@ -113,7 +113,16 @@ class AivenCLI(argx.CommandLineTool):
             email = raw_input_func("Username (email): ")
 
         password = self.enter_password("{}'s Aiven password: ".format(email))
-        result = self.client.authenticate_user(email=email, password=password)
+        try:
+            result = self.client.authenticate_user(email=email, password=password)
+        except client.Error as ex:
+            if ex.status == HTTPStatus.NOT_EXTENDED:
+                # Two-factor auth OTP required
+                otp = raw_input_func("Two-factor authentication OTP: ")
+                result = self.client.authenticate_user(email=email, password=password, otp=otp)
+            else:
+                raise
+
         self._write_auth_token_file(token=result["token"], email=email)
 
         # ensure that there is a working default project
@@ -1213,7 +1222,7 @@ class AivenCLI(argx.CommandLineTool):
     def user_info(self):
         """Show current user info"""
         result = self.client.get_user_info()
-        layout = [["user", "real_name", "state", "token_validity_begin", "projects"]]
+        layout = [["user", "real_name", "state", "token_validity_begin", "projects", "auth"]]
         self.print_response([result], json=self.args.json, table_layout=layout)
 
     def _write_auth_token_file(self, token, email):
