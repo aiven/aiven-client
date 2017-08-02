@@ -277,6 +277,16 @@ class AivenClient(AivenClientBase):
     def delete_service_topic(self, project, service, topic):
         return self.verify(self.delete, "/project/{}/service/{}/topic/{}".format(project, service, topic))
 
+    def add_service_kafka_acl(self, project, service, permission, topic, username):
+        return self.verify(self.post, "/project/{}/service/{}/acl".format(project, service), body={
+            "permission": permission,
+            "topic": topic,
+            "username": username,
+        })
+
+    def delete_service_kafka_acl(self, project, service, acl_id):
+        return self.verify(self.delete, "/project/{}/service/{}/acl/{}".format(project, service, acl_id))
+
     def create_service(self, project, service, service_type, group_name, plan,
                        cloud=None, user_config=None):
         user_config = user_config or {}

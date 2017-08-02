@@ -712,6 +712,42 @@ class AivenCLI(argx.CommandLineTool):
         print(response["message"])
 
     @arg.project
+    @arg.service_name
+    @arg("--permission", help="Permission, one of read, write or readwrite", required=True)
+    @arg("--topic", help="Topic name, accepts * and ? as wildcard characters", required=True)
+    @arg("--username", help="Username, accepts * and ? as wildcard characters", required=True)
+    def service_acl_add(self):
+        """Add a Kafka ACL entry"""
+        response = self.client.add_service_kafka_acl(project=self.get_project(),
+                                                     service=self.args.name,
+                                                     permission=self.args.permission,
+                                                     topic=self.args.topic,
+                                                     username=self.args.username)
+        print(response["message"])
+
+    @arg.project
+    @arg.service_name
+    @arg("acl_id", help="ID of the ACL entry to delete")
+    def service_acl_delete(self):
+        """Delete a Kafka ACL entry"""
+        response = self.client.delete_service_kafka_acl(project=self.get_project(),
+                                                        service=self.args.name,
+                                                        acl_id=self.args.acl_id)
+        print(response["message"])
+
+    @arg.project
+    @arg.service_name
+    @arg.json
+    def service_acl_list(self):
+        """List Kafka ACL entries"""
+        service = self.client.get_service(project=self.get_project(), service=self.args.name)
+
+        layout = ["id", "username", "topic", "permission"]
+
+        self.print_response(service.get("acl", []), json=self.args.json,
+                            table_layout=layout)
+
+    @arg.project
     @arg("service", nargs="+", help="Service to wait for")
     @arg.timeout
     def service_wait(self):
