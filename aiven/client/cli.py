@@ -184,11 +184,12 @@ class AivenCLI(argx.CommandLineTool):
             result = self.client.delete_data(project=self.get_project(), filename=filename)
             print(result)
 
-    def _show_logs(self, offset):
+    def _show_logs(self, offset, service=None):
         msgs = self.client.get_logs(
             project=self.get_project(),
             limit=self.args.limit,
-            offset=offset)
+            offset=offset,
+            service=service)
 
         if self.args.json:
             print(jsonlib.dumps(msgs["logs"], indent=4, sort_keys=True))
@@ -201,11 +202,12 @@ class AivenCLI(argx.CommandLineTool):
     @arg.json
     @arg("-n", "--limit", type=int, default=100, help="Get up to N rows of logs")
     @arg("-f", "--follow", action="store_true", default=False)
+    @arg("-s", "--service", help="Service name")
     def logs(self):
         """View project logs"""
         previous_offset = -self.args.limit
         while True:
-            new_offset = self._show_logs(previous_offset)
+            new_offset = self._show_logs(offset=previous_offset, service=self.args.service)
             if not self.args.follow:
                 break
             if previous_offset == new_offset:
