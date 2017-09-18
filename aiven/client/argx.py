@@ -105,6 +105,9 @@ class CommandLineTool(object):
         for arg_prop in getattr(func, ARG_LIST_PROP, []):
             parser.add_argument(*arg_prop[0], **arg_prop[1])
 
+    def add_args(self, parser):
+        pass  # override in sub-class
+
     def extend_commands(self, sub_client):
         """Add top-level args and all commands from a CommandLineTool instance"""
         sub_client.add_args(self.parser)  # top-level args
