@@ -259,18 +259,25 @@ class AivenClient(AivenClientBase):
         return self.verify(self.get, "/project/{}/service/{}/topic/{}".format(project, service, topic),
                            result_key="topic")
 
-    def create_service_topic(self, project, service, topic, partitions, replication, retention_hours, cleanup_policy):
+    def create_service_topic(self, project, service, topic, partitions, replication,
+                             min_insync_replicas, retention_bytes, retention_hours,
+                             cleanup_policy):
         return self.verify(self.post, "/project/{}/service/{}/topic".format(project, service), body={
             "cleanup_policy": cleanup_policy,
+            "min_insync_replicas": min_insync_replicas,
             "topic_name": topic,
             "partitions": partitions,
             "replication": replication,
+            "retention_bytes": retention_bytes,
             "retention_hours": retention_hours,
         })
 
-    def update_service_topic(self, project, service, topic, partitions, retention_hours):
+    def update_service_topic(self, project, service, topic, partitions, retention_bytes,
+                             retention_hours, min_insync_replicas):
         return self.verify(self.put, "/project/{}/service/{}/topic/{}".format(project, service, topic), body={
             "partitions": partitions,
+            "min_insync_replicas": min_insync_replicas,
+            "retention_bytes": retention_bytes,
             "retention_hours": retention_hours,
         })
 

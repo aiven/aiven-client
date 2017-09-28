@@ -635,7 +635,8 @@ class AivenCLI(argx.CommandLineTool):
         for topic in topics:
             if topic["retention_hours"] == -1:
                 topic["retention_hours"] = "unlimited"
-        layout = [["topic_name", "partitions", "replication", "retention_hours", "state"]]
+        layout = [["topic_name", "partitions", "replication", "min_insync_replicas", "retention_bytes",
+                   "retention_hours", "state"]]
         self.print_response(topics, format=self.args.format, json=self.args.json, table_layout=layout)
 
     @arg.project
@@ -675,7 +676,9 @@ class AivenCLI(argx.CommandLineTool):
     @arg.topic
     @arg.partitions
     @arg.replication
+    @arg.min_insync_replicas
     @arg.retention
+    @arg.retention_bytes
     @arg("--cleanup-policy", help="Topic cleanup policy", choices=["delete", "compact"], default="delete")
     def service_topic_create(self):
         """Create a Kafka topic"""
@@ -685,6 +688,8 @@ class AivenCLI(argx.CommandLineTool):
             topic=self.args.topic,
             partitions=self.args.partitions,
             replication=self.args.replication,
+            min_insync_replicas=self.args.min_insync_replicas,
+            retention_bytes=self.args.retention_bytes,
             retention_hours=self.args.retention,
             cleanup_policy=self.args.cleanup_policy)
         print(response)
@@ -693,14 +698,20 @@ class AivenCLI(argx.CommandLineTool):
     @arg.service_name
     @arg.topic
     @arg.partitions
+    @arg.min_insync_replicas
     @arg.retention
+    @arg.retention_bytes
     def service_topic_update(self):
         """Update a Kafka topic"""
-        response = self.client.update_service_topic(project=self.get_project(),
-                                                    service=self.args.name,
-                                                    topic=self.args.topic,
-                                                    partitions=self.args.partitions,
-                                                    retention_hours=self.args.retention)
+        response = self.client.update_service_topic(
+            project=self.get_project(),
+            service=self.args.name,
+            topic=self.args.topic,
+            min_insync_replicas=self.args.min_insync_replicas,
+            partitions=self.args.partitions,
+            retention_bytes=self.args.retention_bytes,
+            retention_hours=self.args.retention,
+        )
         print(response["message"])
 
     @arg.project
