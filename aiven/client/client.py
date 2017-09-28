@@ -389,29 +389,6 @@ class AivenClient(AivenClientBase):
     def get_project_ca(self, project):
         return self.verify(self.get, "/project/{}/kms/ca".format(project))
 
-    def list_project_certificates(self, project):
-        return self.verify(self.get, "/project/{}/kms/certificates".format(project))["certificates"]
-
-    def create_project_certificate(self, project, certname):
-        return self.verify(self.post, "/project/{}/kms/certificates/{}".format(project, certname))
-
-    def delete_project_certificate(self, project, certname):
-        return self.verify(self.delete, "/project/{}/kms/certificates/{}".format(project, certname))
-
-    def get_project_alert_endpoints(self, project):
-        return self.verify(self.get, "/project/{}/alert_endpoint".format(project),
-                           result_key="alert_endpoints")
-
-    def create_project_alert_endpoint(self, project, alert_endpoint_name, metadata):
-        return self.verify(
-            self.post, "/project/{}/alert_endpoint/{}".format(project, alert_endpoint_name),
-            body=metadata,
-            result_key="alert_endpoint")
-
-    def delete_project_alert_endpoint(self, project, alert_endpoint_name):
-        return self.verify(self.delete, "/project/{}/alert_endpoint/{}".format(
-            project, alert_endpoint_name))
-
     def invite_project_user(self, project, user_email, member_type=None):
         body = {
             "user_email": user_email,
