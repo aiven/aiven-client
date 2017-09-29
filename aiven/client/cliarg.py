@@ -27,6 +27,6 @@ arg.service_name = arg("name", help="Service name")
 arg.service_type = arg("-t", "--service-type", help="Type of service (see 'service list-types')")
 arg.timeout = arg("--timeout", type=int, help="Wait for up to N seconds (default: infinite)")
 arg.topic = arg("topic", help="Topic name")
-arg.user_config = arg("-c", dest="user_config", action="append", default=[],
-                      help="User configuration: KEY=JSON_VALUE")
+arg.user_config = arg("-c", dest="user_config", metavar="KEY=VALUE", action="append", default=[],
+                      help="Apply a configuration setting. See 'avn service types -v' for available values.")
 arg.verbose = arg("-v", "--verbose", help="Verbose output", action="store_true", default=False)

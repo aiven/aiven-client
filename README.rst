@@ -86,27 +86,35 @@ You will need to login again after this.::
 
  $ avn user tokens-expire
 
+Clouds
+------
+List available cloud regions::
+
+  $ avn cloud list
+
 Projects
 --------
-List projects::
+List projects you are a member of::
 
   $ avn project list
 
-Switch a project as the default one::
+Project commands operate on the currently active project or the project
+specified with the `--project NAME` switch. The active project cab be changed
+with the `switch` command::
 
   $ avn project switch <projectname>
 
-Create a project::
+Show active project's details::
 
-  $ avn project create myproject
+  $ avn project details
+
+Create a project and set the default cloud region for it::
+
+  $ avn project create myproject --cloud aws-us-east-1
 
 Delete an empty project::
 
   $ avn project delete myproject
-
-Show project details::
-
-  $ avn project details
 
 List authorized users in a project::
 
@@ -120,43 +128,39 @@ Remove a user from the project::
 
   $ avn project user-remove somebody@aiven.io
 
-View project event log::
+View project management event log::
 
   $ avn events
 
-View project log entries::
+View project service log entries::
 
   $ avn logs -n 100
 
 Services
 --------
-List services (of the default project)::
+List services (of the active project)::
 
   $ avn service list
 
-List services in a non-default project::
+List services in a specific project::
 
   $ avn service list --project proj2
 
-Switch default project::
-
-  $ avn project switch proj2
-
 List only a specific service::
 
-  $ avn project list db1
+  $ avn service list db1
 
 Verbose list (includes connection information, etc.)::
 
-  $ avn project list db1 -v
+  $ avn service list db1 -v
 
 Full service information in json, as it is returned by the Aiven REST API::
 
-  $ avn project list db1 --json
+  $ avn service list db1 --json
 
 Only a specific field in the output, custom formatting::
 
-  $ avn project list db1 --format "The service is at {service_uri}"
+  $ avn service list db1 --format "The service is at {service_uri}"
 
 Launching services
 ------------------
@@ -168,7 +172,7 @@ Launch a PostgreSQL service::
 
   $ avn service create mydb -t pg --plan hobbyist
 
-View service-specific options::
+View service type specific options, including examples on how to set them::
 
   $ avn service types -v
 
@@ -176,7 +180,12 @@ Launch a PostgreSQL service of a specific version (see above command)::
 
   $ avn service create mydb96 -t pg --plan hobbyist -c pg_version=9.6
 
-Update a service to a bigger plan AND move it to another cloud::
+Update a service's list of allowed client IP addresses. Note that a list of multiple
+values is provided as a comma separated list::
+
+  $ avn service update mydb96 -c ip_filter=10.0.1.0/24,10.0.2.0/24,1.2.3.4/32
+
+Update a service to a different plan AND move it to another cloud region::
 
   $ avn service update mydb --plan startup-4 --cloud aws-us-east-1
 
@@ -192,11 +201,8 @@ Terminate a service (all data will be gone!)::
 
   $ avn service terminate mydb
 
-Clouds
-------
-List available cloud regions::
-
-  $ avn cloud list
+Updating service configuration
+------------------------------
 
 More help
 ---------

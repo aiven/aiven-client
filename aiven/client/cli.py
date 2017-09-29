@@ -52,7 +52,7 @@ def convert_str_to_value(schema, str_value):
     elif "array" in schema["type"]:
         return [convert_str_to_value(schema["items"], val) for val in str_value.split(",")]
     else:
-        raise argx.UserError("Supported for option value type(s) {!r} is unimplemented".format(schema["type"]))
+        raise argx.UserError("Support for option value type(s) {!r} not implemented".format(schema["type"]))
 
 
 def no_auth(fun):
@@ -580,7 +580,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg.verbose
     @arg.json
     def service_current_queries(self):
-        """List current PostgreSQL queries"""
+        """List current PostgreSQL connections/queries"""
         queries = self.client.get_pg_service_current_queries(project=self.get_project(), service=self.args.name)
         layout = [["pid", "query", "query_duration", "client_addr", "application_name"]]
         if self.args.verbose:
@@ -922,9 +922,9 @@ class AivenCLI(argx.CommandLineTool):
     @arg("-p", "--plan", help="subscription plan of service", required=False)
     @arg("--power-on", action="store_true", default=False, help="Power-on the service")
     @arg("--power-off", action="store_true", default=False, help="Temporarily power-off the service")
-    @arg("--maintenance-dow", help="automatic maintenance day of week",
+    @arg("--maintenance-dow", help="Set automatic maintenance window's day of week",
          choices=["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "never"])
-    @arg("--maintenance-time", help="automatic maintenance time of day (HH:MM:SS)")
+    @arg("--maintenance-time", help="Set automatic maintenance window's start time (HH:MM:SS)")
     def service_update(self):
         """Update service settings"""
         powered = self._get_powered()
