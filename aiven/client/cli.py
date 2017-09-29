@@ -549,6 +549,28 @@ class AivenCLI(argx.CommandLineTool):
     @arg.project
     @arg.service_name
     @arg("--username", help="Service user username", required=True)
+    @arg("-d", "--target-directory", help="Directory to write credentials to", required=False, default=os.getcwd())
+    def service_user_creds_download(self):
+        """Download service user certificate/key/CA certificate"""
+        project_name = self.get_project()
+        try:
+            result = self.client.get_project_ca(project=project_name)
+            with open(os.path.join(self.args.target_directory, "ca.pem"), "w") as fp:
+                fp.write(result["certificate"])
+        except client.Error as ex:
+            raise argx.UserError("Project '{}' CA get failed: {}".format(project_name, ex.response.text))
+
+        service = self.client.get_service(project=self.get_project(), service=self.args.name)
+        for user in service["users"]:
+            if user["username"] == self.args.username:
+                with open(os.path.join(self.args.target_directory, "service.cert"), "w") as fp:
+                    fp.write(user["access_cert"])
+                with open(os.path.join(self.args.target_directory, "service.key"), "w") as fp:
+                    fp.write(user["access_key"])
+
+    @arg.project
+    @arg.service_name
+    @arg("--username", help="Service user username", required=True)
     @arg.json
     def service_user_password_reset(self):
         """Reset service user password"""
