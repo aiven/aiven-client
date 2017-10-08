@@ -1,4 +1,4 @@
-short_ver = 1.2.1
+short_ver = 1.2.2
 long_ver = $(shell git describe --long 2>/dev/null || echo $(short_ver)-0-unknown-g`git describe --always`)
 generated = aiven/client/version.py
 PYTHON ?= python
@@ -25,6 +25,9 @@ coverage: $(generated)
 
 clean:
 	$(RM) -r rpms
+
+build-dep-fedora:
+	sudo dnf install -y python2-pylint pylint python-devel python-flake8 python3-requests python2-requests
 
 rpm: $(generated)
 	git archive --prefix=aiven-client/ HEAD -o rpm-src-aiven-client.tar
