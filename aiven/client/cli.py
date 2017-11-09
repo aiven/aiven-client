@@ -261,7 +261,7 @@ class AivenCLI(argx.CommandLineTool):
         return opts
 
     @staticmethod
-    def describe_plan(plan):
+    def describe_plan(plan, node_count, service_plan):
         """Describe a plan based on their specs as published in the api, returning strings like:
         "Basic-0 (4 CPU, 123 MB RAM) "
         "Basic-1 (4 CPU, 1 GB RAM, 9 GB disk) "
@@ -278,15 +278,15 @@ class AivenCLI(argx.CommandLineTool):
         else:
             disk_desc = ""
 
-        if plan["node_count"] == 2:
+        if node_count == 2:
             plan_qual = " high availability pair"
-        elif plan["node_count"] > 2:
-            plan_qual = " {}-node high availability set".format(plan["node_count"])
+        elif node_count > 2:
+            plan_qual = " {}-node high availability set".format(node_count)
         else:
             plan_qual = ""
 
         return "{name} ({cpu_count} CPU, {ram_amount} RAM{disk_desc}){qual}".format(
-            name=plan["service_plan"].title(),
+            name=service_plan.title(),
             cpu_count=plan["node_cpu_count"],
             ram_amount=ram_amount,
             disk_desc=disk_desc,
@@ -295,12 +295,15 @@ class AivenCLI(argx.CommandLineTool):
 
     @optional_auth
     @arg.project
+    @arg.cloud
     @arg.json
     def service_plans(self):
         """List service plans"""
         project = self.get_project()
         if project and not self.client.auth_token:
             raise argx.UserError("authentication is required to list service plans for a specific project")
+        if not self.args.cloud:
+            print("Used cloud not defined, only showing service types!\n")
 
         service_types = self.client.get_service_types(project=project)
         if self.args.json:
@@ -317,10 +320,13 @@ class AivenCLI(argx.CommandLineTool):
         for info in sorted(output, key=lambda s: s["description"]):
             print("{} Plans:\n".format(info["description"]))
             for plan in info["service_plans"]:
+                if self.args.cloud not in plan["regions"]:
+                    continue
                 args = "{}:{}".format(plan["service_type"], plan["service_plan"])
-                price_dec = Decimal(plan["price_usd"])
+                price_dec = Decimal(plan["regions"][self.args.cloud]["price_usd"])
                 price = "${}/h".format(price_dec.quantize(dformat))
-                print("    {:<28} {:>10}  {}".format(args, price, self.describe_plan(plan)))
+                description = self.describe_plan(plan["regions"][self.args.cloud], plan["node_count"], plan["service_plan"])
+                print("    {:<28} {:>10}  {}".format(args, price, description))
 
             if not info["service_plans"]:
                 print("    (no plans available)")
