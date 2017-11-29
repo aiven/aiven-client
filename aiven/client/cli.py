@@ -606,7 +606,7 @@ class AivenCLI(argx.CommandLineTool):
         self.client.delete_service_integration(
             project=self.get_project(),
             service=self.args.name,
-            integration_id=self.args.integration_id,
+            integration_id=getattr(self.args, "integration-id"),
         )
 
     @arg.project
@@ -1296,7 +1296,7 @@ class AivenCLI(argx.CommandLineTool):
     def card_update(self):
         """Update credit card information"""
         card = self.client.update_card(
-            card_id=self.args.card_id,
+            card_id=getattr(self.args, "card-id"),
             exp_month=self.args.exp_month,
             exp_year=self.args.exp_year,
             name=self.args.name,
@@ -1308,7 +1308,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg("card-id", help="Card ID")
     def card_remove(self):
         """Remove a credit card"""
-        result = self.client.remove_card(card_id=self.args.card_id)
+        result = self.client.remove_card(card_id=getattr(self.args, "card-id"))
         if self.args.json:
             self.print_response(result, json=True)
 
