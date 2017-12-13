@@ -10,6 +10,7 @@ from __future__ import print_function, unicode_literals
 import datetime
 import fnmatch
 import json
+import sys
 
 # string type checking must work on python 2.x and 3.x
 try:
@@ -98,8 +99,13 @@ def yield_table(result, drop_fields=None, table_layout=None, header=True):
                     yield "    {:{}} = {}".format(key.split(".", 1)[-1], vertical_width, value)
 
 
-def print_table(result, drop_fields=None, table_layout=None, header=True):
+def print_table(
+        result,
+        drop_fields=None,
+        table_layout=None,
+        header=True,
+        file=sys.stdout):  # pylint: disable=redefined-builtin
     """print a list of dicts in a nicer table format"""
     for row in yield_table(result, drop_fields=drop_fields, table_layout=table_layout,
                            header=header):
-        print(row)
+        print(row, file=file)
