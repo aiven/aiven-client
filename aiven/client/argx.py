@@ -144,8 +144,11 @@ class CommandLineTool(object):
             single_item=False,
             header=True,
             csv=False,
-            file=sys.stdout):  # pylint: disable=redefined-builtin
+            file=None):  # pylint: disable=redefined-builtin
         """print request response in chosen format"""
+        if file is None:
+            file = sys.stdout
+
         if format is not None:
             for item in result:
                 print(format.format(**item), file=file)
