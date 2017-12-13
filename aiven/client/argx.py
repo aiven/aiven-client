@@ -134,15 +134,23 @@ class CommandLineTool(object):
     def expected_errors(self):
         return []
 
-    def print_response(self, result, json=True, format=None,   # pylint: disable=redefined-builtin
-                       drop_fields=None, table_layout=None, single_item=False, header=True,
-                       csv=False):
+    def print_response(
+            self,
+            result,
+            json=True,
+            format=None,  # pylint: disable=redefined-builtin
+            drop_fields=None,
+            table_layout=None,
+            single_item=False,
+            header=True,
+            csv=False,
+            file=sys.stdout):  # pylint: disable=redefined-builtin
         """print request response in chosen format"""
         if format is not None:
             for item in result:
-                print(format.format(**item))
+                print(format.format(**item), file=file)
         elif json:
-            print(jsonlib.dumps(result, indent=4, sort_keys=True))
+            print(jsonlib.dumps(result, indent=4, sort_keys=True), file=file)
         elif csv:
             fields = []
             for field in table_layout:
@@ -151,7 +159,7 @@ class CommandLineTool(object):
                 else:
                     fields.extend(field)
 
-            writer = csvlib.DictWriter(sys.stdout, extrasaction="ignore", fieldnames=fields)
+            writer = csvlib.DictWriter(file, extrasaction="ignore", fieldnames=fields)
             if header:
                 writer.writeheader()
             for item in result:
@@ -161,7 +169,7 @@ class CommandLineTool(object):
                 result = [result]
 
             pretty.print_table(result, drop_fields=drop_fields, table_layout=table_layout,
-                               header=header)
+                               header=header, file=file)
 
     def run(self, args=None):
         args = args or sys.argv[1:]
