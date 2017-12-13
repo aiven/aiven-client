@@ -104,8 +104,8 @@ def print_table(
         drop_fields=None,
         table_layout=None,
         header=True,
-        file=sys.stdout):  # pylint: disable=redefined-builtin
+        file=None):  # pylint: disable=redefined-builtin
     """print a list of dicts in a nicer table format"""
     for row in yield_table(result, drop_fields=drop_fields, table_layout=table_layout,
                            header=header):
-        print(row, file=file)
+        print(row, file=file or sys.stdout)
