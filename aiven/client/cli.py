@@ -772,6 +772,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg.min_insync_replicas
     @arg.retention
     @arg.retention_bytes
+    @arg("--replication", help="Replication factor", type=int, required=False)
     def service_topic_update(self):
         """Update a Kafka topic"""
         response = self.client.update_service_topic(
@@ -780,6 +781,7 @@ class AivenCLI(argx.CommandLineTool):
             topic=self.args.topic,
             min_insync_replicas=self.args.min_insync_replicas,
             partitions=self.args.partitions,
+            replication=self.args.replication,
             retention_bytes=self.args.retention_bytes,
             retention_hours=self.args.retention,
         )
