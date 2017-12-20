@@ -285,8 +285,8 @@ class AivenClient(AivenClientBase):
             "retention_hours": retention_hours,
         })
 
-    def update_service_topic(self, project, service, topic, partitions, replication, retention_bytes,
-                             retention_hours, min_insync_replicas):
+    def update_service_topic(self, project, service, topic, partitions, retention_bytes,
+                             retention_hours, min_insync_replicas, replication=None):
         return self.verify(self.put, "/project/{}/service/{}/topic/{}".format(project, service, topic), body={
             "partitions": partitions,
             "min_insync_replicas": min_insync_replicas,
