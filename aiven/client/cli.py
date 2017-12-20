@@ -225,7 +225,8 @@ class AivenCLI(argx.CommandLineTool):
             limit=self.args.limit)
 
         if self.args.json:
-            return print(jsonlib.dumps(events, indent=4, sort_keys=True))
+            print(jsonlib.dumps(events, indent=4, sort_keys=True))
+            return
 
         for msg in events:
             if not msg["service_name"]:
@@ -307,7 +308,8 @@ class AivenCLI(argx.CommandLineTool):
 
         service_types = self.client.get_service_types(project=project)
         if self.args.json:
-            return print(jsonlib.dumps(service_types, indent=4, sort_keys=True))
+            print(jsonlib.dumps(service_types, indent=4, sort_keys=True))
+            return
 
         output = []
         for service_type, prop in service_types.items():
@@ -772,6 +774,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg.min_insync_replicas
     @arg.retention
     @arg.retention_bytes
+    @arg("--replication", help="Replication factor", type=int, required=False)
     def service_topic_update(self):
         """Update a Kafka topic"""
         response = self.client.update_service_topic(
@@ -780,6 +783,7 @@ class AivenCLI(argx.CommandLineTool):
             topic=self.args.topic,
             min_insync_replicas=self.args.min_insync_replicas,
             partitions=self.args.partitions,
+            replication=self.args.replication,
             retention_bytes=self.args.retention_bytes,
             retention_hours=self.args.retention,
         )
@@ -834,7 +838,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg.project
     @arg("service", nargs="+", help="Service to wait for")
     @arg.timeout
-    def service_wait(self):
+    def service_wait(self):  # pylint: disable=inconsistent-return-statements
         """Wait service to reach the 'RUNNING' state"""
         start_time = time.time()
         report_interval = 30.0
@@ -852,7 +856,7 @@ class AivenCLI(argx.CommandLineTool):
 
             if all_running:
                 self.log.info("Service(s) RUNNING: %s", ", ".join(self.args.service))
-                return
+                return 0
 
             if self.args.timeout is not None and (time.time() - start_time) > self.args.timeout:
                 self.log.error("Timeout waiting for service(s) to start")
