@@ -27,7 +27,7 @@ clean:
 	$(RM) -r rpms
 
 build-dep-fedora:
-	sudo dnf install -y python2-pylint pylint python-devel python-flake8 python3-requests python2-requests
+	sudo dnf install -y pylint python-devel python-flake8 python3-requests python2-requests
 
 rpm: $(generated)
 	git archive --prefix=aiven-client/ HEAD -o rpm-src-aiven-client.tar
