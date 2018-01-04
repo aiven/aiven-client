@@ -307,6 +307,25 @@ class AivenClient(AivenClientBase):
     def delete_service_kafka_acl(self, project, service, acl_id):
         return self.verify(self.delete, "/project/{}/service/{}/acl/{}".format(project, service, acl_id))
 
+    def list_project_vpcs(self, project):
+        return self.verify(self.get, "/project/{}/vpcs".format(project))
+
+    def request_project_vpc(self, project, cloud, network_cidr, peering_connections):
+        return self.verify(self.post, "/project/{}/vpcs".format(project), body={
+            "cloud_name": cloud,
+            "network_cidr": network_cidr,
+            "peering_connections": peering_connections,
+        })
+
+    def get_project_vpc(self, project, project_vpc_id):
+        return self.verify(self.get, "/project/{}/vpcs/{}".format(project, project_vpc_id))
+
+    def request_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc):
+        return self.verify(self.post, "/project/{}/vpcs/{}/peering-connections".format(project, project_vpc_id), body={
+            "peer_cloud_account": peer_cloud_account,
+            "peer_vpc": peer_vpc,
+        })
+
     def create_service(self, project, service, service_type, group_name, plan,
                        cloud=None, user_config=None):
         user_config = user_config or {}
