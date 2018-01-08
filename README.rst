@@ -71,8 +71,8 @@ Build an RPM package (Linux)::
 
 Basic Usage
 ===========
-* NOTE: On Windows you may need to use ``python -m aiven.client`` instead of
-``avn``.
+
+* NOTE: On Windows you may need to use ``python -m aiven.client`` instead of ``avn``.
 * All commands will output the raw REST API JSON response with ``--json``
 
 Login and users
