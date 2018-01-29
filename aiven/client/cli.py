@@ -149,41 +149,6 @@ class AivenCLI(argx.CommandLineTool):
         message = self.client.expire_user_tokens()["message"]
         print(message)
 
-    @arg("--format", help="Format string for output, e.g. '{filename} {size}'")
-    @arg.json
-    @arg.project
-    def data_list(self):
-        """List project data files"""
-        files = self.client.list_data(project=self.get_project())["files"]
-        layout = ["filename", "size", "create_time"]
-
-        self.print_response(files, format=self.args.format, json=self.args.json,
-                            table_layout=layout)
-
-    @arg.project
-    @arg("filename", help="Name of the file to download", nargs="+")
-    def data_download(self):
-        """Download a data file from a project"""
-        for filename in self.args.filename:
-            result = self.client.download_data(project=self.get_project(), filename=filename)
-            print(result)
-
-    @arg.project
-    @arg("filename", help="Name of the file to upload", nargs="+")
-    def data_upload(self):
-        """Upload a data file to a project"""
-        for filename in self.args.filename:
-            result = self.client.upload_data(project=self.get_project(), filename=filename)
-            print(result)
-
-    @arg.project
-    @arg("filename", help="Name of the file to delete", nargs="+")
-    def data_delete(self):
-        """Delete a data file from a project"""
-        for filename in self.args.filename:
-            result = self.client.delete_data(project=self.get_project(), filename=filename)
-            print(result)
-
     def _show_logs(self, offset, service=None):
         msgs = self.client.get_logs(
             project=self.get_project(),

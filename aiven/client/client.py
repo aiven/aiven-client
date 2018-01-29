@@ -10,7 +10,6 @@ except ImportError:
 
 import json
 import logging
-import os
 import requests
 import time
 
@@ -444,22 +443,6 @@ class AivenClient(AivenClientBase):
         params = {"limit": limit}
         return self.verify(self.get, "/project/{}/events".format(project), params=params,
                            result_key="events")
-
-    def list_data(self, project):
-        return self.verify(self.get, "/project/{}/data".format(project))
-
-    def download_data(self, project, filename):
-        path = self.api_prefix + "/project/{}/data/{}".format(project, os.path.basename(filename))
-        return self.get(path).content
-
-    def upload_data(self, project, filename):
-        with open(filename, "rb") as fp:
-            path = "/project/{}/data/{}".format(project, os.path.basename(filename))
-            return self.verify(self.put, path, body=fp)
-
-    def delete_data(self, project, filename):
-        path = "/project/{}/data/{}".format(project, os.path.basename(filename))
-        return self.verify(self.delete, path)
 
     def get_cards(self):
         return self.verify(self.get, "/card", result_key="cards")
