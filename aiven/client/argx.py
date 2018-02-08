@@ -84,20 +84,24 @@ class CommandLineTool(object):
     def add_cmd(self, func):
         """Add a parser for a single command method call"""
         assert func.__doc__, func
-        cat_name, _, cmd = func.__name__.partition("_")
-        if not cmd:
-            # single part name
-            cmd = cat_name
-            cat_name = None
 
-        cmd = cmd.replace("_", "-")
-        subparsers = self._cats.get(cat_name)
-        if not cat_name:
-            subparsers = self.subparsers
-        elif not subparsers:
-            parser = self.subparsers.add_parser(cat_name, help=cat_name.capitalize() + " commands")
-            subparsers = parser.add_subparsers()
-            self._cats[cat_name] = subparsers
+        # allow multi-level commands, separating each level with double underscores
+        if "__" in func.__name__:
+            cmd_parts = func.__name__.split("__")
+        else:
+            # previously we only allowed two levels, separated by a single underscore
+            cmd_parts = func.__name__.split("_", 1)
+
+        cmd_parts = [part.replace("_", "-") for part in cmd_parts]
+        cats, cmd = cmd_parts, cmd_parts.pop()
+
+        subparsers = self.subparsers
+        for level in range(len(cats)):
+            cat = tuple(cats[:level + 1])
+            if cat not in self._cats:
+                parser = subparsers.add_parser(cat[-1], help=" ".join(cat).title() + " commands")
+                self._cats[cat] = parser.add_subparsers()
+            subparsers = self._cats[cat]
 
         parser = subparsers.add_parser(cmd, help=func.__doc__)
         parser.set_defaults(func=func)
