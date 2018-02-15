@@ -896,7 +896,7 @@ class AivenCLI(argx.CommandLineTool):
                 raise argx.UserError("Invalid value {!r}: {}".format(key_value, ex))
 
             conf = user_config
-            parts = key.split(".")
+            parts = key.split(".", 1)
             for part in parts[:-1]:
                 conf.setdefault(part, {})
                 conf = conf[part]
