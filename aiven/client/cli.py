@@ -906,6 +906,88 @@ class AivenCLI(argx.CommandLineTool):
         return user_config
 
     @arg.project
+    @arg.json
+    @arg.verbose
+    def vpc__list(self):
+        """List VPCs for a project"""
+        project_name = self.get_project()
+        try:
+            vpc_list = self.client.list_project_vpcs(project=project_name)["vpcs"]
+            layout = ["project_vpc_id", "cloud_name", "network_cidr", "state"]
+            if self.args.verbose:
+                layout += ["create_time", "update_time"]
+            self.print_response(vpc_list, json=self.args.json, table_layout=layout)
+        except client.Error as ex:
+            print(ex.response.text)
+            raise argx.UserError("Project VPC listing for '{}' failed".format(project_name))
+
+    @arg.project
+    @arg.json
+    @arg.cloud
+    @arg("--network-cidr", help="The network range in the Aiven project VPC in CIDR format (a.b.c.d/e)", required=True)
+    def vpc__request(self):
+        """Request a VPC for a project"""
+        project_name = self.get_project()
+        try:
+            vpc = self.client.request_project_vpc(
+                project=project_name,
+                cloud=self.args.cloud,
+                network_cidr=self.args.network_cidr,
+                peering_connections=[],
+            )
+            layout = ["project_vpc_id", "state", "cloud_name", "network_cidr"]
+            self.print_response(vpc, json=self.args.json, table_layout=layout, single_item=True)
+        except client.Error as ex:
+            print(ex.response.text)
+            raise
+
+    _project_vpc_id_help = "Aiven project VPC ID to request the peering connection for. See 'vpc list'"
+
+    @arg.project
+    @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
+    @arg.json
+    @arg.verbose
+    def vpc__peering_connection__list(self):
+        """List VPC peering connections for a project"""
+        project_name = self.get_project()
+        try:
+            vpc = self.client.get_project_vpc(
+                project=project_name,
+                project_vpc_id=self.args.project_vpc_id,
+            )
+            layout = ["peer_cloud_account", "peer_vpc", "state"]
+            if self.args.verbose:
+                layout += ["create_time", "update_time"]
+            self.print_response(vpc["peering_connections"], json=self.args.json, table_layout=layout)
+        except client.Error as ex:
+            print(ex.response.text)
+            msg = "Peering connection listing for VPC '{}' of project '{}' failed".format(
+                self.args.project_vpc_id,
+                project_name,
+            )
+            raise argx.UserError(msg)
+
+    @arg.project
+    @arg.json
+    @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
+    @arg("--peer-cloud-account", required=True, help="AWS account ID or Google project ID")
+    @arg("--peer-vpc", required=True, help="AWS VPC ID or Google VPC network name")
+    def vpc__peering_connection__request(self):
+        """Request a peering connection for a project VPC"""
+        project_name = self.get_project()
+        try:
+            vpc_peering_connection = self.client.request_project_vpc_peering_connection(
+                project=project_name,
+                project_vpc_id=self.args.project_vpc_id,
+                peer_cloud_account=self.args.peer_cloud_account,
+                peer_vpc=self.args.peer_vpc
+            )
+            self.print_response(vpc_peering_connection, json=self.args.json, single_item=True)
+        except client.Error as ex:
+            print(ex.response.text)
+            raise
+
+    @arg.project
     @arg.service_name
     @arg("--group-name", help="service group", default="default")
     @arg("-t", "--service-type", help="type of service (see 'service types')", required=True)
