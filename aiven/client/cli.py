@@ -551,9 +551,55 @@ class AivenCLI(argx.CommandLineTool):
                                                 username=self.args.username)
 
     @arg.project
-    @arg("-s", "--source-service", help="Source service name", required=True)
-    @arg("-d", "--dest-service", help="Destination service name", required=True)
+    @arg("-d", "--endpoint-name", help="Integration endpoint name", required=True)
+    @arg("-t", "--endpoint-type", help="Integration endpoint type", required=True)
+    @arg.user_config
+    @arg.json
+    def service_integration_endpoint_create(self):
+        """Create a service integration endpoint"""
+        if self.args.user_config:
+            project = self.get_project()
+            user_config_schema = self._get_endpoint_user_config_schema(
+                project=project, endpoint_type_name=self.args.endpoint_type)
+            user_config = self.create_user_config(user_config_schema, self.args.user_config)
+        else:
+            user_config = {}
+
+        self.client.create_service_integration_endpoint(
+            project=self.get_project(),
+            endpoint_name=self.args.endpoint_name,
+            endpoint_type=self.args.endpoint_type,
+            user_config=user_config,
+        )
+
+    @arg.project
+    @arg("endpoint-id", help="Service integration endpoint ID")
+    @arg.json
+    def service_integration_endpoint_delete(self):
+        """Delete a service integration endpoint"""
+        self.client.delete_service_integration_endpoint(
+            project=self.get_project(),
+            endpoint_id=getattr(self.args, "endpoint-id"),
+        )
+
+    @arg.project
+    @arg("--format", help="Format string for output, e.g. '{username} {password}'")
+    @arg.verbose
+    @arg.json
+    def service_integration_endpoint_list(self):
+        """List service integration endpoints"""
+        service_integration_endpoints = self.client.get_service_integration_endpoints(project=self.get_project())
+        layout = [["endpoint_id", "endpoint_name", "endpoint_type"]]
+        if self.args.verbose:
+            layout.extend(["user_config"])
+        self.print_response(service_integration_endpoints, format=self.args.format, json=self.args.json, table_layout=layout)
+
+    @arg.project
     @arg("-t", "--integration-type", help="Integration type", required=True)
+    @arg("-s", "--source-service", help="Source service name")
+    @arg("-d", "--dest-service", help="Destination service name")
+    @arg("-S", "--source-endpoint-id", help="Source integration endpoint id")
+    @arg("-D", "--dest-endpoint-id", help="Destination integration endpoint id")
     @arg.json
     def service_integration_create(self):
         """Create a service integration"""
@@ -561,18 +607,18 @@ class AivenCLI(argx.CommandLineTool):
             project=self.get_project(),
             source_service=self.args.source_service,
             dest_service=self.args.dest_service,
+            source_endpoint_id=self.args.source_endpoint_id,
+            dest_endpoint_id=self.args.dest_endpoint_id,
             integration_type=self.args.integration_type,
         )
 
     @arg.project
-    @arg.service_name
     @arg("integration-id", help="Service integration ID")
     @arg.json
     def service_integration_delete(self):
         """Delete a service integration"""
         self.client.delete_service_integration(
             project=self.get_project(),
-            service=self.args.name,
             integration_id=getattr(self.args, "integration-id"),
         )
 
@@ -584,10 +630,12 @@ class AivenCLI(argx.CommandLineTool):
     def service_integration_list(self):
         """List service integrations"""
         service_integrations = self.client.get_service_integrations(project=self.get_project(), service=self.args.name)
-        for integration in service_integrations:
-            integration["service_integration_id"] = integration["service_integration_id"] or "(integration not enabled)"
+        for item in service_integrations:
+            item["service_integration_id"] = item["service_integration_id"] or "(integration not enabled)"
+            item["source"] = item["source_service"] or item["source_endpoint_id"]
+            item["dest"] = item["dest_service"] or item["dest_endpoint_id"]
 
-        layout = [["service_integration_id", "source_service", "dest_service",
+        layout = [["service_integration_id", "source", "dest",
                    "integration_type", "enabled", "active", "description"]]
         if self.args.verbose:
             layout.extend(["source_project", "dest_project"])
@@ -859,19 +907,12 @@ class AivenCLI(argx.CommandLineTool):
             self.client.delete_service(project=self.get_project(), service=name)
             self.log.info("%s: terminated", name)
 
-    def create_user_config(self, project, service_type, config_vars):
+    def create_user_config(self, user_config_schema, config_vars):
         """Convert a list of ["foo.bar='baz'"] to {"foo": {"bar": "baz"}}"""
         if not config_vars:
             return {}
 
-        service_types = self.client.get_service_types(project=project)
-        try:
-            service_def = service_types[service_type]
-        except KeyError:
-            raise argx.UserError("Unknown service type {!r}, available options: {}".format(
-                service_type, ", ".join(service_types)))
-
-        options = self.collect_user_config_options(service_def["user_config_schema"])
+        options = self.collect_user_config_options(user_config_schema)
         user_config = {}
         for key_value in self.args.user_config:
             try:
@@ -1010,6 +1051,7 @@ class AivenCLI(argx.CommandLineTool):
             raise argx.UserError("No subscription plan given")
 
         project = self.get_project()
+        user_config_schema = self._get_service_type_user_config_schema(project=project, service_type=service_type)
         try:
             self.client.create_service(
                 project=project,
@@ -1018,7 +1060,7 @@ class AivenCLI(argx.CommandLineTool):
                 plan=plan,
                 cloud=self.args.cloud,
                 group_name=self.args.group_name,
-                user_config=self.create_user_config(project, self.args.service_type, self.args.user_config))
+                user_config=self.create_user_config(user_config_schema, self.args.user_config))
         except client.Error as ex:
             print(ex.response)
             if not self.args.no_fail_if_exists or ex.response.status_code != 409:
@@ -1035,6 +1077,25 @@ class AivenCLI(argx.CommandLineTool):
             return False
         else:
             return None
+
+    def _get_service_type_user_config_schema(self, project, service_type):
+        service_types = self.client.get_service_types(project=project)
+        try:
+            service_def = service_types[service_type]
+        except KeyError:
+            raise argx.UserError("Unknown service type {!r}, available options: {}".format(
+                service_type, ", ".join(service_types)))
+
+        return service_def["user_config_schema"]
+
+    def _get_endpoint_user_config_schema(self, project, endpoint_type_name):
+        endpoint_types_list = self.client.get_service_integration_endpoint_types(project=project)
+        endpoint_types = {item["endpoint_type"]: item for item in endpoint_types_list}
+        try:
+            return endpoint_types[endpoint_type_name]["user_config_schema"]
+        except KeyError:
+            raise argx.UserError("Unknown endpoint type {!r}, available options: {}".format(
+                endpoint_type_name, ", ".join(endpoint_types)))
 
     @arg.project
     @arg.service_name
@@ -1053,7 +1114,8 @@ class AivenCLI(argx.CommandLineTool):
         project = self.get_project()
         service = self.client.get_service(project=project, service=self.args.name)
         plan = self.args.plan or service["plan"]
-        user_config = self.create_user_config(project, service["service_type"], self.args.user_config)
+        user_config_schema = self._get_service_type_user_config_schema(project=project, service_type=service["service_type"])
+        user_config = self.create_user_config(user_config_schema, self.args.user_config)
         maintenance = {}
         if self.args.maintenance_dow:
             maintenance["dow"] = self.args.maintenance_dow
