@@ -254,18 +254,41 @@ class AivenClient(AivenClientBase):
     def reset_service_user_password(self, project, service, username):
         return self.verify(self.put, "/project/{}/service/{}/user/{}/credentials/reset".format(project, service, username))
 
+    def get_service_integration_endpoints(self, project):
+        return self.verify(self.get, "/project/{}/integration_endpoint".format(project),
+                           result_key="service_integration_endpoints")
+
+    def get_service_integration_endpoint_types(self, project):
+        return self.verify(self.get, "/project/{}/integration_endpoint_types".format(project),
+                           result_key="endpoint_types")
+
+    def create_service_integration_endpoint(self, project, endpoint_name, endpoint_type, user_config):
+        return self.verify(self.post, "/project/{}/integration_endpoint".format(project), body={
+            "endpoint_name": endpoint_name,
+            "endpoint_type": endpoint_type,
+            "user_config": user_config,
+        })
+
+    def delete_service_integration_endpoint(self, project, endpoint_id):
+        return self.verify(self.delete, "/project/{}/integration_endpoint/{}".format(project, endpoint_id))
+
     def get_service_integrations(self, project, service):
         return self.verify(self.get, "/project/{}/service/{}/integration".format(project, service),
                            result_key="service_integrations")
 
-    def create_service_integration(self, project, source_service, dest_service, integration_type):
-        return self.verify(self.post, "/project/{}/service/{}/integration".format(project, source_service), body={
+    def create_service_integration(self, project, integration_type,
+                                   source_service=None, dest_service=None,
+                                   source_endpoint_id=None, dest_endpoint_id=None):
+        return self.verify(self.post, "/project/{}/integration".format(project), body={
+            "source_endpoint_id": source_endpoint_id,
+            "source_service": source_service,
+            "dest_endpoint_id": dest_endpoint_id,
             "dest_service": dest_service,
             "integration_type": integration_type,
         })
 
-    def delete_service_integration(self, project, service, integration_id):
-        return self.verify(self.delete, "/project/{}/service/{}/integration/{}".format(project, service, integration_id))
+    def delete_service_integration(self, project, integration_id):
+        return self.verify(self.delete, "/project/{}/integration/{}".format(project, integration_id))
 
     def get_service_topic(self, project, service, topic):
         return self.verify(self.get, "/project/{}/service/{}/topic/{}".format(project, service, topic),
