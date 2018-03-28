@@ -383,6 +383,16 @@ class AivenCLI(argx.CommandLineTool):
 
     @arg.project
     @arg.service_name
+    def service_connect(self):
+        """Run shell command to the service"""
+        service = self.client.get_service(project=self.get_project(), service=self.args.name)
+        if service['service_type'] == 'pg':
+            os.system("psql {}".format(service['connection_info']['pg'][0]))
+        else:
+            raise argx.UserError("Connection to service type {} is not supported".format(service['service_type']))
+
+    @arg.project
+    @arg.service_name
     @arg("--format", help="Format string for output, e.g. '{service_name} {service_uri}'")
     @arg.verbose
     @arg.json
