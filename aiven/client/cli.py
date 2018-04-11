@@ -12,6 +12,7 @@ import getpass
 import json as jsonlib
 import os
 import requests
+import subprocess
 import time
 
 PLUGINS = []
@@ -523,9 +524,59 @@ class AivenCLI(argx.CommandLineTool):
     @arg.service_name
     @arg("--username", help="Service user username", required=True)
     @arg("-d", "--target-directory", help="Directory to write credentials to", required=False, default=os.getcwd())
+    @arg("-p", "--password", help="Truststore password", default="changeit")
+    def service_user_kafka_java_creds(self):
+        """Download user certificate/key/CA certificate and create a Java keystore/truststore/properties from them"""
+        self.service_user_creds_download()
+        # First create the truststore
+        subprocess.check_call([
+            "keytool", "-importcert",
+            "-alias", "Aiven CA",
+            "-keystore", os.path.join(self.args.target_directory, "client.truststore.jks"),
+            "-storepass", self.args.password,
+            "-file", os.path.join(self.args.target_directory, "ca.pem"),
+            "-noprompt",
+        ])
+        # Then create the keystore
+        subprocess.check_call([
+            "openssl", "pkcs12", "-export",
+            "-out", os.path.join(self.args.target_directory, "client.keystore.p12"),
+            "-inkey", os.path.join(self.args.target_directory, "service.key"),
+            "-in", os.path.join(self.args.target_directory, "service.cert"),
+            "-certfile", os.path.join(self.args.target_directory, "ca.pem"),
+            "-passout", "pass:{}".format(self.args.password),
+        ])
+        service = self.client.get_service(project=self.get_project(), service=self.args.name)
+        with open(os.path.join(self.args.target_directory, "client.properties"), "w") as fp:
+            properties = """\
+bootstrap.servers={service_uri}
+security.protocol=SSL
+ssl.protocol=TLS
+ssl.key.password={password}
+ssl.keystore.location={keypath}/client.keystore.p12
+ssl.keystore.password={password}
+ssl.keystore.type=PKCS12
+ssl.truststore.location={keypath}/client.truststore.jks
+ssl.truststore.password={password}
+ssl.truststore.type=JKS
+            """.format(
+                keypath=os.path.abspath(self.args.target_directory),
+                password=self.args.password,
+                service_uri=service["service_uri"],
+            )
+            fp.write(properties)
+
+    @arg.project
+    @arg.service_name
+    @arg("--username", help="Service user username", required=True)
+    @arg("-d", "--target-directory", help="Directory to write credentials to", required=False, default=os.getcwd())
     def service_user_creds_download(self):
         """Download service user certificate/key/CA certificate"""
         project_name = self.get_project()
+
+        if not os.path.exists(self.args.target_directory):
+            os.makedirs(self.args.target_directory)
+
         try:
             result = self.client.get_project_ca(project=project_name)
             with open(os.path.join(self.args.target_directory, "ca.pem"), "w") as fp:
