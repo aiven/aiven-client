@@ -11,8 +11,14 @@ import errno
 import getpass
 import json as jsonlib
 import os
+import re
 import requests
 import time
+
+try:
+    from urllib.parse import urlparse  # pylint: disable=import-error,no-name-in-module
+except ImportError:
+    from urlparse import urlparse  # pylint: disable=import-error,no-name-in-module
 
 PLUGINS = []
 
@@ -380,6 +386,51 @@ class AivenCLI(argx.CommandLineTool):
 
         self.print_response(service, format=self.args.format, json=self.args.json,
                             table_layout=layout, single_item=True)
+
+    @arg.project
+    @arg.service_name
+    @arg("arg", nargs="*",
+         help="Pass arguments directly for service client, use '--' to separate from avn args", default=[])
+    def service_cli(self):
+        """Open interactive shell to given service (if supported)"""
+        if "://" in self.args.name:
+            url = self.args.name
+        else:
+            service = self.client.get_service(project=self.get_project(), service=self.args.name)
+            url = service["service_uri"]
+
+        match = re.match("([a-z]+\\+)?([a-z]+)://", url)
+        service_type = match and match.group(2)
+        if service_type == "influxdb":
+            command, params, env = self._build_influx_start_info(url)
+        elif service_type == "postgres":
+            command, params, env = self._build_psql_start_info(url)
+        else:
+            raise argx.UserError("Unsupported service type {}. Only InfluxDB and PostgreSQL are supported".format(
+                service_type))
+
+        try:
+            os.execvpe(command, [command] + params + self.args.arg, dict(os.environ, **env))
+        except EnvironmentError as e:
+            if e.errno != errno.ENOENT:
+                raise
+            raise argx.UserError("Executable '{}' is not available, cannot launch {} client".format(
+                command, service_type))
+
+    def _build_influx_start_info(self, url):
+        info = urlparse(url)
+        params = ["-host", info.hostname,
+                  "-port", str(info.port),
+                  "-database", info.path.lstrip("/"),
+                  "-username", info.username,
+                  "-ssl"]
+        return ("influx", params, {"INFLUX_PASSWORD": info.password})
+
+    def _build_psql_start_info(self, url):
+        pw_pattern = "([a-z\\+]+://[^:]+):([^@]+)@(.*)"
+        match = re.match(pw_pattern, url)
+        connect_info = re.sub(pw_pattern, "\\1@\\3", url)
+        return ("psql", [connect_info], {"PGPASSWORD": match.group(2)})
 
     @arg.project
     @arg.service_name

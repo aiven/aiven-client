@@ -185,6 +185,10 @@ values is provided as a comma separated list::
 
   $ avn service update mydb96 -c ip_filter=10.0.1.0/24,10.0.2.0/24,1.2.3.4/32
 
+Open psql client and connect to the PostgreSQL service (also available for InfluxDB)::
+
+  $ avn service cli mydb96
+
 Update a service to a different plan AND move it to another cloud region::
 
   $ avn service update mydb --plan startup-4 --cloud aws-us-east-1
