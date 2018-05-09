@@ -269,6 +269,13 @@ class AivenClient(AivenClientBase):
             "user_config": user_config,
         })
 
+    def update_service_integration_endpoint(self, project, endpoint_id, user_config):
+        return self.verify(self.put, "/project/{}/integration_endpoint/{}".format(
+            project, endpoint_id),
+                           body={
+                               "user_config": user_config,
+                           })
+
     def delete_service_integration_endpoint(self, project, endpoint_id):
         return self.verify(self.delete, "/project/{}/integration_endpoint/{}".format(project, endpoint_id))
 
@@ -276,16 +283,32 @@ class AivenClient(AivenClientBase):
         return self.verify(self.get, "/project/{}/service/{}/integration".format(project, service),
                            result_key="service_integrations")
 
+    def get_service_integration_types(self, project):
+        return self.verify(self.get, "/project/{}/integration_types".format(project),
+                           result_key="integration_types")
+
     def create_service_integration(self, project, integration_type,
                                    source_service=None, dest_service=None,
-                                   source_endpoint_id=None, dest_endpoint_id=None):
+                                   source_endpoint_id=None, dest_endpoint_id=None,
+                                   user_config=None):
+        user_config = user_config or {}
         return self.verify(self.post, "/project/{}/integration".format(project), body={
             "source_endpoint_id": source_endpoint_id,
             "source_service": source_service,
             "dest_endpoint_id": dest_endpoint_id,
             "dest_service": dest_service,
             "integration_type": integration_type,
+            "user_config": user_config,
         })
+
+    def update_service_integration(self, project, integration_id, user_config):
+        return self.verify(self.put, "/project/{}/integration/{}".format(project, integration_id), body={
+            "user_config": user_config,
+        }, result_key="service_integration")
+
+    def get_service_integration(self, project, integration_id):
+        return self.verify(self.get, "/project/{}/integration/{}".format(project, integration_id),
+                           result_key="service_integration")
 
     def delete_service_integration(self, project, integration_id):
         return self.verify(self.delete, "/project/{}/integration/{}".format(project, integration_id))
