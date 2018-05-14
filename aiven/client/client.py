@@ -22,6 +22,9 @@ class Error(Exception):
         self.status = status
 
 
+UNDEFINED = object()
+
+
 class AivenClientBase(object):
     """Aiven Client with low-level HTTP operations"""
     def __init__(self, base_url, show_http=False):
@@ -373,16 +376,19 @@ class AivenClient(AivenClientBase):
         })
 
     def create_service(self, project, service, service_type, group_name, plan,
-                       cloud=None, user_config=None):
+                       cloud=None, user_config=None, project_vpc_id=UNDEFINED):
         user_config = user_config or {}
-        return self.verify(self.post, "/project/{}/service".format(project), body={
+        body = {
             "group_name": group_name,
             "cloud": cloud,
             "plan": plan,
             "service_name": service,
             "service_type": service_type,
             "user_config": user_config,
-        }, result_key="service")
+        }
+        if project_vpc_id is not UNDEFINED:
+            body["project_vpc_id"] = project_vpc_id
+        return self.verify(self.post, "/project/{}/service".format(project), body=body, result_key="service")
 
     def update_service(self,
                        project,
@@ -392,7 +398,8 @@ class AivenClient(AivenClientBase):
                        maintenance=None,
                        user_config=None,
                        plan=None,
-                       powered=None):
+                       powered=None,
+                       project_vpc_id=UNDEFINED):
         user_config = user_config or {}
         body = {}
         if group_name is not None:
@@ -407,6 +414,8 @@ class AivenClient(AivenClientBase):
             body["powered"] = powered
         if user_config is not None:
             body["user_config"] = user_config
+        if project_vpc_id is not UNDEFINED:
+            body["project_vpc_id"] = project_vpc_id
 
         return self.verify(self.put, "/project/{}/service/{}".format(project, service), body=body, result_key="service")
 
