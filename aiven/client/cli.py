@@ -676,6 +676,36 @@ ssl.truststore.type=JKS
 
     @arg.project
     @arg("endpoint-id", help="Service integration endpoint ID")
+    @arg.user_config
+    @arg.json
+    def service_integration_endpoint_update(self):
+        """Update a service integration endpoint"""
+        if self.args.user_config:
+            project = self.get_project()
+            endpoint_id = getattr(self.args, "endpoint-id")
+            integration_endpoints = self.client.get_service_integration_endpoints(project=self.get_project())
+            endpoint_type = None
+            for endpoint in integration_endpoints:
+                if endpoint["endpoint_id"] == endpoint_id:
+                    endpoint_type = endpoint["endpoint_type"]
+
+            if not endpoint_type:
+                raise argx.UserError("Endpoint id does not exist")
+
+            user_config_schema = self._get_endpoint_user_config_schema(
+                project=project, endpoint_type_name=endpoint_type)
+            user_config = self.create_user_config(user_config_schema, self.args.user_config)
+        else:
+            user_config = {}
+
+        self.client.update_service_integration_endpoint(
+            project=self.get_project(),
+            endpoint_id=endpoint_id,
+            user_config=user_config,
+        )
+
+    @arg.project
+    @arg("endpoint-id", help="Service integration endpoint ID")
     @arg.json
     def service_integration_endpoint_delete(self):
         """Delete a service integration endpoint"""
@@ -702,9 +732,18 @@ ssl.truststore.type=JKS
     @arg("-d", "--dest-service", help="Destination service name")
     @arg("-S", "--source-endpoint-id", help="Source integration endpoint id")
     @arg("-D", "--dest-endpoint-id", help="Destination integration endpoint id")
+    @arg.user_config
     @arg.json
     def service_integration_create(self):
         """Create a service integration"""
+        if self.args.user_config:
+            project = self.get_project()
+            user_config_schema = self._get_integration_user_config_schema(
+                project=project, integration_type_name=self.args.integration_type)
+            user_config = self.create_user_config(user_config_schema, self.args.user_config)
+        else:
+            user_config = {}
+
         self.client.create_service_integration(
             project=self.get_project(),
             source_service=self.args.source_service,
@@ -712,6 +751,35 @@ ssl.truststore.type=JKS
             source_endpoint_id=self.args.source_endpoint_id,
             dest_endpoint_id=self.args.dest_endpoint_id,
             integration_type=self.args.integration_type,
+            user_config=user_config,
+        )
+
+    @arg.project
+    @arg("integration-id", help="Service integration ID")
+    @arg.user_config
+    @arg.json
+    def service_integration_update(self):
+        """Update a service integration"""
+        if self.args.user_config:
+            project = self.get_project()
+            integration_id = getattr(self.args, "integration-id")
+            integration = self.client.get_service_integration(
+                project=project,
+                integration_id=integration_id,
+            )
+            integration_type = None
+            if integration["service_integration_id"] == integration_id:
+                integration_type = integration["integration_type"]
+            user_config_schema = self._get_integration_user_config_schema(
+                project=project, integration_type_name=integration_type)
+            user_config = self.create_user_config(user_config_schema, self.args.user_config)
+        else:
+            user_config = {}
+
+        self.client.update_service_integration(
+            project=self.get_project(),
+            integration_id=integration_id,
+            user_config=user_config,
         )
 
     @arg.project
@@ -1190,7 +1258,7 @@ ssl.truststore.type=JKS
 
         return service_def["user_config_schema"]
 
-    def _get_endpoint_user_config_schema(self, project, endpoint_type_name):
+    def _get_endpoint_user_config_schema(self, project, endpoint_type_name=None):
         endpoint_types_list = self.client.get_service_integration_endpoint_types(project=project)
         endpoint_types = {item["endpoint_type"]: item for item in endpoint_types_list}
         try:
@@ -1198,6 +1266,15 @@ ssl.truststore.type=JKS
         except KeyError:
             raise argx.UserError("Unknown endpoint type {!r}, available options: {}".format(
                 endpoint_type_name, ", ".join(endpoint_types)))
+
+    def _get_integration_user_config_schema(self, project, integration_type_name):
+        integration_types_list = self.client.get_service_integration_types(project=project)
+        integration_types = {item["integration_type"]: item for item in integration_types_list}
+        try:
+            return integration_types[integration_type_name]["user_config_schema"]
+        except KeyError:
+            raise argx.UserError("Unknown integration type {!r}, available options: {}".format(
+                integration_type_name, ", ".join(integration_types)))
 
     @arg.project
     @arg.service_name
