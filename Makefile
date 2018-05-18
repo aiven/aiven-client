@@ -2,6 +2,7 @@ short_ver = 2.1.0
 long_ver = $(shell git describe --long 2>/dev/null || echo $(short_ver)-0-unknown-g`git describe --always`)
 generated = aiven/client/version.py
 PYTHON ?= python
+PYTHON_DIRS = aiven tests
 
 all: $(generated)
 
@@ -11,10 +12,10 @@ aiven/client/version.py: .git/index
 test: flake8 pylint pytest
 
 flake8:
-	$(PYTHON) -m flake8 --max-line-length=125 aiven/ tests/
+	$(PYTHON) -m flake8 $(PYTHON_DIRS)
 
 pylint:
-	$(PYTHON) -m pylint aiven/ --rcfile pylintrc tests/
+	$(PYTHON) -m pylint $(PYTHON_DIRS)
 
 pytest:
 	$(PYTHON) -m pytest -vv tests/
