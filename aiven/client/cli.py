@@ -1198,6 +1198,16 @@ ssl.truststore.type=JKS
             print(ex.response.text)
             raise
 
+    def _get_service_project_vpc_id(self):
+        """Utility method for service_create and service_update"""
+        if self.args.project_vpc_id is None:
+            project_vpc_id = None if self.args.no_project_vpc else client.UNDEFINED
+        elif self.args.no_project_vpc:
+            raise argx.UserError("Only one of --project-vpc-id and --no-project-vpc can be specified")
+        else:
+            project_vpc_id = self.args.project_vpc_id
+        return project_vpc_id
+
     @arg.project
     @arg.service_name
     @arg("--group-name", help="service group", default="default")
@@ -1207,6 +1217,10 @@ ssl.truststore.type=JKS
     @arg("--no-fail-if-exists", action="store_true", default=False,
          help="do not fail if service already exists")
     @arg.user_config
+    @arg("--project-vpc-id", help="Put service into a project VPC. The VPC's cloud must match the service's cloud")
+    @arg("--no-project-vpc",
+         action="store_true",
+         help="Do not put the service into a project VPC even if the project has one in the selected cloud")
     def service_create(self):
         """Create a service"""
         service_type_info = self.args.service_type.split(":")
@@ -1220,6 +1234,7 @@ ssl.truststore.type=JKS
         if not plan:
             raise argx.UserError("No subscription plan given")
 
+        project_vpc_id = self._get_service_project_vpc_id()
         project = self.get_project()
         user_config_schema = self._get_service_type_user_config_schema(project=project, service_type=service_type)
         try:
@@ -1230,7 +1245,8 @@ ssl.truststore.type=JKS
                 plan=plan,
                 cloud=self.args.cloud,
                 group_name=self.args.group_name,
-                user_config=self.create_user_config(user_config_schema, self.args.user_config))
+                user_config=self.create_user_config(user_config_schema, self.args.user_config),
+                project_vpc_id=project_vpc_id)
         except client.Error as ex:
             print(ex.response)
             if not self.args.no_fail_if_exists or ex.response.status_code != 409:
@@ -1287,6 +1303,10 @@ ssl.truststore.type=JKS
     @arg("--maintenance-dow", help="Set automatic maintenance window's day of week",
          choices=["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "never"])
     @arg("--maintenance-time", help="Set automatic maintenance window's start time (HH:MM:SS)")
+    @arg("--project-vpc-id", help="Put service into a project VPC. The VPC's cloud must match the service's cloud")
+    @arg("--no-project-vpc",
+         action="store_true",
+         help="Do not put the service into a project VPC even if the project has one in the selected cloud")
     def service_update(self):
         """Update service settings"""
         powered = self._get_powered()
@@ -1300,6 +1320,7 @@ ssl.truststore.type=JKS
             maintenance["dow"] = self.args.maintenance_dow
         if self.args.maintenance_time:
             maintenance["time"] = self.args.maintenance_time
+        project_vpc_id = self._get_service_project_vpc_id()
         try:
             self.client.update_service(
                 cloud=self.args.cloud,
@@ -1310,6 +1331,7 @@ ssl.truststore.type=JKS
                 project=project,
                 service=self.args.name,
                 user_config=user_config,
+                project_vpc_id=project_vpc_id,
             )
         except client.Error as ex:
             print(ex.response.text)
