@@ -156,30 +156,58 @@ class AivenCLI(argx.CommandLineTool):
         message = self.client.expire_user_tokens()["message"]
         print(message)
 
-    def _show_logs(self, offset, service=None):
-        msgs = self.client.get_logs(
-            project=self.get_project(),
-            limit=self.args.limit,
-            offset=offset,
-            service=service)
-
+    def _show_logs(self, msgs):
         if self.args.json:
             print(jsonlib.dumps(msgs["logs"], indent=4, sort_keys=True))
         else:
             for log_msg in msgs["logs"]:
-                print("{time:<27}  {msg}".format(**log_msg))
+                print("{time:<27}{hostname} {unit} {msg}".format(**log_msg))
         return msgs["offset"]
 
     @arg.project
+    @arg.service_name
+    @arg.json
+    @arg("-S", "--sort-order", type=str, default="asc", choices=["desc", "asc"], help="Sort direction for log fetching")
+    @arg("-n", "--limit", type=int, default=100, help="Get up to N rows of logs")
+    @arg("-f", "--follow", action="store_true", default=False)
+    def service_logs(self):
+        """View project logs"""
+        previous_offset = None
+        while True:
+            msgs = self.client.get_service_logs(
+                project=self.get_project(),
+                limit=self.args.limit,
+                offset=previous_offset,
+                service=self.args.name,
+                sort_order=self.args.sort_order,
+            )
+            new_offset = self._show_logs(msgs)
+            if not msgs["logs"] and previous_offset is not None and self.args.sort_order == "desc":
+                # Quit because since we didn't find older messages than this, we'll never find any.
+                break
+            if not self.args.follow:
+                break
+            if previous_offset == new_offset:
+                # No new msgs, sleep for a while
+                time.sleep(10.0)
+            previous_offset = new_offset
+
+    @arg.project
+    @arg.service_name
     @arg.json
     @arg("-n", "--limit", type=int, default=100, help="Get up to N rows of logs")
     @arg("-f", "--follow", action="store_true", default=False)
-    @arg("-s", "--service", help="Service name")
     def logs(self):
         """View project logs"""
         previous_offset = -self.args.limit
         while True:
-            new_offset = self._show_logs(offset=previous_offset, service=self.args.service)
+            msgs = self.client.get_logs(
+                project=self.get_project(),
+                limit=self.args.limit,
+                offset=previous_offset,
+                service=self.args.name,
+            )
+            new_offset = self._show_logs(msgs)
             if not self.args.follow:
                 break
             if previous_offset == new_offset:

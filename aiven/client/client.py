@@ -513,6 +513,14 @@ class AivenClient(AivenClientBase):
             params["service"] = str(service)
         return self.verify(self.get, "/project/{}/logs".format(project), params=params)
 
+    def get_service_logs(self, project, service, sort_order=None, offset=None, limit=100):
+        body = {"limit": limit}
+        if offset is not None:
+            body["offset"] = str(offset)
+        if sort_order is not None:
+            body["sort_order"] = sort_order
+        return self.verify(self.post, "/project/{}/service/{}/logs".format(project, service), body=body)
+
     def get_events(self, project, limit=100):
         params = {"limit": limit}
         return self.verify(self.get, "/project/{}/events".format(project), params=params,
