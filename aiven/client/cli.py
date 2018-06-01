@@ -1226,6 +1226,26 @@ ssl.truststore.type=JKS
             print(ex.response.text)
             raise
 
+    @arg.project
+    @arg.json
+    @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
+    @arg("--peer-cloud-account", required=True, help="AWS account ID or Google project ID")
+    @arg("--peer-vpc", required=True, help="AWS VPC ID or Google VPC network name")
+    def vpc__peering_connection__delete(self):
+        """Delete a peering connection for a project VPC"""
+        project_name = self.get_project()
+        try:
+            vpc_peering_connection = self.client.delete_project_vpc_peering_connection(
+                project=project_name,
+                project_vpc_id=self.args.project_vpc_id,
+                peer_cloud_account=self.args.peer_cloud_account,
+                peer_vpc=self.args.peer_vpc
+            )
+            self.print_response(vpc_peering_connection, json=self.args.json, single_item=True)
+        except client.Error as ex:
+            print(ex.response.text)
+            raise
+
     def _get_service_project_vpc_id(self):
         """Utility method for service_create and service_update"""
         if self.args.project_vpc_id is None:

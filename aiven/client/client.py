@@ -375,6 +375,14 @@ class AivenClient(AivenClientBase):
             "peer_vpc": peer_vpc,
         })
 
+    def delete_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc):
+        return self.verify(
+            self.delete,
+            "/project/{}/vpcs/{}/peering-connections/peer-accounts/{}/peer-vpcs/{}".format(
+                project, project_vpc_id, peer_cloud_account, peer_vpc,
+            ),
+        )
+
     def create_service(self, project, service, service_type, group_name, plan,
                        cloud=None, user_config=None, project_vpc_id=UNDEFINED):
         user_config = user_config or {}
