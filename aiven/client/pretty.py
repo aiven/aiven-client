@@ -38,6 +38,8 @@ def format_item(key, value):
             formatted = json_v
     elif isinstance(value, datetime.datetime):
         formatted = value.isoformat()
+    elif isinstance(value, datetime.timedelta):
+        formatted = str(value)
     else:
         formatted = json.dumps(value)
 
