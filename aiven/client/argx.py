@@ -190,7 +190,7 @@ class CommandLineTool(object):
             expected_errors.extend(ext.expected_errors())
             ext.config = self.config
         try:
-            return self.run_actual()
+            return self.run_actual(args)
         except tuple(expected_errors) as ex:  # pylint: disable=catching-non-exception
             # nicer output on "expected" errors
             err = "command failed: {0.__class__.__name__}: {0}".format(ex)
@@ -200,10 +200,10 @@ class CommandLineTool(object):
             self.log.error("*** terminated by keyboard ***")
             return 2
 
-    def run_actual(self):
+    def run_actual(self, args_for_help):
         func = getattr(self.args, "func", None)
         if not func:
-            self.parser.print_help()
+            self.parser.parse_args(args_for_help + ["--help"])
             return 1
 
         self.pre_run(func)
