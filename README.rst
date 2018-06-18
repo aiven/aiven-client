@@ -86,6 +86,17 @@ You will need to login again after this.::
 
  $ avn user tokens-expire
 
+Manage individual access tokens::
+
+ $ avn user access-token list
+ $ avn user access-token create --description <usage_description> [--max-age-seconds <secs>] [--extend-when-used]
+ $ avn user access-token update <token|token_prefix> --description <new_description>
+ $ avn user access-token revoke <token|token_prefix>
+
+Note that the system has hard limits for the number of tokens you can create. If you're
+permanently done using a token you should always use ``user access-token revoke`` operation
+to revoke the token so that it does not count towards the quota.
+
 Clouds
 ------
 List available cloud regions::

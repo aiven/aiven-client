@@ -8,6 +8,11 @@ try:
 except ImportError:
     __version__ = "UNKNOWN"
 
+try:
+    from urllib import quote
+except ImportError:
+    from urllib.parse import quote
+
 import json
 import logging
 import requests
@@ -509,6 +514,30 @@ class AivenClient(AivenClientBase):
 
     def get_user_info(self):
         return self.verify(self.get, "/me", result_key="user")
+
+    def access_token_create(self, description, extend_when_used=False, max_age_seconds=None):
+        request = {
+            "description": description,
+            "extend_when_used": extend_when_used,
+            "max_age_seconds": max_age_seconds
+        }
+        return self.verify(self.post, "/access_token", body=request)
+
+    def access_token_revoke(self, token_prefix):
+        if any(c in token_prefix for c in "/+="):
+            token_prefix = quote(token_prefix, safe="")
+        return self.verify(self.delete, "/access_token/{}".format(token_prefix))
+
+    def access_token_update(self, token_prefix, description):
+        if any(c in token_prefix for c in "/+="):
+            token_prefix = quote(token_prefix, safe="")
+        request = {
+            "description": description
+        }
+        return self.verify(self.put, "/access_token/{}".format(token_prefix), body=request)
+
+    def access_tokens_list(self):
+        return self.verify(self.get, "/access_token", result_key="tokens")
 
     def expire_user_tokens(self):
         return self.verify(self.post, "/me/expire_tokens")
