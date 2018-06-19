@@ -21,9 +21,9 @@ except NameError:
 
 def format_item(key, value):
     if isinstance(value, list):
-        return ", ".join(format_item(None, entry) for entry in value)
+        formatted = ", ".join(format_item(None, entry) for entry in value)
     elif isinstance(value, dict):
-        return json.dumps(value, sort_keys=True)
+        formatted = json.dumps(value, sort_keys=True)
     elif isinstance(value, basestring):
         if key and key.endswith("_time") and value.endswith("Z") and "." in value:
             # drop microseconds from timestamps
@@ -33,12 +33,15 @@ def format_item(key, value):
         json_v = json.dumps(value)
         quoted_v = '"{}"'.format(value)
         if json_v == quoted_v or json_v.replace("\\u00a3", "£").replace("\\u20ac", "€") == quoted_v:
-            return value
-        return json_v
+            formatted = value
+        else:
+            formatted = json_v
     elif isinstance(value, datetime.datetime):
-        return value.isoformat()
+        formatted = value.isoformat()
+    else:
+        formatted = json.dumps(value)
 
-    return json.dumps(value)
+    return formatted
 
 
 def yield_table(result, drop_fields=None, table_layout=None, header=True):
