@@ -81,6 +81,10 @@ Login::
 
   $ avn user login <your@email>
 
+Logout (revokes current access token, other sessions remain valid)::
+
+  $ avn user logout
+
 Expire all authentication tokens for your user, logs out all web console sessions, etc.
 You will need to login again after this.::
 
