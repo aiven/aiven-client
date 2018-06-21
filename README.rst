@@ -147,10 +147,6 @@ View project management event log::
 
   $ avn events
 
-View project service log entries::
-
-  $ avn logs -n 100
-
 Services
 --------
 List services (of the active project)::
@@ -176,6 +172,10 @@ Full service information in json, as it is returned by the Aiven REST API::
 Only a specific field in the output, custom formatting::
 
   $ avn service list db1 --format "The service is at {service_uri}"
+
+View service log entries (most recent entries and keep on following logs, other options can be used to get history)::
+
+  $ avn service logs db1 -f
 
 Launching services
 ------------------
