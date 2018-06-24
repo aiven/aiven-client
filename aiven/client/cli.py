@@ -464,6 +464,7 @@ class AivenCLI(argx.CommandLineTool):
         self.print_response(service, format=self.args.format, json=self.args.json,
                             table_layout=layout, single_item=True)
 
+    @optional_auth
     @arg.project
     @arg.service_name
     @arg("arg", nargs="*",
@@ -473,6 +474,8 @@ class AivenCLI(argx.CommandLineTool):
         if "://" in self.args.name:
             url = self.args.name
         else:
+            if not self.client.auth_token:
+                raise argx.UserError("not authenticated: please login first with 'avn user login'")
             service = self.client.get_service(project=self.get_project(), service=self.args.name)
             url = service["service_uri"]
 
