@@ -150,11 +150,59 @@ class AivenCLI(argx.CommandLineTool):
         else:
             self.log.info("No projects exists. You should probably create one with 'avn project create <name>'")
 
+    @arg()
+    def user_logout(self):
+        """Logout from current session"""
+        self.client.access_token_revoke(token_prefix=self._get_auth_token())
+        self._remove_auth_token_file()
+
     @arg.verbose
     def user_tokens_expire(self):
         """Expire all authorization tokens"""
         message = self.client.expire_user_tokens()["message"]
         print(message)
+
+    @arg("--description", required=True, help="Description of how the token will be used")
+    @arg("--max-age-seconds", type=int, help="Maximum age of the token, if any")
+    @arg("--extend-when-used", action="store_true",
+         help="Extend token's expiry time when used (only applicable if token is set to expire)")
+    @arg.json
+    def user__access_token__create(self):
+        """Creates new access token"""
+        token_info = self.client.access_token_create(
+            description=self.args.description,
+            extend_when_used=self.args.extend_when_used,
+            max_age_seconds=self.args.max_age_seconds
+        )
+        layout = ["expiry_time", "description", "max_age_seconds", "extend_when_used", "full_token"]
+        self.print_response([token_info], json=self.args.json, table_layout=layout)
+
+    @arg("token_prefix", help="The full token or token prefix identifying the token to update")
+    @arg("--description", required=True, help="Description of how the token will be used")
+    @arg.json
+    def user__access_token__update(self):
+        """Updates an existing access token"""
+        token_info = self.client.access_token_update(
+            token_prefix=self.args.token_prefix,
+            description=self.args.description
+        )
+        layout = ["expiry_time", "token_prefix", "description", "max_age_seconds", "extend_when_used",
+                  "last_used_time", "last_ip", "last_user_agent"]
+        self.print_response([token_info], json=self.args.json, table_layout=layout)
+
+    @arg("token_prefix", help="The full token or token prefix identifying the token to revoke")
+    def user__access_token__revoke(self):
+        """Revokes an access token"""
+        self.client.access_token_revoke(token_prefix=self.args.token_prefix)
+        print("Revoked")
+
+    @arg.json
+    def user__access_token__list(self):
+        """List all of your access tokens"""
+        tokens = self.client.access_tokens_list()
+        layout = ["expiry_time", "token_prefix", "description", "max_age_seconds", "extend_when_used",
+                  "last_used_time", "last_ip", "last_user_agent"]
+        self.print_response(tokens, json=self.args.json, table_layout=layout)
 
     def _show_logs(self, msgs):
         if self.args.json:
@@ -416,6 +464,7 @@ class AivenCLI(argx.CommandLineTool):
         self.print_response(service, format=self.args.format, json=self.args.json,
                             table_layout=layout, single_item=True)
 
+    @optional_auth
     @arg.project
     @arg.service_name
     @arg("arg", nargs="*",
@@ -425,6 +474,8 @@ class AivenCLI(argx.CommandLineTool):
         if "://" in self.args.name:
             url = self.args.name
         else:
+            if not self.client.auth_token:
+                raise argx.UserError("not authenticated: please login first with 'avn user login'")
             service = self.client.get_service(project=self.get_project(), service=self.args.name)
             url = service["service_uri"]
 
@@ -1556,8 +1607,7 @@ ssl.truststore.type=JKS
         self.log.info("Aiven credentials written to: %s", aiven_credentials_filename)
 
     def _open_auth_token_file(self, mode="r"):
-        default_token_file_path = os.path.join(envdefault.AIVEN_CONFIG_DIR, "aiven-credentials.json")
-        auth_token_file_path = (os.environ.get("AIVEN_CREDENTIALS_FILE") or default_token_file_path)
+        auth_token_file_path = self._get_auth_token_file_name()
         try:
             return open(auth_token_file_path, mode)
         except IOError as ex:
@@ -1567,6 +1617,16 @@ ssl.truststore.type=JKS
                 os.chmod(aiven_dir, 0o700)
                 return open(auth_token_file_path, mode)
             raise
+
+    def _remove_auth_token_file(self):
+        try:
+            os.unlink(self._get_auth_token_file_name())
+        except OSError:
+            pass
+
+    def _get_auth_token_file_name(self):
+        default_token_file_path = os.path.join(envdefault.AIVEN_CONFIG_DIR, "aiven-credentials.json")
+        return os.environ.get("AIVEN_CREDENTIALS_FILE") or default_token_file_path
 
     def _get_auth_token(self):
         token = self.args.auth_token

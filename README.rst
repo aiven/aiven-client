@@ -81,10 +81,25 @@ Login::
 
   $ avn user login <your@email>
 
+Logout (revokes current access token, other sessions remain valid)::
+
+  $ avn user logout
+
 Expire all authentication tokens for your user, logs out all web console sessions, etc.
 You will need to login again after this.::
 
  $ avn user tokens-expire
+
+Manage individual access tokens::
+
+ $ avn user access-token list
+ $ avn user access-token create --description <usage_description> [--max-age-seconds <secs>] [--extend-when-used]
+ $ avn user access-token update <token|token_prefix> --description <new_description>
+ $ avn user access-token revoke <token|token_prefix>
+
+Note that the system has hard limits for the number of tokens you can create. If you're
+permanently done using a token you should always use ``user access-token revoke`` operation
+to revoke the token so that it does not count towards the quota.
 
 Clouds
 ------
@@ -132,10 +147,6 @@ View project management event log::
 
   $ avn events
 
-View project service log entries::
-
-  $ avn logs -n 100
-
 Services
 --------
 List services (of the active project)::
@@ -161,6 +172,10 @@ Full service information in json, as it is returned by the Aiven REST API::
 Only a specific field in the output, custom formatting::
 
   $ avn service list db1 --format "The service is at {service_uri}"
+
+View service log entries (most recent entries and keep on following logs, other options can be used to get history)::
+
+  $ avn service logs db1 -f
 
 Launching services
 ------------------
