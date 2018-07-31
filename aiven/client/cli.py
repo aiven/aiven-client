@@ -1234,6 +1234,23 @@ ssl.truststore.type=JKS
     _project_vpc_id_help = "Aiven project VPC ID to request the peering connection for. See 'vpc list'"
 
     @arg.project
+    @arg.json
+    @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
+    def vpc__delete(self):
+        """Delete a peering connection for a project VPC"""
+        project_name = self.get_project()
+        try:
+            vpc = self.client.delete_project_vpc(
+                project=project_name,
+                project_vpc_id=self.args.project_vpc_id,
+            )
+            layout = ["project_vpc_id", "state", "cloud_name", "network_cidr"]
+            self.print_response(vpc, json=self.args.json, table_layout=layout, single_item=True)
+        except client.Error as ex:
+            print(ex.response.text)
+            raise
+
+    @arg.project
     @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
     @arg.json
     @arg.verbose

@@ -374,6 +374,9 @@ class AivenClient(AivenClientBase):
     def get_project_vpc(self, project, project_vpc_id):
         return self.verify(self.get, "/project/{}/vpcs/{}".format(project, project_vpc_id))
 
+    def delete_project_vpc(self, project, project_vpc_id):
+        return self.verify(self.delete, "/project/{}/vpcs/{}".format(project, project_vpc_id))
+
     def request_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc):
         return self.verify(self.post, "/project/{}/vpcs/{}/peering-connections".format(project, project_vpc_id), body={
             "peer_cloud_account": peer_cloud_account,
