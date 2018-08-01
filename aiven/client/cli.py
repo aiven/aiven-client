@@ -1469,12 +1469,16 @@ ssl.truststore.type=JKS
     @arg.cloud
     @arg("--no-fail-if-exists", action="store_true", default=False,
          help="Do not fail if project already exists")
+    @arg("-c", "--copy-from-project", metavar="PROJECT", help="Copy project settings from an existing project")
     def project_create(self):
         """Create a project"""
         try:
-            project = self.client.create_project(project=self.args.name,
-                                                 card_id=self.args.card_id,
-                                                 cloud=self.args.cloud)
+            project = self.client.create_project(
+                card_id=self.args.card_id,
+                cloud=self.args.cloud,
+                copy_from_project=self.args.copy_from_project,
+                project=self.args.name,
+            )
         except client.Error as ex:
             if not self.args.no_fail_if_exists or ex.response.status_code != 409:
                 raise
