@@ -30,7 +30,7 @@ class Error(Exception):
 UNDEFINED = object()
 
 
-class AivenClientBase(object):
+class AivenClientBase:  # pylint: disable=old-style-class
     """Aiven Client with low-level HTTP operations"""
     def __init__(self, base_url, show_http=False):
         self.log = logging.getLogger("AivenClient")
@@ -123,7 +123,7 @@ class AivenClientBase(object):
 
     def verify(self, op, path, body=None, params=None, result_key=None, retry=None):
         # Retry GET operations by default
-        if retry is None and op == self.get:
+        if retry is None and op == self.get:  # pylint: disable=comparison-with-callable
             attempts = 3
         else:
             attempts = 1 + (retry or 0)
@@ -461,12 +461,16 @@ class AivenClient(AivenClientBase):
             path = "/project/{}/service_types".format(project)
         return self.verify(self.get, path, result_key="service_types")
 
-    def create_project(self, project, card_id=None, cloud=None):
-        return self.verify(self.post, "/project", body={
-            "project": project,
+    def create_project(self, project, card_id=None, cloud=None, copy_from_project=None):
+        body = {
             "card_id": card_id,
             "cloud": cloud,
-        }, result_key="project")
+            "project": project,
+        }
+        if copy_from_project is not None:
+            body["copy_from_project"] = copy_from_project
+
+        return self.verify(self.post, "/project", body=body, result_key="project")
 
     def delete_project(self, project):
         return self.verify(self.delete, "/project/{}".format(project))
