@@ -82,7 +82,7 @@ class Config(dict):
             jsonlib.dump(self, fp, sort_keys=True, indent=4)
 
 
-class CommandLineTool(object):
+class CommandLineTool:  # pylint: disable=old-style-class
     def __init__(self, name):
         self.log = logging.getLogger(name)
         self.config = None

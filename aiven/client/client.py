@@ -30,7 +30,7 @@ class Error(Exception):
 UNDEFINED = object()
 
 
-class AivenClientBase(object):
+class AivenClientBase:  # pylint: disable=old-style-class
     """Aiven Client with low-level HTTP operations"""
     def __init__(self, base_url, show_http=False):
         self.log = logging.getLogger("AivenClient")
@@ -123,7 +123,7 @@ class AivenClientBase(object):
 
     def verify(self, op, path, body=None, params=None, result_key=None, retry=None):
         # Retry GET operations by default
-        if retry is None and op == self.get:
+        if retry is None and op == self.get:  # pylint: disable=comparison-with-callable
             attempts = 3
         else:
             attempts = 1 + (retry or 0)

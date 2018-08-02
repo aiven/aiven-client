@@ -1651,7 +1651,7 @@ ssl.truststore.type=JKS
         # Always set CA if we have anything set at the command line or in the env
         if self.args.auth_ca is not None:
             self.client.set_ca(self.args.auth_ca)
-        if func == self.user_create:
+        if func == self.user_create:  # pylint: disable=comparison-with-callable
             # "user create" doesn't use authentication (yet)
             return
 
