@@ -1211,15 +1211,11 @@ ssl.truststore.type=JKS
             print(ex.response.text)
             raise argx.UserError("Project VPC listing for '{}' failed".format(project_name))
 
-    @arg.project
-    @arg.json
-    @arg.cloud
-    @arg("--network-cidr", help="The network range in the Aiven project VPC in CIDR format (a.b.c.d/e)", required=True)
-    def vpc__request(self):
-        """Request a VPC for a project"""
+    def _vpc_create(self):
+        """Helper method for vpc__create and vpc__request"""
         project_name = self.get_project()
         try:
-            vpc = self.client.request_project_vpc(
+            vpc = self.client.create_project_vpc(
                 project=project_name,
                 cloud=self.args.cloud,
                 network_cidr=self.args.network_cidr,
@@ -1231,7 +1227,41 @@ ssl.truststore.type=JKS
             print(ex.response.text)
             raise
 
+    @arg.project
+    @arg.json
+    @arg.cloud
+    @arg("--network-cidr", help="The network range in the Aiven project VPC in CIDR format (a.b.c.d/e)", required=True)
+    def vpc__create(self):
+        """Create a VPC for a project"""
+        return self._vpc_create()
+
+    @arg.project
+    @arg.json
+    @arg.cloud
+    @arg("--network-cidr", help="The network range in the Aiven project VPC in CIDR format (a.b.c.d/e)", required=True)
+    def vpc__request(self):
+        """Request a VPC for a project (Deprecated: use vpc create)"""
+        self.log.warning("'vpc request' is going to be deprecated. Use the 'vpc create' command instead.")
+        return self._vpc_create()
+
     _project_vpc_id_help = "Aiven project VPC ID to request the peering connection for. See 'vpc list'"
+
+    @arg.project
+    @arg.json
+    @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
+    def vpc__delete(self):
+        """Delete a peering connection for a project VPC"""
+        project_name = self.get_project()
+        try:
+            vpc = self.client.delete_project_vpc(
+                project=project_name,
+                project_vpc_id=self.args.project_vpc_id,
+            )
+            layout = ["project_vpc_id", "state", "cloud_name", "network_cidr"]
+            self.print_response(vpc, json=self.args.json, table_layout=layout, single_item=True)
+        except client.Error as ex:
+            print(ex.response.text)
+            raise
 
     @arg.project
     @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
@@ -1257,16 +1287,11 @@ ssl.truststore.type=JKS
             )
             raise argx.UserError(msg)
 
-    @arg.project
-    @arg.json
-    @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
-    @arg("--peer-cloud-account", required=True, help="AWS account ID or Google project ID")
-    @arg("--peer-vpc", required=True, help="AWS VPC ID or Google VPC network name")
-    def vpc__peering_connection__request(self):
-        """Request a peering connection for a project VPC"""
+    def _vpc_peering_connection_create(self):
+        """Helper method for vpc__peering_connection__create and vpc__peering_connection__request"""
         project_name = self.get_project()
         try:
-            vpc_peering_connection = self.client.request_project_vpc_peering_connection(
+            vpc_peering_connection = self.client.create_project_vpc_peering_connection(
                 project=project_name,
                 project_vpc_id=self.args.project_vpc_id,
                 peer_cloud_account=self.args.peer_cloud_account,
@@ -1276,6 +1301,28 @@ ssl.truststore.type=JKS
         except client.Error as ex:
             print(ex.response.text)
             raise
+
+    @arg.project
+    @arg.json
+    @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
+    @arg("--peer-cloud-account", required=True, help="AWS account ID or Google project ID")
+    @arg("--peer-vpc", required=True, help="AWS VPC ID or Google VPC network name")
+    def vpc__peering_connection__create(self):
+        """Create a peering connection for a project VPC"""
+        return self._vpc_peering_connection_create()
+
+    @arg.project
+    @arg.json
+    @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
+    @arg("--peer-cloud-account", required=True, help="AWS account ID or Google project ID")
+    @arg("--peer-vpc", required=True, help="AWS VPC ID or Google VPC network name")
+    def vpc__peering_connection__request(self):
+        """Request a peering connection for a project VPC (Deprecated: use vpc peering-connection create)"""
+        self.log.warning(
+            "'vpc peering-connection request' is going to be deprecated. Use the 'vpc peering-connection create' command "
+            "instead."
+        )
+        return self._vpc_peering_connection_create()
 
     @arg.project
     @arg.json

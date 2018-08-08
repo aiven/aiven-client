@@ -2,6 +2,7 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
+import warnings
 
 try:
     from .version import __version__  # pylint: disable=no-name-in-module
@@ -364,21 +365,42 @@ class AivenClient(AivenClientBase):
     def list_project_vpcs(self, project):
         return self.verify(self.get, "/project/{}/vpcs".format(project))
 
-    def request_project_vpc(self, project, cloud, network_cidr, peering_connections):
+    def create_project_vpc(self, project, cloud, network_cidr, peering_connections):
         return self.verify(self.post, "/project/{}/vpcs".format(project), body={
             "cloud_name": cloud,
             "network_cidr": network_cidr,
             "peering_connections": peering_connections,
         })
 
+    def request_project_vpc(self, project, cloud, network_cidr, peering_connections):
+        warnings.warn("Use the create_project_vpc method", DeprecationWarning)
+        return self.create_project_vpc(
+            project=project,
+            cloud=cloud,
+            network_cidr=network_cidr,
+            peering_connections=peering_connections,
+        )
+
     def get_project_vpc(self, project, project_vpc_id):
         return self.verify(self.get, "/project/{}/vpcs/{}".format(project, project_vpc_id))
 
-    def request_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc):
+    def delete_project_vpc(self, project, project_vpc_id):
+        return self.verify(self.delete, "/project/{}/vpcs/{}".format(project, project_vpc_id))
+
+    def create_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc):
         return self.verify(self.post, "/project/{}/vpcs/{}/peering-connections".format(project, project_vpc_id), body={
             "peer_cloud_account": peer_cloud_account,
             "peer_vpc": peer_vpc,
         })
+
+    def request_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc):
+        warnings.warn("Use the create_project_vpc_peering_connection method", DeprecationWarning)
+        return self.create_project_vpc_peering_connection(
+            project=project,
+            project_vpc_id=project_vpc_id,
+            peer_cloud_account=peer_cloud_account,
+            peer_vpc=peer_vpc,
+        )
 
     def delete_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc):
         return self.verify(
