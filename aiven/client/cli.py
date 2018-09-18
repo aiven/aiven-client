@@ -732,6 +732,14 @@ ssl.truststore.type=JKS
                                                 username=self.args.username)
 
     @arg.project
+    @arg.json
+    def service_integration_endpoint_types_list(self):
+        """List all available integration endpoint types for given project"""
+        endpoint_types = self.client.get_service_integration_endpoint_types(self.args.project)
+        layout = ["title", "endpoint_type", "service_types"]
+        self.print_response(endpoint_types, json=self.args.json, table_layout=layout)
+
+    @arg.project
     @arg("-d", "--endpoint-name", help="Integration endpoint name", required=True)
     @arg("-t", "--endpoint-type", help="Integration endpoint type", required=True)
     @arg.user_config
