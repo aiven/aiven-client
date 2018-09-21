@@ -965,13 +965,12 @@ ssl.truststore.type=JKS
     @arg.json
     def service_topic_list(self):
         """List Kafka service topics"""
-        service = self.client.get_service(project=self.get_project(), service=self.args.name)
-        topics = service["topics"]
+        topics = self.client.list_service_topics(project=self.get_project(), service=self.args.name)
         for topic in topics:
             if topic["retention_hours"] == -1:
                 topic["retention_hours"] = "unlimited"
         layout = [["topic_name", "partitions", "replication", "min_insync_replicas", "retention_bytes",
-                   "retention_hours", "state"]]
+                   "retention_hours", "cleanup_policy"]]
         self.print_response(topics, format=self.args.format, json=self.args.json, table_layout=layout)
 
     @arg.project
