@@ -545,14 +545,6 @@ class AivenClient(AivenClientBase):
     def expire_user_tokens(self):
         return self.verify(self.post, "/me/expire_tokens")
 
-    def get_logs(self, project, limit=100, offset=None, service=None):
-        params = {"limit": limit}
-        if offset is not None:
-            params["offset"] = str(offset)
-        if service is not None:
-            params["service"] = str(service)
-        return self.verify(self.get, "/project/{}/logs".format(project), params=params)
-
     def get_service_logs(self, project, service, sort_order=None, offset=None, limit=100):
         body = {"limit": limit}
         if offset is not None:
