@@ -166,32 +166,6 @@ class AivenClient(AivenClientBase):
     def delete_service_index(self, project, service, index_name):
         return self.verify(self.delete, "/project/{}/service/{}/index/{}".format(project, service, index_name))
 
-    def get_service_alerts(self, project, service):
-        return self.verify(self.get, "/project/{}/service/{}/alerts".format(project, service),
-                           result_key="service_alerts")
-
-    def create_service_alert(self, project, service, alert_name, alert_endpoints, query,
-                             threshold=None, operator=None):
-        metadata = {
-            "query": query
-        }
-        if threshold is not None and threshold >= 0:
-            metadata["alert_threshold"] = threshold
-
-        if operator:
-            metadata["operator"] = operator
-
-        body = {
-            "alert_name": alert_name,
-            "metadata": metadata,
-            "alert_endpoints": alert_endpoints,
-        }
-        return self.verify(self.post, "/project/{}/service/{}/alerts".format(project, service),
-                           body=body, result_key="service_alert")
-
-    def delete_service_alert(self, project, service, alert_name):
-        return self.verify(self.delete, "/project/{}/service/{}/alerts/{}".format(project, service, alert_name))
-
     def get_clouds(self, project):
         if project is None:
             path = "/clouds"
@@ -570,14 +544,6 @@ class AivenClient(AivenClientBase):
 
     def expire_user_tokens(self):
         return self.verify(self.post, "/me/expire_tokens")
-
-    def get_logs(self, project, limit=100, offset=None, service=None):
-        params = {"limit": limit}
-        if offset is not None:
-            params["offset"] = str(offset)
-        if service is not None:
-            params["service"] = str(service)
-        return self.verify(self.get, "/project/{}/logs".format(project), params=params)
 
     def get_service_logs(self, project, service, sort_order=None, offset=None, limit=100):
         body = {"limit": limit}

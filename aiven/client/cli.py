@@ -241,29 +241,6 @@ class AivenCLI(argx.CommandLineTool):
             previous_offset = new_offset
 
     @arg.project
-    @arg.service_name
-    @arg.json
-    @arg("-n", "--limit", type=int, default=100, help="Get up to N rows of logs")
-    @arg("-f", "--follow", action="store_true", default=False)
-    def logs(self):
-        """View project logs"""
-        previous_offset = -self.args.limit
-        while True:
-            msgs = self.client.get_logs(
-                project=self.get_project(),
-                limit=self.args.limit,
-                offset=previous_offset,
-                service=self.args.name,
-            )
-            new_offset = self._show_logs(msgs)
-            if not self.args.follow:
-                break
-            if previous_offset == new_offset:
-                # No new msgs, sleep for a while
-                time.sleep(10.0)
-            previous_offset = new_offset
-
-    @arg.project
     @arg.json
     @arg("-n", "--limit", type=int, default=100, help="Get up to N rows of logs")
     def events(self):
