@@ -85,23 +85,30 @@ def yield_table(result, drop_fields=None, table_layout=None, header=True):
         table_layout = [table_layout]
 
     horizontal_fields = table_layout[0]
-
-    def longest(vf):
-        lengths = [len(f.split(".", 1)[-1]) for f in formatted_row if fnmatch.fnmatch(f, vf)]
-        return max(lengths) if lengths else 0
-
-    vertical_width = max(longest(f) for f in table_layout[1:]) if len(table_layout) > 1 else 0
     if header:
         yield "  ".join(f.upper().ljust(widths[f]) for f in horizontal_fields)
         yield "  ".join("=" * widths[f] for f in horizontal_fields)
     for row_num, formatted_row in enumerate(formatted_values):
+        # If we have multiple lines per entry yield an empty line between each entry
         if len(table_layout) > 1 and row_num > 0:
             yield ""
+        # The main, horizontal, line
         yield "  ".join(formatted_row.get(f, "").ljust(widths[f]) for f in horizontal_fields).strip()
+        # And the rest of the fields, one per field
+        fields_to_print = []
         for vertical_field in table_layout[1:]:
-            for key, value in sorted(formatted_row.items()):
-                if fnmatch.fnmatch(key, vertical_field):
-                    yield "    {:{}} = {}".format(key.split(".", 1)[-1], vertical_width, value)
+            if vertical_field.endswith(".*"):
+                for key, value in sorted(formatted_row.items()):
+                    if fnmatch.fnmatch(key, vertical_field):
+                        fields_to_print.append((key, value))
+            else:
+                value = formatted_row.get(vertical_field)
+                if value is not None:
+                    fields_to_print.append((vertical_field, value))
+        if fields_to_print:
+            max_key_width = max(len(key) for key, _ in fields_to_print)
+            for key, value in fields_to_print:
+                yield "    {:{}} = {}".format(key, max_key_width, value)
 
 
 def print_table(
