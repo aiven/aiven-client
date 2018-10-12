@@ -296,6 +296,16 @@ class AivenClient(AivenClientBase):
     def delete_service_integration(self, project, integration_id):
         return self.verify(self.delete, "/project/{}/integration/{}".format(project, integration_id))
 
+    def create_service_task(self, project, service, operation, target_version):
+        return self.verify(self.post, "/project/{}/service/{}/task".format(project, service), body={
+            "task_type": operation,
+            "target_version": target_version,
+        })
+
+    def get_service_task(self, project, service, task_id):
+        return self.verify(self.get, "/project/{}/service/{}/task/{}".format(project, service, task_id),
+                           result_key="task")
+
     def get_service_topic(self, project, service, topic):
         return self.verify(self.get, "/project/{}/service/{}/topic/{}".format(project, service, topic),
                            result_key="topic")
