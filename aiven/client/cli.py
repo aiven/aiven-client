@@ -14,6 +14,7 @@ import os
 import re
 import requests
 import subprocess
+import sys
 import time
 
 try:
@@ -221,14 +222,26 @@ class AivenCLI(argx.CommandLineTool):
     def service_logs(self):
         """View project logs"""
         previous_offset = None
+        consecutive_errors = 0
         while True:
-            msgs = self.client.get_service_logs(
-                project=self.get_project(),
-                limit=self.args.limit,
-                offset=previous_offset,
-                service=self.args.name,
-                sort_order=self.args.sort_order,
-            )
+            try:
+                msgs = self.client.get_service_logs(
+                    project=self.get_project(),
+                    limit=self.args.limit,
+                    offset=previous_offset,
+                    service=self.args.name,
+                    sort_order=self.args.sort_order,
+                )
+            except requests.RequestException as ex:
+                if not self.args.follow:
+                    raise ex
+                consecutive_errors += 1
+                if consecutive_errors > 10:
+                    raise argx.UserError("Fetching logs failed repeatedly, aborting.")
+                sys.stderr.write("Fetching log messages failed with {}. Retrying after 10s\n".format(ex))
+                time.sleep(10.0)
+                continue
+            consecutive_errors = 0
             new_offset = self._show_logs(msgs)
             if not msgs["logs"] and previous_offset is not None and self.args.sort_order == "desc":
                 # Quit because since we didn't find older messages than this, we'll never find any.
