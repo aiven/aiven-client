@@ -33,6 +33,20 @@ class CustomJsonEncoder(jsonlib.JSONEncoder):
         return jsonlib.JSONEncoder.default(self, o)
 
 
+class CustomFormatter(argparse.RawDescriptionHelpFormatter):
+    """Help formatter to display the default value only for integers and non-empty strings"""
+    def _get_help_string(self, action):
+        help_text = action.help
+        if '%(default)' not in action.help and action.default is not argparse.SUPPRESS:
+            if action.option_strings or action.nargs in [argparse.OPTIONAL, argparse.ZERO_OR_MORE]:
+                if (
+                        (not isinstance(action.default, bool) and isinstance(action.default, int))
+                        or (isinstance(action.default, str) and action.default)
+                ):
+                    help_text += ' (default: %(default)s)'
+        return help_text
+
+
 class UserError(Exception):
     """User error"""
 
@@ -88,7 +102,7 @@ class CommandLineTool:  # pylint: disable=old-style-class
         self.config = None
         self._cats = {}
         self._extensions = []
-        self.parser = argparse.ArgumentParser(prog=name)
+        self.parser = argparse.ArgumentParser(prog=name, formatter_class=CustomFormatter)
         self.parser.add_argument("--config", help="config file location %(default)r",
                                  default=envdefault.AIVEN_CLIENT_CONFIG)
         self.subparsers = self.parser.add_subparsers(title="command categories", dest="command",
@@ -113,11 +127,14 @@ class CommandLineTool:  # pylint: disable=old-style-class
         for level in range(len(cats)):
             cat = tuple(cats[:level + 1])
             if cat not in self._cats:
-                parser = subparsers.add_parser(cat[-1], help=" ".join(cat).title() + " commands")
+                parser = subparsers.add_parser(
+                    cat[-1],
+                    help=" ".join(cat).title() + " commands",
+                    formatter_class=CustomFormatter)
                 self._cats[cat] = parser.add_subparsers()
             subparsers = self._cats[cat]
 
-        parser = subparsers.add_parser(cmd, help=func.__doc__)
+        parser = subparsers.add_parser(cmd, help=func.__doc__, formatter_class=CustomFormatter)
         parser.set_defaults(func=func)
 
         for arg_prop in getattr(func, ARG_LIST_PROP, []):
