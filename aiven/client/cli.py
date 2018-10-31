@@ -997,6 +997,24 @@ ssl.truststore.type=JKS
 
     @arg.project
     @arg.service_name
+    @arg("--operation", help="Task operation", choices=["upgrade_check"], default="upgrade_check")
+    @arg("--target_version", help="Upgrade target version", choices=["9.5", "9.6", "10"])
+    @arg("--format", help="Format string for output, e.g. '{name} {retention_hours}'")
+    @arg.json
+    def service_task_create(self):
+        """Create a service task"""
+        response = self.client.create_service_task(
+            project=self.get_project(),
+            service=self.args.name,
+            operation=self.args.operation,
+            target_version=self.args.target_version
+        )
+        self.print_response([response["task"]], format=self.args.format, json=self.args.json,
+                            table_layout=["task_type", "success"])
+        print(response["task"]["result"])
+
+    @arg.project
+    @arg.service_name
     @arg.topic
     @arg.partitions
     @arg.replication
