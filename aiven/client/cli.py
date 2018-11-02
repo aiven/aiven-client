@@ -998,7 +998,7 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.service_name
     @arg("--operation", help="Task operation", choices=["upgrade_check"], default="upgrade_check")
-    @arg("--target_version", help="Upgrade target version", choices=["9.5", "9.6", "10"])
+    @arg("--target_version", help="Upgrade target version", choices=["9.5", "9.6", "10", "11"])
     @arg("--format", help="Format string for output, e.g. '{name} {retention_hours}'")
     @arg.json
     def service_task_create(self):
