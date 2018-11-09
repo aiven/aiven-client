@@ -1251,13 +1251,13 @@ ssl.truststore.type=JKS
         self.log.warning("'vpc request' is going to be deprecated. Use the 'vpc create' command instead.")
         return self._vpc_create()
 
-    _project_vpc_id_help = "Aiven project VPC ID to request the peering connection for. See 'vpc list'"
+    _project_vpc_id_help = "Aiven project VPC ID. See 'vpc list'"
 
     @arg.project
     @arg.json
     @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
     def vpc__delete(self):
-        """Delete a peering connection for a project VPC"""
+        """Delete a project VPC"""
         project_name = self.get_project()
         try:
             vpc = self.client.delete_project_vpc(
