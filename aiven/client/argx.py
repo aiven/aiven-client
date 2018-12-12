@@ -147,7 +147,6 @@ class CommandLineTool:  # pylint: disable=old-style-class
 
     def pre_run(self, func):
         """Override in sub-class"""
-        pass
 
     def expected_errors(self):
         return []
