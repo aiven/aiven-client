@@ -1313,6 +1313,44 @@ ssl.truststore.type=JKS
             )
             raise argx.UserError(msg)
 
+    @arg.project
+    @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
+    @arg("--peer-cloud-account", required=True, help="AWS account ID or Google project ID")
+    @arg("--peer-vpc", required=True, help="AWS VPC ID or Google VPC network name")
+    @arg.json
+    @arg.verbose
+    def vpc__peering_connection__get(self):
+        """Show details of a VPC peering connection"""
+        project_name = self.get_project()
+        try:
+            vpc = self.client.get_project_vpc(
+                project=project_name,
+                project_vpc_id=self.args.project_vpc_id,
+            )
+            peering_connection = None
+            for conn in vpc["peering_connections"]:
+                if conn["peer_cloud_account"] == self.args.peer_cloud_account and conn["peer_vpc"] == self.args.peer_vpc:
+                    peering_connection = conn
+                    break
+            if peering_connection is None:
+                raise argx.UserError("Peering connection does not exist")
+            if self.args.json:
+                print(jsonlib.dumps(peering_connection, indent=4, sort_keys=True))
+            else:
+                print("State: {}".format(peering_connection["state"]))
+                state_info = peering_connection["state_info"]
+                if state_info is not None:
+                    print("Message: {}\n".format(state_info.pop("message")))
+                    if state_info:
+                        self.print_response(state_info, json=False, single_item=True)
+        except client.Error as ex:
+            print(ex.response.text)
+            msg = "Peering connection listing for VPC '{}' of project '{}' failed".format(
+                self.args.project_vpc_id,
+                project_name,
+            )
+            raise argx.UserError(msg)
+
     def _vpc_peering_connection_create(self):
         """Helper method for vpc__peering_connection__create and vpc__peering_connection__request"""
         project_name = self.get_project()
