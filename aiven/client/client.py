@@ -46,7 +46,7 @@ class AivenClientBase:  # pylint: disable=old-style-class
         }
         self.http_log = logging.getLogger("aiven_http")
         self.init_http_logging(show_http)
-        self.api_prefix = "/v1beta"
+        self.api_prefix = "/v1"
 
     def init_http_logging(self, show_http):
         http_handler = logging.StreamHandler()
