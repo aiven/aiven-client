@@ -374,10 +374,11 @@ class AivenClient(AivenClientBase):
     def delete_project_vpc(self, project, project_vpc_id):
         return self.verify(self.delete, "/project/{}/vpcs/{}".format(project, project_vpc_id))
 
-    def create_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc):
+    def create_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc, peer_region=None):
         return self.verify(self.post, "/project/{}/vpcs/{}/peering-connections".format(project, project_vpc_id), body={
             "peer_cloud_account": peer_cloud_account,
             "peer_vpc": peer_vpc,
+            "peer_region": peer_region,
         })
 
     def request_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc):
@@ -389,13 +390,13 @@ class AivenClient(AivenClientBase):
             peer_vpc=peer_vpc,
         )
 
-    def delete_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc):
-        return self.verify(
-            self.delete,
-            "/project/{}/vpcs/{}/peering-connections/peer-accounts/{}/peer-vpcs/{}".format(
-                project, project_vpc_id, peer_cloud_account, peer_vpc,
-            ),
+    def delete_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc, peer_region=None):
+        url = "/project/{}/vpcs/{}/peering-connections/peer-accounts/{}/peer-vpcs/{}".format(
+            project, project_vpc_id, peer_cloud_account, peer_vpc,
         )
+        if peer_region is not None:
+            url += "/peer-regions/{}".format(peer_region)
+        return self.verify(self.delete, url)
 
     def create_service(self, project, service, service_type, group_name, plan,
                        cloud=None, user_config=None, project_vpc_id=UNDEFINED):

@@ -1301,7 +1301,7 @@ ssl.truststore.type=JKS
                 project=project_name,
                 project_vpc_id=self.args.project_vpc_id,
             )
-            layout = ["peer_cloud_account", "peer_vpc", "state"]
+            layout = ["peer_cloud_account", "peer_vpc", "peer_region", "state"]
             if self.args.verbose:
                 layout += ["create_time", "update_time"]
             self.print_response(vpc["peering_connections"], json=self.args.json, table_layout=layout)
@@ -1351,7 +1351,7 @@ ssl.truststore.type=JKS
             )
             raise argx.UserError(msg)
 
-    def _vpc_peering_connection_create(self):
+    def _vpc_peering_connection_create(self, peer_region):
         """Helper method for vpc__peering_connection__create and vpc__peering_connection__request"""
         project_name = self.get_project()
         try:
@@ -1359,7 +1359,8 @@ ssl.truststore.type=JKS
                 project=project_name,
                 project_vpc_id=self.args.project_vpc_id,
                 peer_cloud_account=self.args.peer_cloud_account,
-                peer_vpc=self.args.peer_vpc
+                peer_vpc=self.args.peer_vpc,
+                peer_region=peer_region,
             )
             self.print_response(vpc_peering_connection, json=self.args.json, single_item=True)
         except client.Error as ex:
@@ -1371,9 +1372,10 @@ ssl.truststore.type=JKS
     @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
     @arg("--peer-cloud-account", required=True, help="AWS account ID or Google project ID")
     @arg("--peer-vpc", required=True, help="AWS VPC ID or Google VPC network name")
+    @arg("--peer-region", help="AWS region of peer VPC, if other than the region of the Aiven project VPC")
     def vpc__peering_connection__create(self):
         """Create a peering connection for a project VPC"""
-        return self._vpc_peering_connection_create()
+        return self._vpc_peering_connection_create(self.args.peer_region)
 
     @arg.project
     @arg.json
@@ -1386,13 +1388,14 @@ ssl.truststore.type=JKS
             "'vpc peering-connection request' is going to be deprecated. Use the 'vpc peering-connection create' command "
             "instead."
         )
-        return self._vpc_peering_connection_create()
+        return self._vpc_peering_connection_create(None)
 
     @arg.project
     @arg.json
     @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
     @arg("--peer-cloud-account", required=True, help="AWS account ID or Google project ID")
     @arg("--peer-vpc", required=True, help="AWS VPC ID or Google VPC network name")
+    @arg("--peer-region", help="AWS region of peer VPC, if other than the region of the Aiven project VPC")
     def vpc__peering_connection__delete(self):
         """Delete a peering connection for a project VPC"""
         project_name = self.get_project()
@@ -1401,7 +1404,8 @@ ssl.truststore.type=JKS
                 project=project_name,
                 project_vpc_id=self.args.project_vpc_id,
                 peer_cloud_account=self.args.peer_cloud_account,
-                peer_vpc=self.args.peer_vpc
+                peer_vpc=self.args.peer_vpc,
+                peer_region=self.args.peer_region,
             )
             self.print_response(vpc_peering_connection, json=self.args.json, single_item=True)
         except client.Error as ex:
