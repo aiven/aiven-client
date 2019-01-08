@@ -998,7 +998,7 @@ ssl.truststore.type=JKS
         self.print_response(topic["partitions"], format=self.args.format, json=self.args.json, table_layout=layout)
         print()
 
-        layout = [["partition", "consumer_group", "offset"]]
+        layout = [["partition", "consumer_group", "offset", "lag"]]
         cgroups = []
         for p in topic["partitions"]:
             for cg in p["consumer_groups"]:
@@ -1006,6 +1006,7 @@ ssl.truststore.type=JKS
                     "partition": p["partition"],
                     "consumer_group": cg["group_name"],
                     "offset": cg["offset"],
+                    "lag": p["latest_offset"] - cg["offset"]
                 })
 
         if not cgroups:
