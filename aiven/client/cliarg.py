@@ -6,8 +6,12 @@
 from .argx import arg
 import os
 
+arg.billing_address = arg("--billing-address", help="Physical billing address for invoices")
+arg.billing_currency = arg("--billing-currency", help="Currency for charges")
+arg.billing_extra_text = arg("--billing-extra-text", help="Extra text to include in invoices (e.g. cost center id)")
 arg.card_id = arg("--card-id", help="Card ID")
 arg.cloud = arg("--cloud", help="Cloud to use (see 'cloud list' command)")
+arg.country_code = arg("--country-code", help="Billing country code")
 arg.email = arg("email", help="User email address")
 arg.force = arg("-f", "--force", help="Force action without interactive confirmation",
                 action="store_true", default=False)
@@ -29,4 +33,5 @@ arg.timeout = arg("--timeout", type=int, help="Wait for up to N seconds (default
 arg.topic = arg("topic", help="Topic name")
 arg.user_config = arg("-c", dest="user_config", metavar="KEY=VALUE", action="append", default=[],
                       help="Apply a configuration setting. See 'avn service types -v' for available values.")
+arg.vat_id = arg("--vat-id", help="VAT ID of an EU VAT area business")
 arg.verbose = arg("-v", "--verbose", help="Verbose output", action="store_true", default=False)
