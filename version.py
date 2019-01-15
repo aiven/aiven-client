@@ -13,14 +13,14 @@ def get_project_version(version_file):
     try:
         module = imp.load_source("verfile", version_file)
         file_ver = module.__version__
-    except:
+    except:  # pylint: disable=bare-except
         file_ver = None
 
     try:
         proc = subprocess.Popen(["git", "describe", "--always"],
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
-        stdout, stderr = proc.communicate()
+        stdout, _ = proc.communicate()
         if stdout:
             git_ver = stdout.splitlines()[0].strip().decode("utf-8")
             if git_ver and ((git_ver != file_ver) or not file_ver):
@@ -34,6 +34,7 @@ def get_project_version(version_file):
                         % version_file)
 
     return file_ver
+
 
 if __name__ == "__main__":
     import sys

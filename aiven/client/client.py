@@ -470,7 +470,18 @@ class AivenClient(AivenClientBase):
             path = "/project/{}/service_types".format(project)
         return self.verify(self.get, path, result_key="service_types")
 
-    def create_project(self, project, card_id=None, cloud=None, copy_from_project=None):
+    def create_project(
+            self,
+            project,
+            card_id=None,
+            cloud=None,
+            copy_from_project=None,
+            country_code=None,
+            billing_address=None,
+            billing_currency=None,
+            billing_extra_text=None,
+            vat_id=None
+    ):
         body = {
             "card_id": card_id,
             "cloud": cloud,
@@ -478,6 +489,16 @@ class AivenClient(AivenClientBase):
         }
         if copy_from_project is not None:
             body["copy_from_project"] = copy_from_project
+        if country_code is not None:
+            body["country_code"] = country_code
+        if billing_address is not None:
+            body["billing_address"] = billing_address
+        if billing_currency is not None:
+            body["billing_currency"] = billing_currency
+        if billing_extra_text is not None:
+            body["billing_extra_text"] = billing_extra_text
+        if vat_id is not None:
+            body["vat_id"] = vat_id
 
         return self.verify(self.post, "/project", body=body, result_key="project")
 
@@ -490,12 +511,32 @@ class AivenClient(AivenClientBase):
     def get_projects(self):
         return self.verify(self.get, "/project", result_key="projects")
 
-    def update_project(self, project, card_id=None, cloud=None):
+    def update_project(
+            self,
+            project,
+            card_id=None,
+            cloud=None,
+            country_code=None,
+            billing_address=None,
+            billing_currency=None,
+            billing_extra_text=None,
+            vat_id=None
+    ):
         body = {}
         if card_id is not None:
             body["card_id"] = card_id
         if cloud is not None:
             body["cloud"] = cloud
+        if country_code is not None:
+            body["country_code"] = country_code
+        if billing_address is not None:
+            body["billing_address"] = billing_address
+        if billing_currency is not None:
+            body["billing_currency"] = billing_currency
+        if billing_extra_text is not None:
+            body["billing_extra_text"] = billing_extra_text
+        if vat_id is not None:
+            body["vat_id"] = vat_id
 
         return self.verify(self.put, "/project/{}".format(project), body=body, result_key="project")
 

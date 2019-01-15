@@ -1537,20 +1537,46 @@ ssl.truststore.type=JKS
 
         return "{}/{}".format(project["card_info"]["user_email"], project["card_info"]["card_id"])
 
+    def _show_projects(self, projects, verbose=True):
+        for project in projects:
+            project["credit_card"] = self._project_credit_card(project)
+        if verbose:
+            layout = [
+                ["project_name", "default_cloud", "billing_currency", "vat_id"],
+                "credit_card",
+                "billing_address",
+                "country_code",
+            ]
+            if any(project["billing_extra_text"] for project in projects):
+                layout.append("billing_extra_text")
+        else:
+            layout = [["project_name", "default_cloud", "credit_card"]]
+        self.print_response(projects, json=getattr(self.args, "json", False), table_layout=layout)
+
     @arg("name", help="Project name")
     @arg.card_id
     @arg.cloud
     @arg("--no-fail-if-exists", action="store_true", default=False,
          help="Do not fail if project already exists")
     @arg("-c", "--copy-from-project", metavar="PROJECT", help="Copy project settings from an existing project")
+    @arg.country_code
+    @arg.billing_address
+    @arg.billing_extra_text
+    @arg.billing_currency
+    @arg.vat_id
     def project_create(self):
         """Create a project"""
         try:
             project = self.client.create_project(
+                billing_address=self.args.billing_address,
+                billing_currency=self.args.billing_currency,
+                billing_extra_text=self.args.billing_extra_text,
                 card_id=self.args.card_id,
                 cloud=self.args.cloud,
                 copy_from_project=self.args.copy_from_project,
+                country_code=self.args.country_code,
                 project=self.args.name,
+                vat_id=self.args.vat_id,
             )
         except client.Error as ex:
             if not self.args.no_fail_if_exists or ex.response.status_code != 409:
@@ -1560,8 +1586,9 @@ ssl.truststore.type=JKS
 
         self.config["default_project"] = self.args.name
         self.config.save()
-        self.log.info("Created project %r (default cloud: %r, credit_card: %r) and set it as the default project",
-                      self.args.name, project["default_cloud"], self._project_credit_card(project))
+
+        self._show_projects([project])
+        self.log.info("Project %r successfully created and set as default project", project["project_name"])
 
     @arg.json
     @arg.project
@@ -1569,38 +1596,42 @@ ssl.truststore.type=JKS
         """Show project details"""
         project_name = self.get_project()
         project = self.client.get_project(project=project_name)
-        project["credit_card"] = self._project_credit_card(project)
-        self.print_response([project],
-                            json=self.args.json,
-                            table_layout=["project_name", "default_cloud", "credit_card"])
+        self._show_projects([project])
 
     @arg.json
+    @arg.verbose
     def project_list(self):
         """List projects"""
         projects = self.client.get_projects()
-        for project in projects:
-            project["credit_card"] = self._project_credit_card(project)
-        self.print_response(projects,
-                            json=self.args.json,
-                            table_layout=["project_name", "default_cloud", "credit_card"])
+        self._show_projects(projects, verbose=self.args.verbose)
 
     @arg.project
     @arg("--card-id", help="Card ID")
     @arg.cloud
+    @arg.country_code
+    @arg.billing_address
+    @arg.billing_extra_text
+    @arg.billing_currency
+    @arg.vat_id
     def project_update(self):
         """Update a project"""
         project_name = self.get_project()
         try:
-            project = self.client.update_project(project=project_name,
-                                                 card_id=self.args.card_id,
-                                                 cloud=self.args.cloud)
+            project = self.client.update_project(
+                billing_address=self.args.billing_address,
+                billing_currency=self.args.billing_currency,
+                billing_extra_text=self.args.billing_extra_text,
+                card_id=self.args.card_id,
+                cloud=self.args.cloud,
+                country_code=self.args.country_code,
+                project=project_name,
+                vat_id=self.args.vat_id,
+            )
         except client.Error as ex:
             print(ex.response.text)
             raise argx.UserError("Project '{}' update failed".format(project_name))
-        self.log.info("Updated project %r, default cloud: %r, credit card: %r",
-                      project_name,
-                      project["default_cloud"],
-                      self._project_credit_card(project))
+        self._show_projects([project])
+        self.log.info("Project %r successfully updated", project["project_name"])
 
     @arg.project
     @arg("--target-filepath", help="Project CA filepath", required=True)

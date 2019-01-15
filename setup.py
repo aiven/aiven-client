@@ -4,7 +4,6 @@
 # See the file `LICENSE` for details.
 
 from setuptools import setup, find_packages
-import os
 import sys
 import version
 
