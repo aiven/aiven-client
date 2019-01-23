@@ -336,6 +336,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg.project
     @arg.cloud
     @arg.json
+    @arg.service_type
     def service_plans(self):
         """List service plans"""
         project = self.get_project()
@@ -351,6 +352,8 @@ class AivenCLI(argx.CommandLineTool):
 
         output = []
         for service_type, prop in service_types.items():
+            if self.args.service_type and service_type != self.args.service_type:
+                continue
             entry = prop.copy()
             entry["service_type"] = service_type
             output.append(entry)
