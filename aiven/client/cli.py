@@ -1435,6 +1435,8 @@ ssl.truststore.type=JKS
     @arg("--no-project-vpc",
          action="store_true",
          help="Do not put the service into a project VPC even if the project has one in the selected cloud")
+    @arg("--read-replica-for",
+         help="Creates a read replica for given source service. Only applicable for certain service types")
     def service_create(self):
         """Create a service"""
         service_type_info = self.args.service_type.split(":")
@@ -1451,6 +1453,19 @@ ssl.truststore.type=JKS
         project_vpc_id = self._get_service_project_vpc_id()
         project = self.get_project()
         user_config_schema = self._get_service_type_user_config_schema(project=project, service_type=service_type)
+        user_config = self.create_user_config(user_config_schema, self.args.user_config)
+        service_integrations = []
+
+        if self.args.read_replica_for:
+            if self.args.service_type == "pg":
+                user_config["pg_read_replica"] = True
+                user_config["service_to_fork_from"] = self.args.read_replica_for
+            else:
+                service_integrations.append({
+                    "integration_type": "read_replica",
+                    "source_service": self.args.read_replica_for
+                })
+
         try:
             self.client.create_service(
                 project=project,
@@ -1459,8 +1474,9 @@ ssl.truststore.type=JKS
                 plan=plan,
                 cloud=self.args.cloud,
                 group_name=self.args.group_name,
-                user_config=self.create_user_config(user_config_schema, self.args.user_config),
-                project_vpc_id=project_vpc_id)
+                user_config=user_config,
+                project_vpc_id=project_vpc_id,
+                service_integrations=service_integrations)
         except client.Error as ex:
             print(ex.response)
             if not self.args.no_fail_if_exists or ex.response.status_code != 409:
