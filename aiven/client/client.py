@@ -399,12 +399,13 @@ class AivenClient(AivenClientBase):
         return self.verify(self.delete, url)
 
     def create_service(self, project, service, service_type, group_name, plan,
-                       cloud=None, user_config=None, project_vpc_id=UNDEFINED):
+                       cloud=None, user_config=None, project_vpc_id=UNDEFINED, service_integrations=None):
         user_config = user_config or {}
         body = {
             "group_name": group_name,
             "cloud": cloud,
             "plan": plan,
+            "service_integrations": service_integrations,
             "service_name": service,
             "service_type": service_type,
             "user_config": user_config,
