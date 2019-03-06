@@ -336,6 +336,8 @@ class AivenCLI(argx.CommandLineTool):
     @arg.project
     @arg.cloud
     @arg.json
+    @arg.service_type
+    @arg("--monthly", help="Show monthly price estimates", action="store_true")
     def service_plans(self):
         """List service plans"""
         project = self.get_project()
@@ -351,11 +353,16 @@ class AivenCLI(argx.CommandLineTool):
 
         output = []
         for service_type, prop in service_types.items():
+            if self.args.service_type and service_type != self.args.service_type:
+                continue
             entry = prop.copy()
             entry["service_type"] = service_type
             output.append(entry)
 
-        dformat = Decimal("0.000")
+        if self.args.monthly:
+            dformat = Decimal("0")
+        else:
+            dformat = Decimal("0.000")
 
         for info in sorted(output, key=lambda s: s["description"]):
             print("{} Plans:\n".format(info["description"]))
@@ -364,7 +371,12 @@ class AivenCLI(argx.CommandLineTool):
                     continue
                 args = "{}:{}".format(plan["service_type"], plan["service_plan"])
                 price_dec = Decimal(plan["regions"][self.args.cloud]["price_usd"])
-                price = "${}/h".format(price_dec.quantize(dformat))
+                if self.args.monthly:
+                    price_str = (price_dec * 730).quantize(dformat)
+                    price = "${}/mo".format(price_str)
+                else:
+                    price_str = price_dec.quantize(dformat)
+                    price = "${}/h".format(price_str)
                 description = self.describe_plan(plan["regions"][self.args.cloud], plan["node_count"], plan["service_plan"])
                 print("    {:<28} {:>10}  {}".format(args, price, description))
 
