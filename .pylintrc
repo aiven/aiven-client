@@ -6,6 +6,7 @@ disable=
     invalid-name,
     locally-disabled,
     missing-docstring,
+    no-else-raise,
     no-else-return,
     no-self-use,
     star-args,
