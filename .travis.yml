@@ -7,6 +7,12 @@ python:
   - "3.6"
   - "pypy"
 
+matrix:
+  include:
+    - python: 3.7
+      dist: xenial
+      sudo: true
+
 install:
   - "pip install flake8 pylint pytest requests"
 
