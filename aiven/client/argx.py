@@ -152,6 +152,10 @@ class CommandLineTool:  # pylint: disable=old-style-class
     def add_cmds(self, add_func):
         """Add every method tagged with @arg as a command"""
         for prop in dir(self):
+            # Skip @properties to avoid evaluating them
+            classprop = getattr(self.__class__, prop, None)
+            if isinstance(classprop, property):
+                continue
             func = getattr(self, prop, None)
             if getattr(func, ARG_LIST_PROP, None) is not None:
                 add_func(func)
