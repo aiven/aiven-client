@@ -416,14 +416,15 @@ class AivenCLI(argx.CommandLineTool):
                             default = ",".join(default)
 
                         default_desc = "(default={!r})".format(default) if default is not None else ""
+                        description = ": {}".format(spec["description"]) if "description" in spec else ""
                         types = spec["type"]
                         if not isinstance(types, list):
                             types = [types]
                         type_str = " or ".join(t for t in types if t != "null")
-                        print("  -c {name}=<{type}>  {default}\n"
-                              "     => {title}"
+                        print("  {title}{description}\n"
+                              "     => -c {name}=<{type}>  {default}"
                               .format(name=name, type=type_str,
-                                      default=default_desc, title=spec["title"]))
+                                      default=default_desc, title=spec["title"], description=description))
 
     SERVICE_LAYOUT = [["service_name", "service_type", "state", "cloud_name", "plan",
                        "group_list", "create_time", "update_time"]]
