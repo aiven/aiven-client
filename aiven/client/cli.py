@@ -1137,6 +1137,140 @@ ssl.truststore.type=JKS
                             table_layout=layout)
 
     @arg.project
+    @arg.service_name
+    def service_connector_available(self):
+        """List available Kafka connectors"""
+        project_name = self.get_project()
+
+        response = self.client.get_available_kafka_connectors(project_name, self.args.name)
+
+        self.print_response(response)
+
+    @arg.project
+    @arg.service_name
+    def service_connector_list(self):
+        """List Kafka connectors"""
+        project_name = self.get_project()
+
+        response = self.client.list_kafka_connectors(project_name, self.args.name)
+
+        self.print_response(response)
+
+    @arg.project
+    @arg.service_name
+    @arg("connector", help="Connector name")
+    def service_connector_status(self):
+        """Get Kafka connector status"""
+        project_name = self.get_project()
+
+        response = self.client.get_kafka_connector_status(project_name, self.args.name, self.args.connector)
+
+        self.print_response(response)
+
+    @arg.project
+    @arg.service_name
+    @arg("connector", help="Connector name")
+    def service_connector_configuration(self):
+        """Get Kafka connector configuration"""
+        project_name = self.get_project()
+
+        response = self.client.get_kafka_connector_configuration(project_name, self.args.name, self.args.connector)
+
+        self.print_response(response)
+
+    def get_connector_config(self, path_or_string):
+        config = path_or_string
+        if os.path.isfile(config):
+            with open(config, 'r') as config_file:
+                config = config_file.read()
+        return config
+
+    @arg.project
+    @arg.service_name
+    @arg("connector_config", help="Connector configuration as a json file or string")
+    def service_connector_create(self):
+        """Create a Kafka connector"""
+        project_name = self.get_project()
+
+        config = self.get_connector_config(self.args.connector_config)
+        response = self.client.create_kafka_connector(project_name, self.args.name, config)
+
+        self.print_response(response)
+
+    @arg.project
+    @arg.service_name
+    @arg("connector", help="Connector name")
+    @arg("connector_config", help="Connector configuration as a json file or string")
+    def service_connector_update(self):
+        """Update a Kafka connector"""
+        project_name = self.get_project()
+
+        config = self.get_connector_config(self.args.connector_config)
+        response = self.client.update_kafka_connector(project_name, self.args.name, self.args.connector, config)
+
+        self.print_response(response)
+
+    @arg.project
+    @arg.service_name
+    @arg("connector", help="Connector name")
+    def service_connector_delete(self):
+        """Delete a Kafka connector"""
+        project_name = self.get_project()
+
+        response = self.client.delete_kafka_connector(project_name, self.args.name, self.args.connector)
+
+        self.print_response(response["message"])
+
+    @arg.project
+    @arg.service_name
+    @arg("connector", help="Connector name")
+    def service_connector_pause(self):
+        """Pause a Kafka connector"""
+        project_name = self.get_project()
+
+        response = self.client.pause_kafka_connector(project_name, self.args.name, self.args.connector)
+
+        self.print_response(response["message"])
+
+    @arg.project
+    @arg.service_name
+    @arg("connector", help="Connector name")
+    def service_connector_resume(self):
+        """Resume a Kafka connector"""
+        project_name = self.get_project()
+
+        response = self.client.resume_kafka_connector(project_name, self.args.name, self.args.connector)
+
+        self.print_response(response["message"])
+
+    @arg.project
+    @arg.service_name
+    @arg("connector", help="Connector name")
+    def service_connector_restart(self):
+        """Restart a Kafka connector"""
+        project_name = self.get_project()
+
+        response = self.client.restart_kafka_connector(project_name, self.args.name, self.args.connector)
+
+        self.print_response(response["message"])
+
+    @arg.project
+    @arg.service_name
+    @arg("connector", help="Connector name")
+    @arg("task", help="Task id")
+    def service_connector_restart_task(self):
+        """Restart a Kafka connector task"""
+        project_name = self.get_project()
+
+        response = self.client.restart_kafka_connector_task(
+            project_name,
+            self.args.name,
+            self.args.connector,
+            self.args.task)
+
+        self.print_response(response["message"])
+
+    @arg.project
     @arg("service", nargs="+", help="Service to wait for")
     @arg.timeout
     def service_wait(self):  # pylint: disable=inconsistent-return-statements
