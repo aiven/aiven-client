@@ -404,6 +404,47 @@ class AivenClient(AivenClientBase):
     def delete_service_kafka_acl(self, project, service, acl_id):
         return self.verify(self.delete, "/project/{}/service/{}/acl/{}".format(project, service, acl_id))
 
+    def get_available_kafka_connectors(self, project, service):
+        return self.verify(self.get, "/project/{}/service/{}/available-connectors".format(project, service))
+
+    def list_kafka_connectors(self, project, service):
+        return self.verify(self.get, "/project/{}/service/{}/connectors".format(project, service))
+
+    def get_kafka_connector_status(self, project, service, connector_name):
+        connector_name = quote(connector_name, safe="")
+        return self.verify(self.get, "/project/{}/service/{}/connectors/{}/status".format(project, service, connector_name))
+
+    def get_kafka_connector_schema(self, project, service, connector_name):
+        url = "/project/{}/service/{}/connector-plugins/{}/configuration"
+        return self.verify(self.get, url.format(project, service, connector_name))
+
+    def create_kafka_connector(self, project, service, config):
+        return self.verify(self.post, "/project/{}/service/{}/connectors".format(project, service), body=config)
+
+    def update_kafka_connector(self, project, service, connector_name, config):
+        url = "/project/{}/service/{}/connectors/{}"
+        return self.verify(self.put, url.format(project, service, connector_name), body=config)
+
+    def delete_kafka_connector(self, project, service, connector_name):
+        connector_name = quote(connector_name, safe="")
+        return self.verify(self.delete, "/project/{}/service/{}/connectors/{}".format(project, service, connector_name))
+
+    def pause_kafka_connector(self, project, service, connector_name):
+        connector_name = quote(connector_name, safe="")
+        return self.verify(self.post, "/project/{}/service/{}/connectors/{}/pause".format(project, service, connector_name))
+
+    def resume_kafka_connector(self, project, service, connector_name):
+        connector_name = quote(connector_name, safe="")
+        return self.verify(self.post, "/project/{}/service/{}/connectors/{}/resume".format(project, service, connector_name))
+
+    def restart_kafka_connector(self, project, service, connector_name):
+        url = "/project/{}/service/{}/connectors/{}/restart"
+        return self.verify(self.post, url.format(project, service, connector_name))
+
+    def restart_kafka_connector_task(self, project, service, connector_name, task_id):
+        url = "/project/{}/service/{}/connectors/{}/tasks/{}/restart"
+        return self.verify(self.post, url.format(project, service, connector_name, task_id))
+
     def list_project_vpcs(self, project):
         return self.verify(self.get, "/project/{}/vpcs".format(project))
 
