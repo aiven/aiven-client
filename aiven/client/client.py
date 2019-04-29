@@ -339,6 +339,61 @@ class AivenClient(AivenClientBase):
     def delete_service_topic(self, project, service, topic):
         return self.verify(self.delete, "/project/{}/service/{}/topic/{}".format(project, service, topic))
 
+    def list_service_elasticsearch_acl_config(self, project, service):
+        return self.verify(self.get, "/project/{}/service/{}/elasticsearch/acl".format(project, service))
+
+    @staticmethod
+    def _add_es_acl_rules(config, user, rules):
+        user_acl = None
+        for acl in config["acls"]:
+            if acl["username"] == user:
+                user_acl = acl
+                break
+        if user_acl is None:  # new user
+            user_acl = {"username": user, "rules": []}
+            config["acls"].append(user_acl)
+        patterns = {rule["index"]: rule["permission"] for rule in user_acl["rules"]}
+        patterns.update(rules)
+        user_acl["rules"] = [{"index": index, "permission": permission} for index, permission in patterns.items()]
+
+    @staticmethod
+    def _del_es_acl_rules(config, user, rules):
+        acls = []
+        user_acl = None
+        for acl in config["acls"]:
+            if acl["username"] != user:
+                acls.append(acl)
+            if acl["username"] == user:
+                user_acl = acl
+        config["acls"] = acls
+        if user_acl is None:  # No rules existed for the user
+            return
+        if not rules:  # removing all rules
+            return
+
+        # Remove the requested rules
+        user_acl["rules"] = [rule for rule in user_acl["rules"] if rule["index"] not in rules]
+        config["acls"].append(user_acl)
+
+    def update_service_elasticsearch_acl_config(self, project, service, enabled=None, extended_acl=None,
+                                                username=None, add_rules=None, del_rules=None):
+        acl_config = self.list_service_elasticsearch_acl_config(project, service)["elasticsearch_acl_config"]
+        if enabled is not None:
+            acl_config["enabled"] = enabled
+        if extended_acl is not None:
+            acl_config["extendedAcl"] = extended_acl
+        if add_rules is not None:
+            try:
+                rules = {index.strip(): permission.strip() for index, permission in [rule.split("/") for rule in add_rules]}
+            except ValueError:
+                raise ValueError("Unrecognized index-pattern/permission rule")
+            self._add_es_acl_rules(config=acl_config, user=username, rules=rules)
+        if del_rules is not None:
+            self._del_es_acl_rules(config=acl_config, user=username, rules=set(rule.strip() for rule in del_rules))
+
+        return self.verify(self.put, "/project/{}/service/{}/elasticsearch/acl".format(project, service),
+                           body={"elasticsearch_acl_config": acl_config})
+
     def add_service_kafka_acl(self, project, service, permission, topic, username):
         return self.verify(self.post, "/project/{}/service/{}/acl".format(project, service), body={
             "permission": permission,

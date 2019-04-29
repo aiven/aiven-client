@@ -1137,6 +1137,80 @@ ssl.truststore.type=JKS
                             table_layout=layout)
 
     @arg.project
+    @arg.service_name
+    @arg("--username", help="Only show rules for user", required=False)
+    def service_es_acl_list(self):
+        """List Elasticsearch ACL configuration"""
+        response = self.client.list_service_elasticsearch_acl_config(project=self.get_project(), service=self.args.name)
+        acl_config = response.get("elasticsearch_acl_config")
+        print("ACL:         ", "enabled" if acl_config.get("enabled") else "disabled")
+        print("ExtendedACL: ", "enabled" if acl_config.get("extendedAcl") else "disabled")
+        print("rules:")
+        for acl in acl_config.get("acls"):
+            if self.args.username is not None and acl["username"] != self.args.username:
+                continue
+            print("    {}:".format(acl["username"]))
+            for rule in acl["rules"]:
+                print("          {}/{}".format(rule["index"], rule["permission"]))
+
+    @arg.project
+    @arg.service_name
+    def service_es_acl_enable(self):
+        """Enable Elasticsearch ACL configuration"""
+        response = self.client.update_service_elasticsearch_acl_config(
+            project=self.get_project(), service=self.args.name, enabled=True)
+        print(response.get("message"))
+
+    @arg.project
+    @arg.service_name
+    def service_es_acl_extended_enable(self):
+        """Enable Elasticsearch Extended ACL"""
+        response = self.client.update_service_elasticsearch_acl_config(
+            project=self.get_project(), service=self.args.name, extended_acl=True)
+        print(response.get("message"))
+
+    @arg.project
+    @arg.service_name
+    def service_es_acl_disable(self):
+        """Disable Elasticsearch ACL configuration"""
+        response = self.client.update_service_elasticsearch_acl_config(
+            project=self.get_project(), service=self.args.name, enabled=False)
+        print(response.get("message"))
+
+    @arg.project
+    @arg.service_name
+    def service_es_acl_extended_disable(self):
+        """Disable Elasticsearch Extended ACL"""
+        response = self.client.update_service_elasticsearch_acl_config(
+            project=self.get_project(), service=self.args.name, extended_acl=False)
+        print(response.get("message"))
+
+    @arg.project
+    @arg.service_name
+    @arg("--username", help="Service user (no wildcards)", required=True)
+    @arg("rule", nargs="+",
+         help=("index/permission (index accepts * and ? as wildcard characters, "
+               "allowed permissions are admin,read,write,readwrite,deny)."))
+    def service_es_acl_add(self):
+        """Add rules to elastic ACL configuration"""
+        response = self.client.update_service_elasticsearch_acl_config(
+            project=self.get_project(), service=self.args.name,
+            username=self.args.username, add_rules=self.args.rule)
+        print(response.get("message"))
+
+    @arg.project
+    @arg.service_name
+    @arg("--username", help="Service username (no wildcards)", required=True)
+    @arg("rule", nargs="*",
+         help="index rule to remove (if none given all rules are removed).")
+    def service_es_acl_del(self):
+        """Delete rules from elastic ACL configuration"""
+        response = self.client.update_service_elasticsearch_acl_config(
+            project=self.get_project(), service=self.args.name,
+            username=self.args.username, del_rules=self.args.rule)
+        print(response.get("message"))
+
+    @arg.project
     @arg("service", nargs="+", help="Service to wait for")
     @arg.timeout
     def service_wait(self):  # pylint: disable=inconsistent-return-statements
