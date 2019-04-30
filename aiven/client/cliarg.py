@@ -5,6 +5,30 @@
 
 from .argx import arg
 import os
+import json as jsonlib
+from functools import wraps
+
+
+def get_json_config(path_or_string):
+    if path_or_string.startswith("@"):
+        filepath = path_or_string[1:]
+        with open(filepath, "r") as config_file:
+            return jsonlib.load(config_file)
+
+    return jsonlib.loads(path_or_string)
+
+
+def json_path_or_string(param_name):
+    def wrapper(fun):
+        arg(param_name, help="JSON string or path (preceded by '@') to a JSON configuration file")(fun)
+
+        @wraps(fun)
+        def wrapped(self):
+            setattr(self.args, param_name, get_json_config(getattr(self.args, param_name, "")))
+            return fun(self)
+        return wrapped
+    return wrapper
+
 
 arg.billing_address = arg("--billing-address", help="Physical billing address for invoices")
 arg.billing_currency = arg("--billing-currency", help="Currency for charges")
@@ -35,3 +59,5 @@ arg.user_config = arg("-c", dest="user_config", metavar="KEY=VALUE", action="app
                       help="Apply a configuration setting. See 'avn service types -v' for available values.")
 arg.vat_id = arg("--vat-id", help="VAT ID of an EU VAT area business")
 arg.verbose = arg("-v", "--verbose", help="Verbose output", action="store_true", default=False)
+arg.connector_name = arg("connector", help="Connector name")
+arg.json_path_or_string = json_path_or_string
