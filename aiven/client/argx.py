@@ -5,6 +5,12 @@
 
 from __future__ import print_function
 from aiven.client import envdefault, pretty
+
+try:
+    from .version import __version__  # pylint: disable=no-name-in-module
+except ImportError:
+    __version__ = "UNKNOWN"
+
 import aiven.client.client
 import argparse
 import csv as csvlib
@@ -105,6 +111,7 @@ class CommandLineTool:  # pylint: disable=old-style-class
         self.parser = argparse.ArgumentParser(prog=name, formatter_class=CustomFormatter)
         self.parser.add_argument("--config", help="config file location %(default)r",
                                  default=envdefault.AIVEN_CLIENT_CONFIG)
+        self.parser.add_argument('--version', action='version', version='aiven-client {}'.format(__version__))
         self.subparsers = self.parser.add_subparsers(title="command categories", dest="command",
                                                      help="", metavar="")
         self.args = None
