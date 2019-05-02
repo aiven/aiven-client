@@ -61,3 +61,12 @@ arg.vat_id = arg("--vat-id", help="VAT ID of an EU VAT area business")
 arg.verbose = arg("-v", "--verbose", help="Verbose output", action="store_true", default=False)
 arg.connector_name = arg("connector", help="Connector name")
 arg.json_path_or_string = json_path_or_string
+arg.subject = arg("--subject", required=True, help="Subject name")
+arg.version_id = arg("--version-id", required=True, help="Subject version")
+arg.compatibility = arg(
+    "--compatibility",
+    required=True,
+    choices=["BACKWARD", "FORWARD", "FULL", "NONE"],
+    help="Choose a compatibility level for the subject"
+)
+arg.schema = arg("--schema", required=True, help="Schema string quote escaped")

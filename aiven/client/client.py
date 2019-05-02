@@ -451,6 +451,90 @@ class AivenClient(AivenClientBase):
         )
         return self.verify(self.post, path)
 
+    def get_schema(self, project, service, schema_id):
+        path = self.build_path("project", project, "service", service, "kafka", "schema", "schemas", "ids", schema_id)
+        return self.verify(self.get, path)
+
+    def check_schema_compatibility(self, project, service, subject, version, schema):
+        path = self.build_path(
+            "project",
+            project,
+            "service",
+            service,
+            "kafka",
+            "schema",
+            "compatibility",
+            "subjects",
+            subject,
+            "versions",
+            version
+        )
+        return self.verify(self.post, path, body={"schema": schema})
+
+    def get_schema_global_configuration(self, project, service):
+        path = self.build_path("project", project, "service", service, "kafka", "schema", "config")
+        return self.verify(self.get, path)
+
+    def update_schema_global_configuration(self, project, service, compatibility):
+        path = self.build_path("project", project, "service", service, "kafka", "schema", "config")
+        return self.verify(self.put, path, body={"compatibility": compatibility})
+
+    def get_schema_subject_configuration(self, project, service, subject):
+        path = self.build_path("project", project, "service", service, "kafka", "schema", "config", subject)
+        return self.verify(self.get, path)
+
+    def update_schema_subject_configuration(self, project, service, subject, compatibility):
+        path = self.build_path("project", project, "service", service, "kafka", "schema", "config", subject)
+        return self.verify(self.put, path, body={"compatibility": compatibility})
+
+    def list_schema_subjects(self, project, service):
+        path = self.build_path("project", project, "service", service, "kafka", "schema", "subjects")
+        return self.verify(self.get, path)
+
+    def delete_schema_subject(self, project, service, subject):
+        path = self.build_path("project", project, "service", service, "kafka", "schema", "subjects", subject)
+        return self.verify(self.delete, path)
+
+    def get_schema_subject_version(self, project, service, subject, version):
+        path = self.build_path(
+            "project", project, "service", service, "kafka", "schema", "subjects", subject, "versions", version
+        )
+        return self.verify(self.get, path)
+
+    def get_schema_subject_version_schema(self, project, service, subject, version):
+        path = self.build_path(
+            "project",
+            project,
+            "service",
+            service,
+            "kafka",
+            "schema",
+            "subjects",
+            subject,
+            "versions",
+            version,
+            "schema"
+        )
+        return self.verify(self.get, path)
+
+    def list_schema_subject_versions(self, project, service, subject):
+        path = self.build_path(
+            "project", project, "service", service, "kafka", "schema", "subjects", subject, "versions"
+        )
+        return self.verify(self.get, path)
+
+    def create_schema_subject_version(self, project, service, subject, schema):
+        path = self.build_path(
+            "project", project, "service", service, "kafka", "schema", "subjects", subject, "versions"
+        )
+        return self.verify(self.post, path, body={"schema": schema})
+
+    def delete_schema_subject_version(self, project, service, subject, version):
+        path = self.build_path(
+            "project", project, "service", service, "kafka", "schema", "subjects", subject, "versions", version
+        )
+        return self.verify(self.delete, path)
+
     def list_project_vpcs(self, project):
         return self.verify(self.get, self.build_path("project", project, "vpcs"))
 
