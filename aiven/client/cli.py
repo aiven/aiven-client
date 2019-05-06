@@ -1299,6 +1299,141 @@ ssl.truststore.type=JKS
         self.client.restart_kafka_connector_task(project_name, self.args.name, self.args.connector, self.args.task)
 
     @arg.project
+    @arg.service_name
+    @arg("--schema-id", required=True, help="Schema ID")
+    def service__schema__get(self):
+        """Get Kafka Schema Registry schema"""
+        project_name = self.get_project()
+        schema = self.client.get_schema(project_name, self.args.name, self.args.schema_id)
+        self.print_response(schema)
+
+    @arg.project
+    @arg.service_name
+    @arg.subject
+    @arg.schema
+    def service__schema__create(self):
+        """Create Kafka Schema Registry schema"""
+        project_name = self.get_project()
+        schema = self.client.create_schema_subject_version(project_name, self.args.name, self.args.subject, self.args.schema)
+        self.print_response(schema)
+
+    @arg.project
+    @arg.service_name
+    @arg.subject
+    @arg.version_id
+    @arg.schema
+    def service__schema__check(self):
+        """Check Kafka Schema Registry schema compatibility"""
+        project_name = self.get_project()
+        schema = self.client.check_schema_compatibility(
+            project_name, self.args.name, self.args.subject, self.args.version_id, self.args.schema
+        )
+        self.print_response(schema)
+
+    @arg.project
+    @arg.service_name
+    def service__schema__configuration(self):
+        """Get Kafka Schema Registry global configuration"""
+        project_name = self.get_project()
+        self.print_response(self.client.get_schema_global_configuration(project_name, self.args.name))
+
+    @arg.project
+    @arg.service_name
+    @arg.compatibility
+    def service__schema__configuration_update(self):
+        """Update Kafka Schema Registry global configuration"""
+        project_name = self.get_project()
+        self.client.update_schema_global_configuration(project_name, self.args.name, self.args.compatibility)
+
+    @arg.project
+    @arg.service_name
+    @arg.subject
+    @arg.compatibility
+    def service__schema__subject_update(self):
+        """Update Kafka Schema Registry subject"""
+        project_name = self.get_project()
+        self.client.update_schema_subject_configuration(
+            project_name, self.args.name, self.args.subject, self.args.compatibility
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg.subject
+    def service__schema__subject_configuration(self):
+        """Update Kafka Schema Registry subject"""
+        project_name = self.get_project()
+        response = self.client.get_schema_subject_configuration(project_name, self.args.name, self.args.subject)
+        self.print_response(response)
+
+    @arg.project
+    @arg.service_name
+    @arg.subject
+    @arg.compatibility
+    def service__schema__subject_configuration_update(self):
+        """Update Kafka Schema Registry global configuration"""
+        project_name = self.get_project()
+        self.client.update_schema_subject_configuration(
+            project_name, self.args.name, self.args.subject, self.args.compatibility
+        )
+
+    @arg.project
+    @arg.service_name
+    def service__schema__subject_list(self):
+        """List Kafka Schema Registry subjects"""
+        project_name = self.get_project()
+        self.print_response(self.client.list_schema_subjects(project_name, self.args.name))
+
+    @arg.project
+    @arg.service_name
+    @arg.subject
+    def service__schema__subject_delete(self):
+        """Delete Kafka Schema Registry subject"""
+        project_name = self.get_project()
+        self.client.delete_schema_subject(project_name, self.args.name, self.args.subject)
+
+    @arg.project
+    @arg.service_name
+    @arg.subject
+    def service__schema__subject_version__list(self):
+        """List or get Kafka Schema Registry subject version"""
+        project_name = self.get_project()
+        response = self.client.list_schema_subject_versions(project_name, self.args.name, self.args.subject)
+        self.print_response(response)
+
+    @arg.project
+    @arg.service_name
+    @arg.subject
+    @arg.version_id
+    def service__schema__subject_version__get(self):
+        """Get Kafka Schema Registry subject version"""
+        project_name = self.get_project()
+        response = self.client.get_schema_subject_version(
+            project_name, self.args.name, self.args.subject, self.args.version_id
+        )
+        self.print_response(response["version"])
+
+    @arg.project
+    @arg.service_name
+    @arg.subject
+    @arg.version_id
+    def service__schema__subject_version__schema(self):
+        """Get Kafka Schema Registry subject schema"""
+        project_name = self.get_project()
+        response = self.client.get_schema_subject_version_schema(
+            project_name, self.args.name, self.args.subject, self.args.version_id
+        )
+        self.print_response(response)
+
+    @arg.project
+    @arg.service_name
+    @arg.subject
+    @arg.version_id
+    def service__schema__subject_version__delete(self):
+        """Delete Kafka Schema Registry subject version"""
+        project_name = self.get_project()
+        self.client.delete_schema_subject_version(project_name, self.args.name, self.args.subject, self.args.version_id)
+
+    @arg.project
     @arg("service", nargs="+", help="Service to wait for")
     @arg.timeout
     def service_wait(self):  # pylint: disable=inconsistent-return-statements
