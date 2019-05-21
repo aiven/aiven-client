@@ -462,7 +462,16 @@ class AivenCLI(argx.CommandLineTool):
 
         layout = self.SERVICE_LAYOUT[:]
         if self.args.verbose:
-            layout.extend(self.EXT_SERVICE_LAYOUT)
+            ext_layout = list(self.EXT_SERVICE_LAYOUT)
+            if service["service_type"] == "kafka":
+                connection_info = service["connection_info"]
+                user_config = service["user_config"]
+                for key in ["kafka_connect", "kafka_rest", "schema_registry"]:
+                    if user_config.get(key):
+                        key_uri = "{}_uri".format(key)
+                        ext_layout.append(key_uri)
+                        service[key_uri] = connection_info[key_uri]
+            layout.extend(ext_layout)
 
         self.print_response(service, format=self.args.format, json=self.args.json,
                             table_layout=layout, single_item=True)
