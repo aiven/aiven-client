@@ -237,9 +237,14 @@ class CommandLineTool:  # pylint: disable=old-style-class
             err = "command failed: {0.__class__.__name__}: {0}".format(ex)
             self.log.error(err)
             return 1
+        except OSError as ex:
+            if ex.errno != errno.EPIPE:
+                raise
+            self.log.error("*** output truncated ***")
+            return 13  # SIGPIPE value in case anyone cares
         except KeyboardInterrupt:
             self.log.error("*** terminated by keyboard ***")
-            return 2
+            return 2  # SIGINT
 
     def run_actual(self, args_for_help):
         func = getattr(self.args, "func", None)
