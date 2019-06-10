@@ -561,7 +561,8 @@ class AivenClient(AivenClientBase):
         return self.verify(self.delete, self.build_path("project", project, "vpcs", project_vpc_id))
 
     def create_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc, peer_region=None):
-        return self.verify(self.post, self.build_path("project", project, "vpcs", project_vpc_id), body={
+        path = self.build_path("project", project, "vpcs", project_vpc_id, "peering-connections")
+        return self.verify(self.post, path, body={
             "peer_cloud_account": peer_cloud_account,
             "peer_vpc": peer_vpc,
             "peer_region": peer_region,
