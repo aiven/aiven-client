@@ -615,6 +615,17 @@ class AivenClient(AivenClientBase):
         )
         raise KeyError(msg)
 
+    def refresh_project_vpc_peering_connections(self, project, project_vpc_id):
+        path = self.build_path(
+            "project",
+            project,
+            "vpcs",
+            project_vpc_id,
+            "peering-connections",
+            "refresh",
+        )
+        return self.verify(self.post, path, body={})
+
     def create_service(self, project, service, service_type, group_name, plan,
                        cloud=None, user_config=None, project_vpc_id=UNDEFINED, service_integrations=None):
         user_config = user_config or {}

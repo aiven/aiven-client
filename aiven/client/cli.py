@@ -1729,6 +1729,20 @@ ssl.truststore.type=JKS
             print(ex.response.text)
             raise
 
+    @arg.project
+    @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
+    def vpc__peering_connection__refresh(self):
+        """Delete a peering connection for a project VPC"""
+        project_name = self.get_project()
+        try:
+            self.client.refresh_project_vpc_peering_connections(
+                project=project_name,
+                project_vpc_id=self.args.project_vpc_id,
+            )
+        except client.Error as ex:
+            print(ex.response.text)
+            raise
+
     def _get_service_project_vpc_id(self):
         """Utility method for service_create and service_update"""
         if self.args.project_vpc_id is None:
