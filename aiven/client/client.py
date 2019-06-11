@@ -595,6 +595,25 @@ class AivenClient(AivenClientBase):
             path += self.build_path("peer-regions", peer_region)
         return self.verify(self.delete, path)
 
+    def get_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc,
+                                           peer_region=UNDEFINED):
+        vpc = self.get_project_vpc(project=project, project_vpc_id=project_vpc_id)
+        for peering_connection in vpc["peering_connections"]:
+            if (peering_connection["peer_cloud_account"] == peer_cloud_account and
+                    peering_connection["peer_vpc"] == peer_vpc and
+                    (peer_region is UNDEFINED or peering_connection["peer_region"] == peer_region)):
+                return peering_connection
+        if peer_region is not UNDEFINED and peer_region is not None:
+            peer_region_msg = " in region {}".format(peer_region)
+        else:
+            peer_region_msg = ""
+        msg = "Peering connection to peer account {} VPC {}{} does not exist".format(
+            peer_cloud_account,
+            peer_vpc,
+            peer_region_msg,
+        )
+        raise KeyError(msg)
+
     def create_service(self, project, service, service_type, group_name, plan,
                        cloud=None, user_config=None, project_vpc_id=UNDEFINED, service_integrations=None):
         user_config = user_config or {}
