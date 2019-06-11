@@ -1642,16 +1642,14 @@ ssl.truststore.type=JKS
         """Show details of a VPC peering connection"""
         project_name = self.get_project()
         try:
-            vpc = self.client.get_project_vpc(
-                project=project_name,
-                project_vpc_id=self.args.project_vpc_id,
-            )
-            peering_connection = None
-            for conn in vpc["peering_connections"]:
-                if conn["peer_cloud_account"] == self.args.peer_cloud_account and conn["peer_vpc"] == self.args.peer_vpc:
-                    peering_connection = conn
-                    break
-            if peering_connection is None:
+            try:
+                peering_connection = self.client.get_project_vpc_peering_connection(
+                    project=project_name,
+                    project_vpc_id=self.args.project_vpc_id,
+                    peer_cloud_account=self.args.peer_cloud_account,
+                    peer_vpc=self.args.peer_vpc,
+                )
+            except KeyError:
                 raise argx.UserError("Peering connection does not exist")
             if self.args.json:
                 print(jsonlib.dumps(peering_connection, indent=4, sort_keys=True))
