@@ -562,11 +562,13 @@ class AivenClient(AivenClientBase):
 
     def create_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc, peer_region=None):
         path = self.build_path("project", project, "vpcs", project_vpc_id, "peering-connections")
-        return self.verify(self.post, path, body={
+        body = {
             "peer_cloud_account": peer_cloud_account,
             "peer_vpc": peer_vpc,
-            "peer_region": peer_region,
-        })
+        }
+        if peer_region is not None:
+            body["peer_region"] = peer_region
+        return self.verify(self.post, path, body=body)
 
     def request_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc):
         warnings.warn("Use the create_project_vpc_peering_connection method", DeprecationWarning)
