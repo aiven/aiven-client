@@ -1958,6 +1958,7 @@ ssl.truststore.type=JKS
                 raise
 
             self.log.info("Project '%s' already exists", self.args.name)
+            return
 
         self.config["default_project"] = self.args.name
         self.config.save()
