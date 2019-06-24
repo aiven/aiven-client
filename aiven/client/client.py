@@ -779,6 +779,14 @@ class AivenClient(AivenClientBase):
     def get_project_ca(self, project):
         return self.verify(self.get, self.build_path("project", project, "kms", "ca"))
 
+    def get_service_ca(self, project, service, ca):
+        path = self.build_path("project", project, "service", service, "kms", "ca", ca)
+        return self.verify(self.get, path)
+
+    def get_service_keypair(self, project, service, keypair):
+        path = self.build_path("project", project, "service", service, "kms", "keypairs", keypair)
+        return self.verify(self.get, path)
+
     def invite_project_user(self, project, user_email, member_type=None):
         body = {
             "user_email": user_email,

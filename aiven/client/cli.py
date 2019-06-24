@@ -2105,6 +2105,33 @@ ssl.truststore.type=JKS
             fp.write(result["certificate"])
 
     @arg.project
+    @arg.service_name
+    @arg("--target-filepath", help="Filepath for storing CA certificate", required=True)
+    @arg("ca")
+    def service__ca__get(self):
+        """Get service CA certificate"""
+        project_name = self.get_project()
+        result = self.client.get_service_ca(project=project_name, service=self.args.name, ca=self.args.ca)
+
+        with open(self.args.target_filepath, "w") as fp:
+            fp.write(result["certificate"])
+
+    @arg.project
+    @arg.service_name
+    @arg("--key-filepath", help="Filepath for storing private key", required=True)
+    @arg("--cert-filepath", help="Filepath for storing certificate", required=True)
+    @arg("keypair")
+    def service__keypair__get(self):
+        """Get service keypair"""
+        project_name = self.get_project()
+        result = self.client.get_service_keypair(project=project_name, service=self.args.name, keypair=self.args.keypair)
+
+        with open(self.args.key_filepath, "w") as fp:
+            fp.write(result["key"])
+        with open(self.args.cert_filepath, "w") as fp:
+            fp.write(result["certificate"])
+
+    @arg.project
     @arg.email
     @arg("--role", help="Project role for new invited user ('admin', 'operator', 'developer')")
     def project_user_invite(self):
