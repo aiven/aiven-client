@@ -668,14 +668,31 @@ class AivenClient(AivenClientBase):
         return self.verify(self.delete, self.build_path("project", project, "service", service))
 
     def get_pg_service_current_queries(self, project, service):
+        warnings.warn("Use the get_service_current_queries method", DeprecationWarning)
+        return self.get_service_current_queries(project, service)
+
+    def get_pg_service_query_stats(self, project, service):
+        warnings.warn("Use the get_service_query_stats method", DeprecationWarning)
+        return self.get_service_query_stats(project, service, service_type="pg")
+
+    def reset_pg_service_query_stats(self, project, service):
+        warnings.warn("Use the reset_service_query_stats method", DeprecationWarning)
+        return self.reset_service_query_stats(project, service)
+
+    def get_service_current_queries(self, project, service):
         path = self.build_path("project", project, "service", service, "query", "activity")
         return self.verify(self.post, path, result_key="queries", body={"limit": 100, "order_by": "query_duration:desc"})
 
-    def get_pg_service_query_stats(self, project, service):
-        path = self.build_path("project", project, "service", service, "query", "stats")
-        return self.verify(self.post, path, result_key="queries", body={"limit": 100, "order_by": "calls:desc"})
+    def get_service_query_stats(self, project, service, service_type=None):
+        if service_type is None:
+            service_type = self.get_service(project, service)["service_type"]
+        path = self.build_path("project", project, "service", service, service_type, "query", "stats")
+        return self.verify(self.post, path, result_key="queries", body={
+            "limit": 100,
+            "order_by": "calls:desc" if service_type == "pg" else "count_star:desc",
+        })
 
-    def reset_pg_service_query_stats(self, project, service):
+    def reset_service_query_stats(self, project, service):
         path = self.build_path("project", project, "service", service, "query", "stats", "reset")
         return self.verify(self.put, path, result_key="queries")
 
