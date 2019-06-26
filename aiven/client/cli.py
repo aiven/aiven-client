@@ -476,6 +476,40 @@ class AivenCLI(argx.CommandLineTool):
         self.print_response(service, format=self.args.format, json=self.args.json,
                             table_layout=layout, single_item=True)
 
+        if self.args.verbose and not self.args.json and service.get("node_states"):
+            print("Service node states")
+            collapsed = []
+            layout = ["name", "state", "phase", "min", "current", "max", "unit", "progress"]
+            for node_state in sorted(service["node_states"], key=lambda ns: ns["name"]):
+                collapsed.append({
+                    "current": "",
+                    "max": "",
+                    "min": "",
+                    "name": node_state["name"],
+                    "phase": "",
+                    "progress": "",
+                    "state": node_state["state"],
+                    "unit": "",
+                })
+                for progress_update in node_state["progress_updates"]:
+                    progress = ""
+                    maxv = progress_update["max"]
+                    minv = progress_update["min"]
+                    currentv = progress_update["current"]
+                    if minv is not None and maxv is not None and currentv is not None:
+                        progress = "{} %".format(int(1000 * (currentv - minv) / (maxv - minv)) / 10)
+                    collapsed.append({
+                        "current": str(currentv) if currentv is not None else "",
+                        "max": str(maxv) if maxv is not None else "",
+                        "min": str(minv) if minv is not None else "",
+                        "name": node_state["name"],
+                        "phase": progress_update["phase"],
+                        "progress": progress,
+                        "state": "",
+                        "unit": progress_update.get("unit") or "",
+                    })
+            self.print_response(collapsed, format=self.args.format, json=False, table_layout=layout)
+
     @optional_auth
     @arg.project
     @arg.service_name
