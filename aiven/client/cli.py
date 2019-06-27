@@ -969,8 +969,8 @@ ssl.truststore.type=JKS
     @arg.verbose
     @arg.json
     def service_queries_reset(self):
-        """Reset PostgreSQL service query statistics"""
-        queries = self.client.reset_pg_service_query_stats(project=self.get_project(), service=self.args.name)
+        """Reset service query statistics"""
+        queries = self.client.reset_service_query_stats(project=self.get_project(), service=self.args.name)
         self.print_response(queries, format=self.args.format, json=self.args.json)
 
     @arg.project
@@ -979,8 +979,8 @@ ssl.truststore.type=JKS
     @arg.verbose
     @arg.json
     def service_current_queries(self):
-        """List current PostgreSQL connections/queries"""
-        queries = self.client.get_pg_service_current_queries(project=self.get_project(), service=self.args.name)
+        """List current service connections/queries"""
+        queries = self.client.get_service_current_queries(project=self.get_project(), service=self.args.name)
         layout = [["pid", "query", "query_duration", "client_addr", "application_name"]]
         if self.args.verbose:
             layout.extend(["datid", "datname", "pid", "usesysid", "usename", "application_name", "client_addr",
@@ -995,14 +995,62 @@ ssl.truststore.type=JKS
     @arg.verbose
     @arg.json
     def service_queries(self):
-        """List PostgreSQL service query statistics"""
-        queries = self.client.get_pg_service_query_stats(project=self.get_project(), service=self.args.name)
-        layout = [["query", "max_time", "stddev_time", "min_time", "mean_time", "rows", "calls", "total_time"]]
+        """List service query statistics"""
+        project = self.get_project()
+        service = self.args.name
+        service_type = self.client.get_service(project, service)["service_type"]
+        queries = self.client.get_service_query_stats(project=project, service=service, service_type=service_type)
+        layout = (
+            [["query", "max_time", "stddev_time", "min_time", "mean_time", "rows", "calls", "total_time"]]
+            if service_type == "pg" else
+            [["digest_text", "max_timer_wait", "min_timer_wait", "avg_timer_wait", "sum_rows_affected", "sum_rows_sent",
+              "count_star", "sum_timer_wait"]]
+        )
         if self.args.verbose:
-            layout.extend(["dbid", "userid", "queryid", "shared_blks_read", "local_blks_read", "local_blks_hit",
-                           "local_blks_written", "local_blks_dirtied", "shared_blks_hit",
-                           "shared_blks_dirtied", "shared_blks_written",
-                           "blk_read_time", "blk_write_time", "temp_blks_read", "temp_blks_written"])
+            layout.extend([
+                "database_name",
+                "user_name",
+                "blk_read_time",
+                "blk_write_time",
+                "local_blks_dirtied",
+                "local_blks_hit",
+                "local_blks_read",
+                "local_blks_written",
+                "shared_blks_dirtied",
+                "shared_blks_hit",
+                "shared_blks_read",
+                "shared_blks_written",
+                "temp_blks_read",
+                "temp_blks_written",
+            ] if service_type == "pg" else [
+                "digest",
+                "first_seen",
+                "last_seen",
+                "quantile_95",
+                "quantile_99",
+                "quantile_999",
+                "query_sample_seen",
+                "query_sample_text",
+                "query_sample_timer_wait",
+                "schema_name",
+                "sum_created_tmp_disk_tables",
+                "sum_created_tmp_tables",
+                "sum_errors",
+                "sum_lock_time",
+                "sum_no_good_index_used",
+                "sum_no_index_used",
+                "sum_rows_examined",
+                "sum_select_full_join",
+                "sum_select_full_range_join",
+                "sum_select_range",
+                "sum_select_range_check",
+                "sum_select_scan",
+                "sum_sort_merge_passes",
+                "sum_sort_range",
+                "sum_sort_rows",
+                "sum_sort_scan",
+                "sum_warnings",
+            ])
         self.print_response(queries, format=self.args.format, json=self.args.json, table_layout=layout)
 
     @arg.project
