@@ -2105,6 +2105,173 @@ ssl.truststore.type=JKS
             fp.write(result["certificate"])
 
     @arg.project
+    @arg.service_name
+    @arg("--target-filepath", help="Filepath for storing CA certificate", required=True)
+    @arg("ca")
+    def service__ca__get(self):
+        """Get service CA certificate"""
+        project_name = self.get_project()
+        result = self.client.get_service_ca(project=project_name, service=self.args.name, ca=self.args.ca)
+
+        with open(self.args.target_filepath, "w") as fp:
+            fp.write(result["certificate"])
+
+    @arg.project
+    @arg.service_name
+    @arg("--key-filepath", help="Filepath for storing private key", required=True)
+    @arg("--cert-filepath", help="Filepath for storing certificate", required=True)
+    @arg("keypair")
+    def service__keypair__get(self):
+        """Get service keypair"""
+        project_name = self.get_project()
+        result = self.client.get_service_keypair(project=project_name, service=self.args.name, keypair=self.args.keypair)
+
+        with open(self.args.key_filepath, "w") as fp:
+            fp.write(result["key"])
+        with open(self.args.cert_filepath, "w") as fp:
+            fp.write(result["certificate"])
+
+    def _validate_service_cassandra_sstableloader(self):
+        """
+        Raises an exception if the service type is not Cassandra, or if its user config doesn't have it set to sstableloader
+        migration mode
+        """
+        service = self.client.get_service(project=self.get_project(), service=self.args.name)
+        if service["service_type"] != "cassandra":
+            raise argx.UserError("Service type is not 'cassandra' but {}".format(service["service_type"]))
+        if not service["user_config"].get("migrate_sstableloader", False):
+            raise argx.UserError("Service does not have migrate_sstableloader on")
+        return service
+
+    @arg.project
+    @arg.service_name
+    @arg("-d", "--target-directory", help="Directory to write credentials to", required=False, default=os.getcwd())
+    @arg("-p", "--password", help="Keystore and truststore password", default="changeit")
+    @arg(
+        "--preserve-pem",
+        action="store_true",
+        help=(
+            "Keep PEM encoded unencrypted service CA and keypair files in addition to the Java keystore and truststore "
+            "files created from them"
+        )
+    )
+    def service__sstableloader__get_credentials(self):
+        """Download credentials and generate cassandra.yaml suitable for running Cassandra sstableloader"""
+        self._validate_service_cassandra_sstableloader()
+
+        project_name = self.get_project()
+        client_keypair = self.client.get_service_keypair(
+            project=project_name, service=self.args.name, keypair="cassandra_migrate_sstableloader_user"
+        )
+        internode_ca = self.client.get_service_ca(
+            project=project_name, service=self.args.name, ca="cassandra_internode_service_nodes_ca"
+        )
+        project_ca = self.client.get_project_ca(project=project_name)
+
+        if not os.path.exists(self.args.target_directory):
+            os.makedirs(self.args.target_directory)
+
+        client_key_path = os.path.join(self.args.target_directory, "sstableloader.key")
+        client_cert_path = os.path.join(self.args.target_directory, "sstableloader.cert")
+        internode_ca_path = os.path.join(self.args.target_directory, "internode-ca.cert")
+        project_ca_path = os.path.join(self.args.target_directory, "project-ca.cert")
+
+        try:
+            with open(client_key_path, "w") as fp:
+                fp.write(client_keypair["key"])
+            with open(client_cert_path, "w") as fp:
+                fp.write(client_keypair["certificate"])
+            with open(internode_ca_path, "w") as fp:
+                fp.write(internode_ca["certificate"])
+            with open(project_ca_path, "w") as fp:
+                fp.write(project_ca["certificate"])
+
+            # Sstableloader accepts a regular cassandra.yaml and reads encryption settings for connecting to the native
+            # transport port (client_encryption_options) and the SSL storage port (server_encryption_options).
+            # Some options are boilerplate just used to avoid Cassandra/Java libraries to attempt to look up
+            # keystore/truststore files from default locations, and failing when they do not exist, even if the actual
+            # certificates/keys in them would not be used
+            with open(os.path.join(self.args.target_directory, "cassandra.yaml"), "w") as fp:
+                fp.write("""\
+client_encryption_options:
+    enabled: true
+    optional: false
+    keystore: sstableloader.keystore.p12
+    keystore_password: {password}
+    truststore: ./sstableloader.truststore.jks
+    truststore_password: {password}
+server_encryption_options:
+    internode_encryption: all
+    keystore: sstableloader.keystore.p12
+    keystore_password: {password}
+    truststore: ./sstableloader.truststore.jks
+    truststore_password: {password}
+""".format(password=self.args.password))
+
+            # The Project CA signs the certificate used by the Cassandra native transport, aka the regular client port
+            # The internode CA signs the certificate used by SSL storage port, aka the internode port used to stream data
+            for path, alias in [(project_ca_path, "Project"), (internode_ca_path, "Cassandra internode service nodes")]:
+                subprocess.check_call([
+                    "keytool", "-importcert",
+                    "-alias", "{} CA".format(alias),
+                    "-keystore", os.path.join(self.args.target_directory, "sstableloader.truststore.jks"),
+                    "-storepass", self.args.password,
+                    "-file", path,
+                    "-noprompt",
+                ])
+            # Connecting to the native transport port happens via username and password credentials, while connecting to
+            # the SSL storage port requires this client certificate
+            subprocess.check_call([
+                "openssl", "pkcs12", "-export",
+                "-out", os.path.join(self.args.target_directory, "sstableloader.keystore.p12"),
+                "-inkey", client_key_path,
+                "-in", client_cert_path,
+                "-passout", "pass:{}".format(self.args.password),
+            ])
+        finally:
+            # These are not used when connecting with the Java based sstableloader utility
+            if not self.args.preserve_pem:
+                for path in client_key_path, client_cert_path, internode_ca_path, project_ca_path:
+                    if os.path.isfile(path):
+                        os.unlink(path)
+
+    @arg.project
+    @arg.service_name
+    @arg("--cassandra-yaml", default="cassandra.yaml", help="Path to cassandra.yaml configuration file")
+    def service__sstableloader__command(self):
+        """
+        Outputs a string that can be used to run the sstableloader utility to upload Cassandra data files efficiently and
+        directly to the internode port of a Cassandra cluster.
+        """
+        service = self._validate_service_cassandra_sstableloader()
+
+        cassandra_component = None
+        internode_component = None
+        for component in service["components"]:
+            if (component["component"] == "cassandra" and
+                    component["route"] == "dynamic" and
+                    component["usage"] == "primary"):
+                cassandra_component = component
+            elif (component["component"] == "cassandra_internode" and
+                  component["route"] == "dynamic" and
+                  component["usage"] == "primary"):
+                internode_component = component
+
+        if cassandra_component is None or internode_component is None:
+            raise ValueError("Cassandra service component information missing")
+
+        print((
+            "sstableloader -f {yaml} -d {hostname} -ssp {internode_port} -p {client_port} -u {user} -pw {password}"
+        ).format(
+            yaml=self.args.cassandra_yaml,
+            hostname=cassandra_component["host"],
+            internode_port=internode_component["port"],
+            client_port=cassandra_component["port"],
+            user=service["service_uri_params"]["user"],
+            password=service["service_uri_params"]["password"]
+        ))
+
+    @arg.project
     @arg.email
     @arg("--role", help="Project role for new invited user ('admin', 'operator', 'developer')")
     def project_user_invite(self):
