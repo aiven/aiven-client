@@ -101,6 +101,21 @@ Note that the system has hard limits for the number of tokens you can create. If
 permanently done using a token you should always use ``user access-token revoke`` operation
 to revoke the token so that it does not count towards the quota.
 
+Alternatively, you can add 2 json files, first create a default config in `~/.config/aiven/aiven-credentials.json` containing the json with an auth_token:
+
+```json
+{
+  "auth_token": "ABC1+123...TOKEN==",
+  "user_email": "your.email@aiven.com"
+ }
+```
+
+Second create a default config in `~/.config/aiven/aiven-client.json` containing the json with the default_project:
+
+```json
+{"default_project": "yourproject-abcd"}
+```
+
 Clouds
 ------
 List available cloud regions::
