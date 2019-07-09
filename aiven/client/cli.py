@@ -1106,11 +1106,15 @@ ssl.truststore.type=JKS
         cgroups = []
         for p in topic["partitions"]:
             for cg in p["consumer_groups"]:
+                if None not in {p["latest_offset"], cg["offset"]}:
+                    lag = p["latest_offset"] - cg["offset"]
+                else:
+                    lag = "UNDEFINED"
                 cgroups.append({
                     "partition": p["partition"],
                     "consumer_group": cg["group_name"],
                     "offset": cg["offset"],
-                    "lag": p["latest_offset"] - cg["offset"]
+                    "lag": lag
                 })
 
         if not cgroups:
