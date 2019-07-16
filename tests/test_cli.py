@@ -22,3 +22,7 @@ def test_cloud_list():
 
 def test_service_plans():
     AivenCLI().run(args=["service", "plans"])
+
+
+def test_help():
+    AivenCLI().run(args=["help"])

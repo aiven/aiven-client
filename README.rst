@@ -75,6 +75,22 @@ Basic Usage
 * NOTE: On Windows you may need to use ``python -m aiven.client`` instead of ``avn``.
 * All commands will output the raw REST API JSON response with ``--json``
 
+Help command
+------------
+
+::
+
+  $ avn help
+
+List all commands. You can use the help to also search for matching commands,
+for example
+
+::
+
+  $ avn help kafka topic
+
+would list all commands that have kafka *and* topic in their description.
+
 Login and users
 ---------------
 Login::
@@ -227,6 +243,7 @@ More help
 ---------
 ::
 
+  $ avn help
   $ avn -h
   $ avn user -h
   $ avn service -h
