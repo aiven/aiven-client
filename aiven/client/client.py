@@ -615,7 +615,8 @@ class AivenClient(AivenClientBase):
         raise KeyError(msg)
 
     def create_service(self, project, service, service_type, group_name, plan,
-                       cloud=None, user_config=None, project_vpc_id=UNDEFINED, service_integrations=None):
+                       cloud=None, user_config=None, project_vpc_id=UNDEFINED, service_integrations=None,
+                       termination_protection=False):
         user_config = user_config or {}
         body = {
             "group_name": group_name,
@@ -625,6 +626,7 @@ class AivenClient(AivenClientBase):
             "service_name": service,
             "service_type": service_type,
             "user_config": user_config,
+            "termination_protection": termination_protection,
         }
         if project_vpc_id is not UNDEFINED:
             body["project_vpc_id"] = project_vpc_id
@@ -639,6 +641,7 @@ class AivenClient(AivenClientBase):
                        user_config=None,
                        plan=None,
                        powered=None,
+                       termination_protection=None,
                        project_vpc_id=UNDEFINED):
         user_config = user_config or {}
         body = {}
@@ -656,6 +659,8 @@ class AivenClient(AivenClientBase):
             body["user_config"] = user_config
         if project_vpc_id is not UNDEFINED:
             body["project_vpc_id"] = project_vpc_id
+        if termination_protection is not None:
+            body["termination_protection"] = termination_protection
 
         path = self.build_path("project", project, "service", service)
         return self.verify(self.put, path, body=body, result_key="service")

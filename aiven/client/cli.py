@@ -1862,6 +1862,7 @@ ssl.truststore.type=JKS
          help="Do not put the service into a project VPC even if the project has one in the selected cloud")
     @arg("--read-replica-for",
          help="Creates a read replica for given source service. Only applicable for certain service types")
+    @arg("--enable-termination-protection", action="store_true", default=False, help="Enable termination protection")
     def service__create(self):
         """Create a service"""
         service_type_info = self.args.service_type.split(":")
@@ -1901,6 +1902,7 @@ ssl.truststore.type=JKS
                 group_name=self.args.group_name,
                 user_config=user_config,
                 project_vpc_id=project_vpc_id,
+                termination_protection=self.args.enable_termination_protection,
                 service_integrations=service_integrations)
         except client.Error as ex:
             print(ex.response)
@@ -1958,6 +1960,8 @@ ssl.truststore.type=JKS
     @arg("--maintenance-dow", help="Set automatic maintenance window's day of week",
          choices=["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "never"])
     @arg("--maintenance-time", help="Set automatic maintenance window's start time (HH:MM:SS)")
+    @arg("--enable-termination-protection", action="store_true", help="Enable termination protection")
+    @arg("--disable-termination-protection", action="store_true", help="Disable termination protection")
     @arg("--project-vpc-id", help="Put service into a project VPC. The VPC's cloud must match the service's cloud")
     @arg("--no-project-vpc",
          action="store_true",
@@ -1976,6 +1980,15 @@ ssl.truststore.type=JKS
         if self.args.maintenance_time:
             maintenance["time"] = self.args.maintenance_time
         project_vpc_id = self._get_service_project_vpc_id()
+        termination_protection = None
+        if self.args.enable_termination_protection and self.args.disable_termination_protection:
+            raise argx.UserError(
+                "--enable-termination-protection and --disable-termination-protection are mutually exclusive."
+            )
+        if self.args.enable_termination_protection:
+            termination_protection = True
+        elif self.args.disable_termination_protection:
+            termination_protection = False
         try:
             self.client.update_service(
                 cloud=self.args.cloud,
@@ -1986,6 +1999,7 @@ ssl.truststore.type=JKS
                 project=project,
                 service=self.args.name,
                 user_config=user_config,
+                termination_protection=termination_protection,
                 project_vpc_id=project_vpc_id,
             )
         except client.Error as ex:
