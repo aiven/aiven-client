@@ -560,7 +560,8 @@ class AivenClient(AivenClientBase):
     def delete_project_vpc(self, project, project_vpc_id):
         return self.verify(self.delete, self.build_path("project", project, "vpcs", project_vpc_id))
 
-    def create_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc, peer_region=None):
+    def create_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc, peer_region=None,
+                                              peer_resource_group=None, peer_azure_app_id=None, peer_azure_tenant_id=None):
         path = self.build_path("project", project, "vpcs", project_vpc_id, "peering-connections")
         body = {
             "peer_cloud_account": peer_cloud_account,
@@ -568,6 +569,12 @@ class AivenClient(AivenClientBase):
         }
         if peer_region is not None:
             body["peer_region"] = peer_region
+        if peer_resource_group is not None:
+            body["peer_resource_group"] = peer_resource_group
+        if peer_azure_app_id is not None:
+            body["peer_azure_app_id"] = peer_azure_app_id
+        if peer_azure_tenant_id is not None:
+            body["peer_azure_tenant_id"] = peer_azure_tenant_id
         return self.verify(self.post, path, body=body)
 
     def request_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc):
@@ -579,7 +586,8 @@ class AivenClient(AivenClientBase):
             peer_vpc=peer_vpc,
         )
 
-    def delete_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc, peer_region=None):
+    def delete_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc, peer_region=None,
+                                              peer_resource_group=UNDEFINED):
         path = self.build_path(
             "project",
             project,
@@ -587,28 +595,36 @@ class AivenClient(AivenClientBase):
             project_vpc_id,
             "peering-connections",
             "peer-accounts",
-            peer_cloud_account,
-            "peer-vpcs",
-            peer_vpc
+            peer_cloud_account
         )
+        if peer_resource_group is not UNDEFINED and peer_resource_group is not None:
+            path += self.build_path("peer-resource-groups", peer_resource_group)
+        path += self.build_path("peer-vpcs", peer_vpc)
         if peer_region is not None:
             path += self.build_path("peer-regions", peer_region)
         return self.verify(self.delete, path)
 
     def get_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc,
-                                           peer_region=UNDEFINED):
+                                           peer_region=UNDEFINED, peer_resource_group=UNDEFINED):
         vpc = self.get_project_vpc(project=project, project_vpc_id=project_vpc_id)
         for peering_connection in vpc["peering_connections"]:
+            # pylint: disable=too-many-boolean-expressions
             if (peering_connection["peer_cloud_account"] == peer_cloud_account and
                     peering_connection["peer_vpc"] == peer_vpc and
-                    (peer_region is UNDEFINED or peering_connection["peer_region"] == peer_region)):
+                    (peer_region is UNDEFINED or peering_connection["peer_region"] == peer_region) and
+                    (peer_resource_group is UNDEFINED or peering_connection["peer_resource_group"] == peer_resource_group)):
                 return peering_connection
+        if peer_resource_group is not UNDEFINED and peer_resource_group is not None:
+            peer_resource_group_msg = " in resource group {}".format(peer_resource_group)
+        else:
+            peer_resource_group_msg = ""
         if peer_region is not UNDEFINED and peer_region is not None:
             peer_region_msg = " in region {}".format(peer_region)
         else:
             peer_region_msg = ""
-        msg = "Peering connection to peer account {} VPC {}{} does not exist".format(
+        msg = "Peering connection to peer account {}{} VPC {}{} does not exist".format(
             peer_cloud_account,
+            peer_resource_group_msg,
             peer_vpc,
             peer_region_msg,
         )

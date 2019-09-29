@@ -1721,14 +1721,16 @@ ssl.truststore.type=JKS
         """List VPC peering connections for a project"""
         project_name = self.get_project()
         try:
-            vpc = self.client.get_project_vpc(
+            peering_connections = self.client.get_project_vpc(
                 project=project_name,
                 project_vpc_id=self.args.project_vpc_id,
-            )
-            layout = ["peer_cloud_account", "peer_vpc", "peer_region", "state"]
+            )["peering_connections"]
+            layout = ["peer_cloud_account", "peer_resource_group", "peer_vpc", "peer_region", "state"]
             if self.args.verbose:
                 layout += ["create_time", "update_time"]
-            self.print_response(vpc["peering_connections"], json=self.args.json, table_layout=layout)
+            self.print_response(
+                [dict(pcx, peer_resource_group=pcx.get("peer_resource_group")) for pcx in peering_connections],
+                json=self.args.json, table_layout=layout)
         except client.Error as ex:
             print(ex.response.text)
             msg = "Peering connection listing for VPC '{}' of project '{}' failed".format(
@@ -1739,8 +1741,9 @@ ssl.truststore.type=JKS
 
     @arg.project
     @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
-    @arg("--peer-cloud-account", required=True, help="AWS account ID or Google project ID")
-    @arg("--peer-vpc", required=True, help="AWS VPC ID or Google VPC network name")
+    @arg("--peer-cloud-account", required=True, help="AWS account ID, Google project ID, or Azure subscription ID")
+    @arg("--peer-resource-group", help="Azure resource group name", default=client.UNDEFINED)
+    @arg("--peer-vpc", required=True, help="AWS VPC ID, Google VPC network name, or Azure VNet name")
     @arg.json
     @arg.verbose
     def vpc__peering_connection__get(self):
@@ -1752,6 +1755,7 @@ ssl.truststore.type=JKS
                     project=project_name,
                     project_vpc_id=self.args.project_vpc_id,
                     peer_cloud_account=self.args.peer_cloud_account,
+                    peer_resource_group=self.args.peer_resource_group,
                     peer_vpc=self.args.peer_vpc,
                 )
             except KeyError:
@@ -1773,7 +1777,7 @@ ssl.truststore.type=JKS
             )
             raise argx.UserError(msg)
 
-    def _vpc_peering_connection_create(self, peer_region):
+    def _vpc_peering_connection_create(self, peer_region, peer_resource_group, peer_azure_app_id, peer_azure_tenant_id):
         """Helper method for vpc__peering_connection__create and vpc__peering_connection__request"""
         project_name = self.get_project()
         try:
@@ -1783,6 +1787,9 @@ ssl.truststore.type=JKS
                 peer_cloud_account=self.args.peer_cloud_account,
                 peer_vpc=self.args.peer_vpc,
                 peer_region=peer_region,
+                peer_resource_group=peer_resource_group,
+                peer_azure_app_id=peer_azure_app_id,
+                peer_azure_tenant_id=peer_azure_tenant_id,
             )
             self.print_response(vpc_peering_connection, json=self.args.json, single_item=True)
         except client.Error as ex:
@@ -1792,17 +1799,23 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.json
     @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
-    @arg("--peer-cloud-account", required=True, help="AWS account ID or Google project ID")
-    @arg("--peer-vpc", required=True, help="AWS VPC ID or Google VPC network name")
+    @arg("--peer-cloud-account", required=True, help="AWS account ID, Google project ID, or Azure subscription ID")
+    @arg("--peer-vpc", required=True, help="AWS VPC ID, Google VPC network name, or Azure VNet name")
     @arg("--peer-region", help="AWS region of peer VPC, if other than the region of the Aiven project VPC")
+    @arg("--peer-resource-group", help="Azure resource group name")
+    @arg("--peer-azure-app-id", help="Azure app object ID")
+    @arg("--peer-azure-tenant-id", help="Azure AD tenant ID")
     def vpc__peering_connection__create(self):
         """Create a peering connection for a project VPC"""
-        return self._vpc_peering_connection_create(self.args.peer_region)
+        return self._vpc_peering_connection_create(peer_region=self.args.peer_region,
+                                                   peer_resource_group=self.args.peer_resource_group,
+                                                   peer_azure_app_id=self.args.peer_azure_app_id,
+                                                   peer_azure_tenant_id=self.args.peer_azure_tenant_id)
 
     @arg.project
     @arg.json
     @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
-    @arg("--peer-cloud-account", required=True, help="AWS account ID or Google project ID")
+    @arg("--peer-cloud-account", required=True, help="AWS account ID, Google project ID, or Azure subscription ID")
     @arg("--peer-vpc", required=True, help="AWS VPC ID or Google VPC network name")
     def vpc__peering_connection__request(self):
         """Request a peering connection for a project VPC (Deprecated: use vpc peering-connection create)"""
@@ -1810,13 +1823,17 @@ ssl.truststore.type=JKS
             "'vpc peering-connection request' is going to be deprecated. Use the 'vpc peering-connection create' command "
             "instead."
         )
-        return self._vpc_peering_connection_create(None)
+        return self._vpc_peering_connection_create(peer_region=None,
+                                                   peer_resource_group=None,
+                                                   peer_azure_app_id=None,
+                                                   peer_azure_tenant_id=None)
 
     @arg.project
     @arg.json
     @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
-    @arg("--peer-cloud-account", required=True, help="AWS account ID or Google project ID")
-    @arg("--peer-vpc", required=True, help="AWS VPC ID or Google VPC network name")
+    @arg("--peer-cloud-account", required=True, help="AWS account ID, Google project ID, or Azure subscription ID")
+    @arg("--peer-resource-group", required=False, help="Azure resource group name", default=client.UNDEFINED)
+    @arg("--peer-vpc", required=True, help="AWS VPC ID, Google VPC network name, or Azure VNet name")
     @arg("--peer-region", help="AWS region of peer VPC, if other than the region of the Aiven project VPC")
     def vpc__peering_connection__delete(self):
         """Delete a peering connection for a project VPC"""
@@ -1826,6 +1843,7 @@ ssl.truststore.type=JKS
                 project=project_name,
                 project_vpc_id=self.args.project_vpc_id,
                 peer_cloud_account=self.args.peer_cloud_account,
+                peer_resource_group=self.args.peer_resource_group,
                 peer_vpc=self.args.peer_vpc,
                 peer_region=self.args.peer_region,
             )
