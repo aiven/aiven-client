@@ -24,5 +24,9 @@ def test_service_plans():
     AivenCLI().run(args=["service", "plans"])
 
 
+def test_service_types_v():
+    AivenCLI().run(args=["service", "types", "-v"])
+
+
 def test_help():
     AivenCLI().run(args=["help"])

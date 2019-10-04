@@ -434,9 +434,6 @@ class AivenCLI(argx.CommandLineTool):
                 else:
                     for name, spec in sorted(options.items()):
                         default = spec.get("default")
-                        if isinstance(default, list):
-                            default = ",".join(default)
-
                         default_desc = "(default={!r})".format(default) if default is not None else ""
                         description = ": {}".format(spec["description"]) if "description" in spec else ""
                         types = spec["type"]
