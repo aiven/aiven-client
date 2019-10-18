@@ -239,9 +239,12 @@ class AivenClient(AivenClientBase):
         path = self.build_path("project", project, "service", service, "user", username)
         return self.verify(self.delete, path)
 
-    def reset_service_user_password(self, project, service, username):
-        path = self.build_path("project", project, "service", service, "user", username, "credentials", "reset")
-        return self.verify(self.put, path)
+    def reset_service_user_password(self, project, service, username, password):
+        path = self.build_path("project", project, "service", service, "user", username)
+        body = {"operation": "reset-credentials"}
+        if password is not None:
+            body["new_password"] = password
+        return self.verify(self.put, path, body=body)
 
     def get_service_integration_endpoints(self, project):
         path = self.build_path("project", project, "integration_endpoint")

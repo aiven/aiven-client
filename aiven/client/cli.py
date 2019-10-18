@@ -790,11 +790,12 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.service_name
     @arg("--username", help="Service user username", required=True)
+    @arg("--new-password", help="New password for service user")
     @arg.json
     def service__user_password_reset(self):
         """Reset service user password"""
         self.client.reset_service_user_password(project=self.get_project(), service=self.args.name,
-                                                username=self.args.username)
+                                                username=self.args.username, password=self.args.new_password)
 
     @arg.project
     @arg.json
