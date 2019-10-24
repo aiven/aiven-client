@@ -354,6 +354,33 @@ class AivenCLI(argx.CommandLineTool):
             qual=plan_qual,
         )
 
+    @arg.json
+    @arg("-n", "--name", required=True, help="Name of the account to create")
+    def account__create(self):
+        """Create new account"""
+        account = self.client.create_account(self.args.name)
+        self.print_response(account, json=self.args.json, single_item=True)
+
+    @arg.json
+    @arg.account_id
+    @arg("-n", "--name", required=True, help="New name for the account")
+    def account__update(self):
+        """Update an account"""
+        account = self.client.update_account(self.args.account_id, self.args.name)
+        self.print_response(account, json=self.args.json, single_item=True)
+
+    @arg.account_id
+    def account__delete(self):
+        """Delete an account"""
+        self.client.delete_account(self.args.account_id)
+        print("Deleted")
+
+    @arg.json
+    def account__list(self):
+        """Lists all current accounts"""
+        accounts = self.client.get_accounts()
+        self.print_response(accounts, json=self.args.json)
+
     @optional_auth
     @arg.project
     @arg.cloud
@@ -2067,6 +2094,7 @@ ssl.truststore.type=JKS
         self.print_response(projects, json=getattr(self.args, "json", False), table_layout=layout)
 
     @arg("name", help="Project name")
+    @arg("--account-id", help="Account ID of the project")
     @arg.card_id
     @arg.cloud
     @arg("--no-fail-if-exists", action="store_true", default=False,
@@ -2081,6 +2109,7 @@ ssl.truststore.type=JKS
         """Create a project"""
         try:
             project = self.client.create_project(
+                account_id=self.args.account_id,
                 billing_address=self.args.billing_address,
                 billing_currency=self.args.billing_currency,
                 billing_extra_text=self.args.billing_extra_text,
@@ -2120,6 +2149,7 @@ ssl.truststore.type=JKS
         self._show_projects(projects, verbose=self.args.verbose)
 
     @arg.project
+    @arg("--account-id", help="Account ID of the project")
     @arg("--card-id", help="Card ID")
     @arg.cloud
     @arg.country_code
@@ -2132,6 +2162,7 @@ ssl.truststore.type=JKS
         project_name = self.get_project()
         try:
             project = self.client.update_project(
+                account_id=self.args.account_id,
                 billing_address=self.args.billing_address,
                 billing_currency=self.args.billing_currency,
                 billing_extra_text=self.args.billing_extra_text,

@@ -730,9 +730,28 @@ class AivenClient(AivenClientBase):
             path = self.build_path("project", project, "service_types")
         return self.verify(self.get, path, result_key="service_types")
 
+    def create_account(self, account_name):
+        body = {
+            "account_name": account_name,
+        }
+        return self.verify(self.post, "/account", body=body, result_key="account")
+
+    def delete_account(self, account_id):
+        return self.verify(self.delete, self.build_path("account", account_id))
+
+    def update_account(self, account_id, account_name):
+        body = {
+            "account_name": account_name,
+        }
+        return self.verify(self.put, self.build_path("account", account_id), body=body, result_key="account")
+
+    def get_accounts(self):
+        return self.verify(self.get, "/account", result_key="accounts")
+
     def create_project(
             self,
             project,
+            account_id=None,
             card_id=None,
             cloud=None,
             copy_from_project=None,
@@ -747,6 +766,8 @@ class AivenClient(AivenClientBase):
             "cloud": cloud,
             "project": project,
         }
+        if account_id is not None:
+            body["account_id"] = account_id
         if copy_from_project is not None:
             body["copy_from_project"] = copy_from_project
         if country_code is not None:
@@ -774,6 +795,7 @@ class AivenClient(AivenClientBase):
     def update_project(
             self,
             project,
+            account_id=None,
             card_id=None,
             cloud=None,
             country_code=None,
@@ -783,6 +805,8 @@ class AivenClient(AivenClientBase):
             vat_id=None
     ):
         body = {}
+        if account_id is not None:
+            body["account_id"] = account_id
         if card_id is not None:
             body["card_id"] = card_id
         if cloud is not None:

@@ -30,6 +30,7 @@ def json_path_or_string(param_name):
     return wrapper
 
 
+arg.account_id = arg("account_id", help="Account identifier")
 arg.billing_address = arg("--billing-address", help="Physical billing address for invoices")
 arg.billing_currency = arg("--billing-currency", help="Currency for charges")
 arg.billing_extra_text = arg("--billing-extra-text", help="Extra text to include in invoices (e.g. cost center id)")
