@@ -31,11 +31,28 @@ def json_path_or_string(param_name):
 
 
 arg.account_id = arg("account_id", help="Account identifier")
+arg.authentication_id = arg("authentication_id", help="Account authentication method identifier")
 arg.billing_address = arg("--billing-address", help="Physical billing address for invoices")
 arg.billing_currency = arg("--billing-currency", help="Currency for charges")
 arg.billing_extra_text = arg("--billing-extra-text", help="Extra text to include in invoices (e.g. cost center id)")
 arg.card_id = arg("--card-id", help="Card ID")
 arg.cloud = arg("--cloud", help="Cloud to use (see 'cloud list' command)")
+arg.config_cmdline = arg(
+    "-c",
+    dest="config_cmdline",
+    metavar="KEY=VALUE",
+    action="append",
+    default=[],
+    help="Additional configuration option in the form name=value"
+)
+arg.config_file = arg(
+    "-f",
+    dest="config_file",
+    metavar="KEY=VALUE",
+    action="append",
+    default=[],
+    help="Additional configuration option whose value is loaded from file in the form name=filename"
+)
 arg.country_code = arg("--country-code", help="Billing country code")
 arg.email = arg("email", help="User email address")
 arg.force = arg("-f", "--force", help="Force action without interactive confirmation",

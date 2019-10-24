@@ -748,6 +748,32 @@ class AivenClient(AivenClientBase):
     def get_accounts(self):
         return self.verify(self.get, "/account", result_key="accounts")
 
+    def create_account_authentication_method(self, account_id, method_name, method_type, options=None):
+        body = dict(options) if options else {}
+        body["authentication_method_name"] = method_name
+        body["authentication_method_type"] = method_type
+        path = self.build_path("account", account_id, "authentication")
+        return self.verify(self.post, path, body=body, result_key="authentication_method")
+
+    def delete_account_authentication_method(self, account_id, authentication_id):
+        return self.verify(self.delete, self.build_path("account", account_id, "authentication", authentication_id))
+
+    def update_account_authentication_method(
+            self, account_id, authentication_id, method_name=None, method_enable=None, options=None
+    ):
+        body = dict(options) if options else {}
+        if method_name is not None:
+            body["authentication_method_name"] = method_name
+        if method_enable is not None:
+            body["authentication_method_enabled"] = method_enable
+
+        path = self.build_path("account", account_id, "authentication", authentication_id)
+        return self.verify(self.put, path, body=body, result_key="authentication_method")
+
+    def get_account_authentication_methods(self, account_id):
+        path = self.build_path("account", account_id, "authentication")
+        return self.verify(self.get, path, result_key="authentication_methods")
+
     def create_project(
             self,
             project,
