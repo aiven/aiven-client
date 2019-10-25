@@ -22,6 +22,16 @@ try:
 except ImportError:
     from urlparse import urlparse  # pylint: disable=import-error,no-name-in-module
 
+AUTHENTICATION_METHOD_COLUMNS = [
+    "account_id",
+    "authentication_method_enabled",
+    "authentication_method_id",
+    "authentication_method_name",
+    "authentication_method_type",
+    "state",
+    "create_time",
+    "update_time",
+]
 PLUGINS = []
 
 
@@ -353,6 +363,118 @@ class AivenCLI(argx.CommandLineTool):
             disk_desc=disk_desc,
             qual=plan_qual,
         )
+
+    @arg.json
+    @arg("-n", "--name", required=True, help="Name of the account to create")
+    def account__create(self):
+        """Create new account"""
+        account = self.client.create_account(self.args.name)
+        self.print_response(account, json=self.args.json, single_item=True)
+
+    @arg.json
+    @arg.account_id
+    @arg("-n", "--name", required=True, help="New name for the account")
+    def account__update(self):
+        """Update an account"""
+        account = self.client.update_account(self.args.account_id, self.args.name)
+        self.print_response(account, json=self.args.json, single_item=True)
+
+    @arg.account_id
+    def account__delete(self):
+        """Delete an account"""
+        self.client.delete_account(self.args.account_id)
+        print("Deleted")
+
+    @arg.json
+    def account__list(self):
+        """Lists all current accounts"""
+        accounts = self.client.get_accounts()
+        self.print_response(accounts, json=self.args.json)
+
+    @staticmethod
+    def _parse_auth_config_options(config_cmdline, config_file):
+        options = {}
+        for name_and_value in config_cmdline:
+            if "=" not in name_and_value:
+                raise argx.UserError("Invalid custom value, missing '=': {}".format(name_and_value))
+            name, value = name_and_value.split("=", 1)
+            options[name] = value
+        for name_and_value in config_file:
+            if "=" not in name_and_value:
+                raise argx.UserError("Invalid custom value, missing '=': {}".format(name_and_value))
+            name, filename = name_and_value.split("=", 1)
+            if not os.path.isfile(filename):
+                raise argx.UserError("No such file {!r}".format(filename))
+            with open(filename, "rt") as fob:
+                value = fob.read()
+            options[name] = value
+        return options
+
+    @arg.json
+    @arg.account_id
+    @arg("-n", "--name", required=True, help="Authentication method name")
+    @arg("-t", "--type", required=True, help="Authentication method type", choices=["saml"])
+    @arg.config_cmdline
+    @arg.config_file
+    def account__authentication_method__create(self):
+        """Create new account authentication method"""
+        options = self._parse_auth_config_options(self.args.config_cmdline, self.args.config_file)
+        method = self.client.create_account_authentication_method(
+            self.args.account_id, method_name=self.args.name, method_type=self.args.type, options=options
+        )
+        acs_url = "https://api.aiven.io/v1/sso/saml/account/{}/method/{}/acs".format(
+            self.args.account_id, method["authentication_method_id"]
+        )
+        metadata_url = "https://api.aiven.io/v1/sso/saml/account/{}/method/{}/metadata".format(
+            self.args.account_id, method["authentication_method_id"]
+        )
+        acs_key = "ACS (Single Sign On / Recipient) URL"
+        metadata_key = "Metadata URL"
+        method[acs_key] = acs_url
+        method[metadata_key] = metadata_url
+        table_layout = [AUTHENTICATION_METHOD_COLUMNS, acs_key, metadata_key]
+        self.print_response(method, json=self.args.json, single_item=True, table_layout=table_layout)
+
+    @arg.json
+    @arg.account_id
+    @arg.authentication_id
+    @arg("-n", "--name", help="New name for the authentication method")
+    @arg("--enable", help="Enable the authentication method", action="store_true")
+    @arg("--disable", help="Disable the authentication method", action="store_true")
+    @arg.config_cmdline
+    @arg.config_file
+    def account__authentication_method__update(self):
+        """Update an account authentication method"""
+        if self.args.enable and self.args.disable:
+            raise argx.UserError("Only set at most one of --enable and --disable")
+        enable = None
+        if self.args.enable:
+            enable = True
+        elif self.args.disable:
+            enable = False
+        options = self._parse_auth_config_options(self.args.config_cmdline, self.args.config_file)
+        account = self.client.update_account_authentication_method(
+            self.args.account_id,
+            self.args.authentication_id,
+            method_enable=enable,
+            method_name=self.args.name,
+            options=options
+        )
+        self.print_response(account, json=self.args.json, single_item=True, table_layout=AUTHENTICATION_METHOD_COLUMNS)
+
+    @arg.account_id
+    @arg.authentication_id
+    def account__authentication_method__delete(self):
+        """Delete an account authentication method"""
+        self.client.delete_account_authentication_method(self.args.account_id, self.args.authentication_id)
+        print("Deleted")
+
+    @arg.json
+    @arg.account_id
+    def account__authentication_method__list(self):
+        """Lists all current account authentication methods"""
+        methods = self.client.get_account_authentication_methods(self.args.account_id)
+        self.print_response(methods, json=self.args.json, table_layout=AUTHENTICATION_METHOD_COLUMNS)
 
     @optional_auth
     @arg.project
@@ -2067,6 +2189,7 @@ ssl.truststore.type=JKS
         self.print_response(projects, json=getattr(self.args, "json", False), table_layout=layout)
 
     @arg("name", help="Project name")
+    @arg("--account-id", help="Account ID of the project")
     @arg.card_id
     @arg.cloud
     @arg("--no-fail-if-exists", action="store_true", default=False,
@@ -2081,6 +2204,7 @@ ssl.truststore.type=JKS
         """Create a project"""
         try:
             project = self.client.create_project(
+                account_id=self.args.account_id,
                 billing_address=self.args.billing_address,
                 billing_currency=self.args.billing_currency,
                 billing_extra_text=self.args.billing_extra_text,
@@ -2120,6 +2244,7 @@ ssl.truststore.type=JKS
         self._show_projects(projects, verbose=self.args.verbose)
 
     @arg.project
+    @arg("--account-id", help="Account ID of the project")
     @arg("--card-id", help="Card ID")
     @arg.cloud
     @arg.country_code
@@ -2132,6 +2257,7 @@ ssl.truststore.type=JKS
         project_name = self.get_project()
         try:
             project = self.client.update_project(
+                account_id=self.args.account_id,
                 billing_address=self.args.billing_address,
                 billing_currency=self.args.billing_currency,
                 billing_extra_text=self.args.billing_extra_text,
