@@ -1887,6 +1887,9 @@ ssl.truststore.type=JKS
                 print(jsonlib.dumps(peering_connection, indent=4, sort_keys=True))
             else:
                 print("State: {}".format(peering_connection["state"]))
+                user_peer_network_cidrs = peering_connection.get("user_peer_network_cidrs", [])
+                if user_peer_network_cidrs:
+                    print("User-defined peer network cidrs: {}".format(", ".join(user_peer_network_cidrs)))
                 state_info = peering_connection["state_info"]
                 if state_info is not None:
                     print("Message: {}\n".format(state_info.pop("message")))
@@ -1900,7 +1903,8 @@ ssl.truststore.type=JKS
             )
             raise argx.UserError(msg)
 
-    def _vpc_peering_connection_create(self, peer_region, peer_resource_group, peer_azure_app_id, peer_azure_tenant_id):
+    def _vpc_peering_connection_create(self, peer_region, peer_resource_group, peer_azure_app_id, peer_azure_tenant_id,
+                                       user_peer_network_cidrs):
         """Helper method for vpc__peering_connection__create and vpc__peering_connection__request"""
         project_name = self.get_project()
         try:
@@ -1913,6 +1917,7 @@ ssl.truststore.type=JKS
                 peer_resource_group=peer_resource_group,
                 peer_azure_app_id=peer_azure_app_id,
                 peer_azure_tenant_id=peer_azure_tenant_id,
+                user_peer_network_cidrs=user_peer_network_cidrs,
             )
             self.print_response(vpc_peering_connection, json=self.args.json, single_item=True)
         except client.Error as ex:
@@ -1928,12 +1933,15 @@ ssl.truststore.type=JKS
     @arg("--peer-resource-group", help="Azure resource group name")
     @arg("--peer-azure-app-id", help="Azure app object ID")
     @arg("--peer-azure-tenant-id", help="Azure AD tenant ID")
+    @arg("--user-peer-network-cidr", help="User-defined peer network IP range for routing/firewall", action="append",
+         dest="user_peer_network_cidrs")
     def vpc__peering_connection__create(self):
         """Create a peering connection for a project VPC"""
         return self._vpc_peering_connection_create(peer_region=self.args.peer_region,
                                                    peer_resource_group=self.args.peer_resource_group,
                                                    peer_azure_app_id=self.args.peer_azure_app_id,
-                                                   peer_azure_tenant_id=self.args.peer_azure_tenant_id)
+                                                   peer_azure_tenant_id=self.args.peer_azure_tenant_id,
+                                                   user_peer_network_cidrs=self.args.user_peer_network_cidrs)
 
     @arg.project
     @arg.json
@@ -1949,7 +1957,8 @@ ssl.truststore.type=JKS
         return self._vpc_peering_connection_create(peer_region=None,
                                                    peer_resource_group=None,
                                                    peer_azure_app_id=None,
-                                                   peer_azure_tenant_id=None)
+                                                   peer_azure_tenant_id=None,
+                                                   user_peer_network_cidrs=None)
 
     @arg.project
     @arg.json
