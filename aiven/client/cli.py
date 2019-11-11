@@ -145,6 +145,7 @@ class AivenCLI(argx.CommandLineTool):
 
     @no_auth
     @arg("email", nargs="?", help="User email address")
+    @arg("--tenant", help="Login under a different tenant")
     def user__login(self):
         """Login as a user"""
         email = self.args.email
@@ -153,7 +154,7 @@ class AivenCLI(argx.CommandLineTool):
 
         password = self.enter_password("{}'s Aiven password: ".format(email))
         try:
-            result = self.client.authenticate_user(email=email, password=password)
+            result = self.client.authenticate_user(email=email, password=password, tenant_id=self.args.tenant)
         except client.Error as ex:
             if ex.status == 510:  # NOT_EXTENDED
                 # Two-factor auth OTP required
