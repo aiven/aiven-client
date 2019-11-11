@@ -185,13 +185,15 @@ class AivenClient(AivenClientBase):
             "period": period
         })
 
-    def authenticate_user(self, email, password, otp=None):
+    def authenticate_user(self, email, password, otp=None, tenant_id=None):
         body = {
             "email": email,
             "password": password,
         }
         if otp is not None:
             body["otp"] = otp
+        if tenant_id is not None:
+            body["tenant"] = tenant_id
 
         return self.verify(self.post, "/userauth", body=body)
 
