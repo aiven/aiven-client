@@ -2675,6 +2675,19 @@ server_encryption_options:
         if self.args.json:
             self.print_response(result, json=True)
 
+    @arg.json
+    @arg.project
+    @arg("ticket", help="Ticket id to invite user to")
+    @arg("user_email", help="Email address of Aiven user to invite to ticket")
+    def ticket__invite_user(self):
+        """Invite a user to a support ticket"""
+        project_name = self.get_project()
+
+        result = self.client.invite_user_to_ticket(project=project_name,
+                                                   ticket_id=self.args.ticket,
+                                                   user_email=self.args.user_email)
+        self.print_response(result, json=True)
+
 
 if __name__ == "__main__":
     AivenCLI().main()

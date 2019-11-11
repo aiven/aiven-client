@@ -969,3 +969,10 @@ class AivenClient(AivenClientBase):
 
     def start_service_maintenance(self, project, service):
         return self.verify(self.put, self.build_path("project", project, "service", service, "maintenance", "start"))
+
+    def invite_user_to_ticket(self, project, ticket_id, user_email):
+        path_args = ("project", project, "tickets", ticket_id, "invite")
+        data = {
+            "user_email": user_email
+        }
+        return self.verify(self.post, self.build_path(*path_args), body=data)
