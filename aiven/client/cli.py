@@ -69,6 +69,8 @@ def convert_str_to_value(schema, str_value):
                                  .format(str_value, ", ".join(values)))
     elif "array" in schema["type"]:
         return [convert_str_to_value(schema["items"], val) for val in str_value.split(",")]
+    elif "null" in schema["type"] and str_value is None:
+        return None
     else:
         raise argx.UserError("Support for option value type(s) {!r} not implemented".format(schema["type"]))
 
@@ -100,6 +102,88 @@ class AivenCLI(argx.CommandLineTool):
         parser.add_argument("--show-http", help="Show HTTP requests and responses", action="store_true")
         parser.add_argument("--url", help="Server base url default %(default)r",
                             default=envdefault.AIVEN_WEB_URL or "https://api.aiven.io")
+
+    def collect_user_config_options(self, obj_def, prefix=""):
+        opts = {}
+        for prop, spec in sorted(obj_def.get("properties", {}).items()):
+            full_name = prop if not prefix else (prefix + "." + prop)
+            types = spec["type"]
+            if not isinstance(types, list):
+                types = [types]
+            # "object" or ["object", "null"]
+            if "object" in types:
+                opts.update(self.collect_user_config_options(spec, prefix=full_name))
+                if "null" in types:
+                    # allow removing user config option
+                    opts[full_name] = {
+                        "title": "Remove {}".format(prop),
+                        "type": "null",
+                    }
+            else:
+                opts[full_name] = spec
+        for spec in sorted(obj_def.get("patternProperties", {}).values()):
+            full_name = "KEY" if not prefix else (prefix + ".KEY")
+            if spec["type"] == "object":
+                opts.update(self.collect_user_config_options(spec, prefix=full_name))
+            else:
+                opts[full_name] = spec
+        return opts
+
+    def create_user_config(self, user_config_schema):
+        """Convert a list of ["foo.bar='baz'"] to {"foo": {"bar": "baz"}}"""
+        if not self.args.user_config and not self.args.user_option_remove:
+            return {}
+
+        options = self.collect_user_config_options(user_config_schema)
+        user_config = {}
+        for key_value in self.args.user_config:
+            try:
+                key, value = key_value.split("=", 1)
+            except ValueError:
+                raise argx.UserError("Invalid config value: {!r}, expected '<KEY>[.<SUBKEY>]=<JSON_VALUE>'"
+                                     .format(key_value))
+
+            opt_schema = options.get(key)
+            if not opt_schema:
+                # Exact key not found, try generic one
+                generic_key = ".".join(key.split(".")[:-1] + ["KEY"])
+                opt_schema = options.get(generic_key)
+
+            if not opt_schema:
+                raise argx.UserError("Unsupported option {!r}, available options: {}"
+                                     .format(key, ", ".join(options) or "none"))
+
+            try:
+                value = convert_str_to_value(opt_schema, value)
+            except ValueError as ex:
+                raise argx.UserError("Invalid value {!r}: {}".format(key_value, ex))
+
+            conf = user_config
+            parts = key.split(".", 1)
+            for part in parts[:-1]:
+                conf.setdefault(part, {})
+                conf = conf[part]
+
+            conf[parts[-1]] = value
+
+        for opt in self.args.user_option_remove:
+            opt_schema = options.get(opt)
+            if not opt_schema:
+                raise argx.UserError("Unsupported option {!r}, available options: {}"
+                                     .format(opt, ", ".join(options) or "none"))
+
+            if "null" not in opt_schema["type"]:
+                raise argx.UserError("Removing option {!r} is not supported".format(opt))
+
+            conf = user_config
+            parts = opt.split(".", 1)
+            for part in parts[:-1]:
+                conf.setdefault(part, {})
+                conf = conf[part]
+
+            conf[parts[-1]] = None
+
+        return user_config
 
     def enter_password(self, prompt, var="AIVEN_PASSWORD", confirm=False):
         """Prompt user for a password"""
@@ -315,22 +399,6 @@ class AivenCLI(argx.CommandLineTool):
         if project and not self.client.auth_token:
             raise argx.UserError("authentication is required to list clouds for a specific project")
         self.print_response(self.client.get_clouds(project=project), json=self.args.json)
-
-    def collect_user_config_options(self, obj_def, prefix=""):
-        opts = {}
-        for prop, spec in sorted(obj_def.get("properties", {}).items()):
-            full_name = prop if not prefix else (prefix + "." + prop)
-            if spec["type"] == "object":
-                opts.update(self.collect_user_config_options(spec, prefix=full_name))
-            else:
-                opts[full_name] = spec
-        for spec in sorted(obj_def.get("patternProperties", {}).values()):
-            full_name = "KEY" if not prefix else (prefix + ".KEY")
-            if spec["type"] == "object":
-                opts.update(self.collect_user_config_options(spec, prefix=full_name))
-            else:
-                opts[full_name] = spec
-        return opts
 
     @staticmethod
     def describe_plan(plan, node_count, service_plan):
@@ -560,13 +628,18 @@ class AivenCLI(argx.CommandLineTool):
                         default_desc = "(default={!r})".format(default) if default is not None else ""
                         description = ": {}".format(spec["description"]) if "description" in spec else ""
                         types = spec["type"]
-                        if not isinstance(types, list):
-                            types = [types]
-                        type_str = " or ".join(t for t in types if t != "null")
-                        print("  {title}{description}\n"
-                              "     => -c {name}=<{type}>  {default}"
-                              .format(name=name, type=type_str,
-                                      default=default_desc, title=spec["title"], description=description))
+                        if isinstance(types, str) and types == "null":
+                            print("  {title}{description}\n"
+                                  "     => --remove-option {name}"
+                                  .format(name=name, title=spec["title"], description=description))
+                        else:
+                            if not isinstance(types, list):
+                                types = [types]
+                            type_str = " or ".join(t for t in types if t != "null")
+                            print("  {title}{description}\n"
+                                  "     => -c {name}=<{type}>  {default}"
+                                  .format(name=name, type=type_str,
+                                          default=default_desc, title=spec["title"], description=description))
 
     SERVICE_LAYOUT = [["service_name", "service_type", "state", "cloud_name", "plan",
                        "group_list", "create_time", "update_time"]]
@@ -948,7 +1021,7 @@ ssl.truststore.type=JKS
             project = self.get_project()
             user_config_schema = self._get_endpoint_user_config_schema(
                 project=project, endpoint_type_name=self.args.endpoint_type)
-            user_config = self.create_user_config(user_config_schema, self.args.user_config)
+            user_config = self.create_user_config(user_config_schema)
         else:
             user_config = {}
 
@@ -979,7 +1052,7 @@ ssl.truststore.type=JKS
 
             user_config_schema = self._get_endpoint_user_config_schema(
                 project=project, endpoint_type_name=endpoint_type)
-            user_config = self.create_user_config(user_config_schema, self.args.user_config)
+            user_config = self.create_user_config(user_config_schema)
         else:
             user_config = {}
 
@@ -1035,7 +1108,7 @@ ssl.truststore.type=JKS
             project = self.get_project()
             user_config_schema = self._get_integration_user_config_schema(
                 project=project, integration_type_name=self.args.integration_type)
-            user_config = self.create_user_config(user_config_schema, self.args.user_config)
+            user_config = self.create_user_config(user_config_schema)
         else:
             user_config = {}
 
@@ -1067,7 +1140,7 @@ ssl.truststore.type=JKS
                 integration_type = integration["integration_type"]
             user_config_schema = self._get_integration_user_config_schema(
                 project=project, integration_type_name=integration_type)
-            user_config = self.create_user_config(user_config_schema, self.args.user_config)
+            user_config = self.create_user_config(user_config_schema)
         else:
             user_config = {}
 
@@ -1739,45 +1812,6 @@ ssl.truststore.type=JKS
             self.client.delete_service(project=self.get_project(), service=name)
             self.log.info("%s: terminated", name)
 
-    def create_user_config(self, user_config_schema, config_vars):
-        """Convert a list of ["foo.bar='baz'"] to {"foo": {"bar": "baz"}}"""
-        if not config_vars:
-            return {}
-
-        options = self.collect_user_config_options(user_config_schema)
-        user_config = {}
-        for key_value in self.args.user_config:
-            try:
-                key, value = key_value.split("=", 1)
-            except ValueError:
-                raise argx.UserError("Invalid config value: {!r}, expected '<KEY>[.<SUBKEY>]=<JSON_VALUE>'"
-                                     .format(key_value))
-
-            opt_schema = options.get(key)
-            if not opt_schema:
-                # Exact key not found, try generic one
-                generic_key = ".".join(key.split(".")[:-1] + ["KEY"])
-                opt_schema = options.get(generic_key)
-
-            if not opt_schema:
-                raise argx.UserError("Unsupported option {!r}, available options: {}"
-                                     .format(key, ", ".join(options) or "none"))
-
-            try:
-                value = convert_str_to_value(opt_schema, value)
-            except ValueError as ex:
-                raise argx.UserError("Invalid value {!r}: {}".format(key_value, ex))
-
-            conf = user_config
-            parts = key.split(".", 1)
-            for part in parts[:-1]:
-                conf.setdefault(part, {})
-                conf = conf[part]
-
-            conf[parts[-1]] = value
-
-        return user_config
-
     @arg.project
     @arg.json
     @arg.verbose
@@ -2079,7 +2113,7 @@ ssl.truststore.type=JKS
         project_vpc_id = self._get_service_project_vpc_id()
         project = self.get_project()
         user_config_schema = self._get_service_type_user_config_schema(project=project, service_type=service_type)
-        user_config = self.create_user_config(user_config_schema, self.args.user_config)
+        user_config = self.create_user_config(user_config_schema)
         service_integrations = []
 
         if self.args.read_replica_for:
@@ -2154,6 +2188,7 @@ ssl.truststore.type=JKS
     @arg("--group-name", help="New service group")
     @arg.cloud
     @arg.user_config
+    @arg.user_option_remove
     @arg("-p", "--plan", help="subscription plan of service", required=False)
     @arg("--power-on", action="store_true", default=False, help="Power-on the service")
     @arg("--power-off", action="store_true", default=False, help="Temporarily power-off the service")
@@ -2173,7 +2208,7 @@ ssl.truststore.type=JKS
         service = self.client.get_service(project=project, service=self.args.name)
         plan = self.args.plan or service["plan"]
         user_config_schema = self._get_service_type_user_config_schema(project=project, service_type=service["service_type"])
-        user_config = self.create_user_config(user_config_schema, self.args.user_config)
+        user_config = self.create_user_config(user_config_schema)
         maintenance = {}
         if self.args.maintenance_dow:
             maintenance["dow"] = self.args.maintenance_dow
