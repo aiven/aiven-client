@@ -1000,3 +1000,6 @@ class AivenClient(AivenClientBase):
 
     def list_tickets(self, project):
         return self.verify(self.get, self.build_path("project", project, "tickets"))
+
+    def get_service_migration_status(self, project, service):
+        return self.verify(self.get, self.build_path("project", project, "service", service, "migration"))

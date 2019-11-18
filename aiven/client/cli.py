@@ -811,6 +811,15 @@ class AivenCLI(argx.CommandLineTool):
 
     @arg.project
     @arg.service_name
+    @arg.json
+    def service__migration_status(self):
+        """Get migration status"""
+        response = self.client.get_service_migration_status(project=self.get_project(), service=self.args.name)
+        layout = ["status", "method", "error"]
+        self.print_response(response, json=self.args.json, single_item=True, table_layout=layout)
+
+    @arg.project
+    @arg.service_name
     @arg("--username", help="Service user username", required=True)
     @arg.json
     def service__user_create(self):
