@@ -638,6 +638,21 @@ class AivenClient(AivenClientBase):
         )
         raise KeyError(msg)
 
+    def update_project_vpc_user_peer_network_cidrs(self, project, project_vpc_id, add=None, delete=None):
+        path = self.build_path(
+            "project",
+            project,
+            "vpcs",
+            project_vpc_id,
+            "user-peer-network-cidrs",
+        )
+        body = {}
+        if add:
+            body["add"] = add
+        if delete:
+            body["delete"] = delete
+        return self.verify(self.put, path, body=body)
+
     def create_service(self, project, service, service_type, group_name, plan,
                        cloud=None, user_config=None, project_vpc_id=UNDEFINED, service_integrations=None,
                        termination_protection=False):
