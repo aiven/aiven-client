@@ -1863,11 +1863,16 @@ ssl.truststore.type=JKS
             )
             raise argx.UserError(msg)
 
+    _peer_cloud_account_help = "AWS account ID, Google project ID, or Azure subscription ID"
+    _peer_resource_group_help = "Azure resource group name"
+    _peer_vpc_help = "AWS VPC ID, Google VPC network name, or Azure VNet name"
+    _peer_region_help = "AWS region of peer VPC, if other than the region of the Aiven project VPC"
+
     @arg.project
     @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
-    @arg("--peer-cloud-account", required=True, help="AWS account ID, Google project ID, or Azure subscription ID")
-    @arg("--peer-resource-group", help="Azure resource group name", default=client.UNDEFINED)
-    @arg("--peer-vpc", required=True, help="AWS VPC ID, Google VPC network name, or Azure VNet name")
+    @arg("--peer-cloud-account", required=True, help=_peer_cloud_account_help)
+    @arg("--peer-resource-group", help=_peer_resource_group_help, default=client.UNDEFINED)
+    @arg("--peer-vpc", required=True, help=_peer_vpc_help)
     @arg.json
     @arg.verbose
     def vpc__peering_connection__get(self):
@@ -1928,10 +1933,10 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.json
     @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
-    @arg("--peer-cloud-account", required=True, help="AWS account ID, Google project ID, or Azure subscription ID")
-    @arg("--peer-vpc", required=True, help="AWS VPC ID, Google VPC network name, or Azure VNet name")
-    @arg("--peer-region", help="AWS region of peer VPC, if other than the region of the Aiven project VPC")
-    @arg("--peer-resource-group", help="Azure resource group name")
+    @arg("--peer-cloud-account", required=True, help=_peer_cloud_account_help)
+    @arg("--peer-vpc", required=True, help=_peer_vpc_help)
+    @arg("--peer-region", help=_peer_region_help)
+    @arg("--peer-resource-group", help=_peer_resource_group_help)
     @arg("--peer-azure-app-id", help="Azure app object ID")
     @arg("--peer-azure-tenant-id", help="Azure AD tenant ID")
     @arg("--user-peer-network-cidr", help="User-defined peer network IP range for routing/firewall", action="append",
@@ -1947,8 +1952,8 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.json
     @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
-    @arg("--peer-cloud-account", required=True, help="AWS account ID, Google project ID, or Azure subscription ID")
-    @arg("--peer-vpc", required=True, help="AWS VPC ID or Google VPC network name")
+    @arg("--peer-cloud-account", required=True, help=_peer_cloud_account_help)
+    @arg("--peer-vpc", required=True, help=_peer_vpc_help)
     def vpc__peering_connection__request(self):
         """Request a peering connection for a project VPC (Deprecated: use vpc peering-connection create)"""
         self.log.warning(
@@ -1964,10 +1969,10 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.json
     @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
-    @arg("--peer-cloud-account", required=True, help="AWS account ID, Google project ID, or Azure subscription ID")
-    @arg("--peer-resource-group", required=False, help="Azure resource group name", default=client.UNDEFINED)
-    @arg("--peer-vpc", required=True, help="AWS VPC ID, Google VPC network name, or Azure VNet name")
-    @arg("--peer-region", help="AWS region of peer VPC, if other than the region of the Aiven project VPC")
+    @arg("--peer-cloud-account", required=True, help=_peer_cloud_account_help)
+    @arg("--peer-resource-group", required=False, help=_peer_resource_group_help, default=client.UNDEFINED)
+    @arg("--peer-vpc", required=True, help=_peer_vpc_help)
+    @arg("--peer-region", help=_peer_region_help)
     def vpc__peering_connection__delete(self):
         """Delete a peering connection for a project VPC"""
         project_name = self.get_project()
@@ -1994,6 +1999,44 @@ ssl.truststore.type=JKS
         else:
             project_vpc_id = self.args.project_vpc_id
         return project_vpc_id
+
+    @arg.project
+    @arg.json
+    @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
+    @arg("--peer-cloud-account", required=True, help=_peer_cloud_account_help)
+    @arg("--peer-resource-group", help=_peer_resource_group_help)
+    @arg("--peer-vpc", required=True, help=_peer_vpc_help)
+    @arg("cidrs", nargs="+", metavar="CIDR")
+    def vpc__user_peer_network_cidr__add(self):
+        """Add one ore more peer network CIDRs to a VPC"""
+        project_name = self.get_project()
+        add_base = {
+            "peer_cloud_account": self.args.peer_cloud_account,
+            "peer_vpc": self.args.peer_vpc,
+        }
+        if self.args.peer_resource_group is not None:
+            add_base["peer_resource_group"] = self.args.peer_resource_group
+        add = [
+            dict(add_base, cidr=cidr) for cidr in self.args.cidrs
+        ]
+        self.client.update_project_vpc_user_peer_network_cidrs(
+            project=project_name,
+            project_vpc_id=self.args.project_vpc_id,
+            add=add,
+        )
+
+    @arg.project
+    @arg.json
+    @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
+    @arg("cidrs", nargs="+", metavar="CIDR")
+    def vpc__user_peer_network_cidr__delete(self):
+        """Delete one ore more peer network CIDRs to a VPC"""
+        project_name = self.get_project()
+        self.client.update_project_vpc_user_peer_network_cidrs(
+            project=project_name,
+            project_vpc_id=self.args.project_vpc_id,
+            delete=self.args.cidrs,
+        )
 
     @arg.project
     @arg.service_name
