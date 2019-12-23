@@ -14,8 +14,6 @@ except ImportError:
 import aiven.client.client
 import argparse
 import csv as csvlib
-import datetime
-import decimal
 import errno
 import json as jsonlib
 import logging
@@ -25,18 +23,6 @@ import sys
 
 ARG_LIST_PROP = "_arg_list"
 LOG_FORMAT = "%(levelname)s\t%(message)s"
-
-
-class CustomJsonEncoder(jsonlib.JSONEncoder):
-    def default(self, o):  # pylint:disable=E0202
-        if isinstance(o, (datetime.datetime, datetime.date)):
-            return o.isoformat()
-        if isinstance(o, datetime.timedelta):
-            return str(o)
-        if isinstance(o, decimal.Decimal):
-            return str(o)
-
-        return jsonlib.JSONEncoder.default(self, o)
 
 
 class CustomFormatter(argparse.RawDescriptionHelpFormatter):
@@ -198,7 +184,7 @@ class CommandLineTool:  # pylint: disable=old-style-class
             for item in result:
                 print(format.format(**item), file=file)
         elif json:
-            print(jsonlib.dumps(result, indent=4, sort_keys=True, cls=CustomJsonEncoder), file=file)
+            print(jsonlib.dumps(result, indent=4, sort_keys=True, cls=pretty.CustomJsonEncoder), file=file)
         elif csv:
             fields = []
             for field in table_layout:

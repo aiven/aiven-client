@@ -8,6 +8,7 @@
 
 from __future__ import print_function, unicode_literals
 import datetime
+import decimal
 import fnmatch
 import json
 import sys
@@ -19,11 +20,23 @@ except NameError:
     basestring = str  # pylint: disable=redefined-builtin
 
 
+class CustomJsonEncoder(json.JSONEncoder):
+    def default(self, o):  # pylint:disable=E0202
+        if isinstance(o, (datetime.datetime, datetime.date)):
+            return o.isoformat()
+        if isinstance(o, datetime.timedelta):
+            return str(o)
+        if isinstance(o, decimal.Decimal):
+            return str(o)
+
+        return json.JSONEncoder.default(self, o)
+
+
 def format_item(key, value):
     if isinstance(value, list):
         formatted = ", ".join(format_item(None, entry) for entry in value)
     elif isinstance(value, dict):
-        formatted = json.dumps(value, sort_keys=True)
+        formatted = json.dumps(value, sort_keys=True, cls=CustomJsonEncoder)
     elif isinstance(value, basestring):
         if key and key.endswith("_time") and value.endswith("Z") and "." in value:
             # drop microseconds from timestamps
@@ -41,7 +54,13 @@ def format_item(key, value):
     elif isinstance(value, datetime.timedelta):
         formatted = str(value)
     else:
-        formatted = json.dumps(value)
+        # again, if adding quotes is only thing json econding would do, omit them
+        json_v = json.dumps(value, sort_keys=True, cls=CustomJsonEncoder)
+        quoted_v = '"{}"'.format(value)
+        if json_v == quoted_v:
+            formatted = '{}'.format(value)
+        else:
+            formatted = json_v
 
     return formatted
 
