@@ -2719,6 +2719,51 @@ server_encryption_options:
         if self.args.json:
             self.print_response(result, json=True)
 
+    @arg.json
+    @arg.project
+    @arg("--service", help="Related service name")
+    @arg("--severity", required=True, choices=["low", "high", "critical"], help="Ticket severity")
+    @arg("--title", required=True, help="Short description")
+    @arg("--description", required=True, help="Longer description")
+    def ticket__create(self):
+        """Create a support ticket"""
+        project_name = self.get_project()
+        ticket = self.client.create_ticket(
+            description=self.args.description,
+            project=project_name,
+            service=self.args.service,
+            severity=self.args.severity,
+            title=self.args.title,
+        )
+        self.print_response(result=ticket, json=self.args.json)
+
+    @arg.json
+    @arg.project
+    @arg("--state", required=False, help="Ticket state", choices=["closed", "open"])
+    def ticket__list(self):
+        """List support tickets for a project"""
+        project_name = self.get_project()
+        result = self.client.list_tickets(project=project_name)
+
+        tickets = result["tickets"]
+        if self.args.state:
+            tickets = [ticket for ticket in tickets if ticket["state"] == self.args.state]
+
+        layout = [
+            "ticket_id",
+            "severity",
+            "state",
+            "title",
+            "project_name",
+            "service_name",
+            "create_time",
+            "description",
+            "update_time",
+            "user_email",
+            "user_real_name"
+        ]
+        self.print_response(result=tickets, table_layout=layout, json=self.args.json)
+
 
 if __name__ == "__main__":
     AivenCLI().main()
