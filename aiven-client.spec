@@ -1,9 +1,3 @@
-%if %{?python3_sitelib:1}0
-%global use_python3 1
-%else
-%global use_python3 0
-%endif
-
 Name:           aiven-client
 Version:        %{major_version}
 Release:        %{minor_version}%{?dist}
@@ -12,13 +6,8 @@ Summary:        Aiven Client
 License:        ASL 2.0
 Source0:        rpm-src-aiven-client.tar
 BuildArch:      noarch
-%if %{use_python3}
 Requires:       python3-requests
 BuildRequires:  python3-devel, python3-flake8, python3-pylint, python3-pytest
-%else
-Requires:       python-requests
-BuildRequires:  python-devel, python-flake8, pylint, pytest
-%endif
 
 
 %description
@@ -35,34 +24,20 @@ aiven-client (`avn`) is the official command-line client for Aiven.
 
 %install
 %{__mkdir_p} %{buildroot}%{_bindir}
-%if %{use_python3}
-sed -e 's,$PYTHON,python3,g' scripts/avn > %{buildroot}%{_bindir}/avn
 %{__mkdir_p} %{buildroot}%{python3_sitelib}
 cp -a aiven %{buildroot}%{python3_sitelib}/
-%else
-sed -e 's,$PYTHON,python,g' scripts/avn > %{buildroot}%{_bindir}/avn
-%{__mkdir_p} %{buildroot}%{python_sitelib}
-cp -a aiven %{buildroot}%{python_sitelib}/
-%endif
+cp scripts/avn %{buildroot}%{_bindir}/avn
 chmod 755 %{buildroot}%{_bindir}/avn
 
 
 %check
-%if %{use_python3}
-make test PYTHON=python3
-%else
-make test PYTHON=python2
-%endif
+make test
 
 
 %files
 %defattr(-,root,root,-)
 %doc LICENSE README.rst
-%if %{use_python3}
 %{python3_sitelib}/aiven
-%else
-%{python_sitelib}/aiven
-%endif
 %{_bindir}/avn
 
 

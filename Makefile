@@ -1,7 +1,7 @@
 short_ver = 2.3.1
 long_ver = $(shell git describe --long 2>/dev/null || echo $(short_ver)-0-unknown-g`git describe --always`)
 generated = aiven/client/version.py
-PYTHON ?= python
+PYTHON ?= python3
 PYTHON_DIRS = aiven tests
 
 all: $(generated)
@@ -28,8 +28,8 @@ clean:
 	$(RM) -r rpms
 
 build-dep-fedora:
-	sudo dnf install -y --best --allowerasing python-devel python-flake8 python3-requests python2-requests \
-		tar rpmdevtools python2-pylint python3-pylint
+	sudo dnf install -y --best --allowerasing python3-devel python3-flake8 python3-requests \
+		tar rpmdevtools python3-pylint
 
 rpm: $(generated)
 	git archive --prefix=aiven-client/ HEAD -o rpm-src-aiven-client.tar
