@@ -15,7 +15,6 @@ import logging
 import requests
 import time
 
-
 class Error(Exception):
     """Request error"""
     def __init__(self, response, status=520):
