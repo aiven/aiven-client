@@ -2,6 +2,12 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
+from urllib.parse import quote
+
+import json
+import logging
+import requests
+import time
 import warnings
 
 try:
@@ -9,11 +15,6 @@ try:
 except ImportError:
     __version__ = "UNKNOWN"
 
-from urllib.parse import quote
-import json
-import logging
-import requests
-import time
 
 class Error(Exception):
     """Request error"""

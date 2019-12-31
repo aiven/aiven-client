@@ -5,8 +5,6 @@
 # See the file `LICENSE` for details.
 
 """Pretty-print JSON objects and lists as tables"""
-
-from __future__ import print_function, unicode_literals
 import datetime
 import decimal
 import fnmatch

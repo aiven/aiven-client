@@ -3,13 +3,7 @@
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
 
-from __future__ import print_function
 from aiven.client import envdefault, pretty
-
-try:
-    from .version import __version__  # pylint: disable=no-name-in-module
-except ImportError:
-    __version__ = "UNKNOWN"
 
 import aiven.client.client
 import argparse
@@ -20,6 +14,12 @@ import logging
 import os
 import requests.exceptions
 import sys
+
+try:
+    from .version import __version__  # pylint: disable=no-name-in-module
+except ImportError:
+    __version__ = "UNKNOWN"
+
 
 ARG_LIST_PROP = "_arg_list"
 LOG_FORMAT = "%(levelname)s\t%(message)s"

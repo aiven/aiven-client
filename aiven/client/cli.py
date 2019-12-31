@@ -2,12 +2,12 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
-from __future__ import print_function, unicode_literals
 from . import argx, client
 from aiven.client import envdefault
 from aiven.client.cliarg import arg
 from decimal import Decimal
 from urllib.parse import urlparse
+
 import errno
 import getpass
 import json as jsonlib
@@ -17,7 +17,6 @@ import requests
 import subprocess
 import sys
 import time
-
 
 AUTHENTICATION_METHOD_COLUMNS = [
     "account_id",

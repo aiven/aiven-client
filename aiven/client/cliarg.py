@@ -4,9 +4,10 @@
 # See the file `LICENSE` for details.
 
 from .argx import arg
-import os
-import json as jsonlib
 from functools import wraps
+
+import json as jsonlib
+import os
 
 
 def get_json_config(path_or_string):
