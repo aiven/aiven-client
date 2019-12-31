@@ -54,3 +54,5 @@ rpm: $(generated)
 		--define 'major_version $(short_ver)' \
 		--define 'minor_version $(subst -,.,$(subst $(short_ver)-,,$(long_ver)))'
 	$(RM) rpm-src-aiven-client.tar
+
+.PHONY: build-dep-fedora clean coverage pytest pylint flake8 reformat test validate-style
