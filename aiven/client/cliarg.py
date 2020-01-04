@@ -75,6 +75,8 @@ arg.timeout = arg("--timeout", type=int, help="Wait for up to N seconds (default
 arg.topic = arg("topic", help="Topic name")
 arg.user_config = arg("-c", dest="user_config", metavar="KEY=VALUE", action="append", default=[],
                       help="Apply a configuration setting. See 'avn service types -v' for available values.")
+arg.user_option_remove = arg("--remove-option", dest="user_option_remove", action="append", default=[],
+                             help="Remove a configuration setting. See 'avn service types -v' for available settings.")
 arg.vat_id = arg("--vat-id", help="VAT ID of an EU VAT area business")
 arg.verbose = arg("-v", "--verbose", help="Verbose output", action="store_true", default=False)
 arg.connector_name = arg("connector", help="Connector name")
