@@ -103,30 +103,33 @@ class AivenCLI(argx.CommandLineTool):
         parser.add_argument("--url", help="Server base url default %(default)r",
                             default=envdefault.AIVEN_WEB_URL or "https://api.aiven.io")
 
-    def collect_user_config_options(self, obj_def, prefix=""):
+    def collect_user_config_options(self, obj_def, prefixes=None):
         opts = {}
         for prop, spec in sorted(obj_def.get("properties", {}).items()):
-            full_name = prop if not prefix else (prefix + "." + prop)
+            full_prop = prefixes + [prop] if prefixes else [prop]
+            full_name = ".".join(full_prop)
             types = spec["type"]
             if not isinstance(types, list):
                 types = [types]
             # "object" or ["object", "null"]
             if "object" in types:
-                opts.update(self.collect_user_config_options(spec, prefix=full_name))
+                opts.update(self.collect_user_config_options(spec, prefixes=full_prop))
                 if "null" in types:
                     # allow removing user config option
                     opts[full_name] = {
+                        "property_parts": full_prop,
                         "title": "Remove {}".format(prop),
                         "type": "null",
                     }
             else:
-                opts[full_name] = spec
+                opts[full_name] = dict(spec, property_parts=full_prop)
         for spec in sorted(obj_def.get("patternProperties", {}).values()):
-            full_name = "KEY" if not prefix else (prefix + ".KEY")
+            full_prop = prefixes + ["KEY"] if prefixes else ["KEY"]
+            full_name = ".".join(full_prop)
             if spec["type"] == "object":
-                opts.update(self.collect_user_config_options(spec, prefix=full_name))
+                opts.update(self.collect_user_config_options(spec, prefixes=full_prop))
             else:
-                opts[full_name] = spec
+                opts[full_name] = dict(spec, property_parts=full_prop)
         return opts
 
     def create_user_config(self, user_config_schema):
@@ -158,13 +161,8 @@ class AivenCLI(argx.CommandLineTool):
             except ValueError as ex:
                 raise argx.UserError("Invalid value {!r}: {}".format(key_value, ex))
 
-            conf = user_config
-            parts = key.split(".", 1)
-            for part in parts[:-1]:
-                conf.setdefault(part, {})
-                conf = conf[part]
-
-            conf[parts[-1]] = value
+            leaf_config, leaf_key = self.get_leaf_config_and_key(config=user_config, key=key, opt_schema=opt_schema)
+            leaf_config[leaf_key] = value
 
         for opt in self.args.user_option_remove:
             opt_schema = options.get(opt)
@@ -175,15 +173,21 @@ class AivenCLI(argx.CommandLineTool):
             if "null" not in opt_schema["type"]:
                 raise argx.UserError("Removing option {!r} is not supported".format(opt))
 
-            conf = user_config
-            parts = opt.split(".", 1)
-            for part in parts[:-1]:
-                conf.setdefault(part, {})
-                conf = conf[part]
-
-            conf[parts[-1]] = None
+            leaf_config, leaf_key = self.get_leaf_config_and_key(config=user_config, key=opt, opt_schema=opt_schema)
+            leaf_config[leaf_key] = None
 
         return user_config
+
+    @classmethod
+    def get_leaf_config_and_key(cls, *, config, key, opt_schema):
+        key_suffix = key
+        for part in opt_schema["property_parts"][:-1]:
+            prefix = "{}.".format(part)
+            if not key_suffix.startswith(prefix):
+                raise argx.UserError("Expected {} to start with {} (full key {})".format(key_suffix, prefix, key))
+            key_suffix = key_suffix[len(prefix):]
+            config = config.setdefault(part, {})
+        return config, key_suffix
 
     def enter_password(self, prompt, var="AIVEN_PASSWORD", confirm=False):
         """Prompt user for a password"""
