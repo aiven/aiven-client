@@ -134,7 +134,10 @@ class AivenCLI(argx.CommandLineTool):
 
     def create_user_config(self, user_config_schema):
         """Convert a list of ["foo.bar='baz'"] to {"foo": {"bar": "baz"}}"""
-        if not self.args.user_config and not self.args.user_option_remove:
+        user_option_remove = []
+        if hasattr(self.args, "user_option_remove"):
+            user_option_remove = self.args.user_option_remove
+        if not self.args.user_config and not user_option_remove:
             return {}
 
         options = self.collect_user_config_options(user_config_schema)
@@ -164,7 +167,7 @@ class AivenCLI(argx.CommandLineTool):
             leaf_config, leaf_key = self.get_leaf_config_and_key(config=user_config, key=key, opt_schema=opt_schema)
             leaf_config[leaf_key] = value
 
-        for opt in self.args.user_option_remove:
+        for opt in user_option_remove:
             opt_schema = options.get(opt)
             if not opt_schema:
                 raise argx.UserError("Unsupported option {!r}, available options: {}"
