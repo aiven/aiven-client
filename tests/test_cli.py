@@ -6,6 +6,7 @@
 # pylint: disable=no-member
 from aiven.client.cli import AivenCLI
 from collections import namedtuple
+
 import pytest
 
 pytestmark = [pytest.mark.unittest, pytest.mark.all]

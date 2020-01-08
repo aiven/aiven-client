@@ -2,11 +2,12 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
-from __future__ import print_function, unicode_literals
 from . import argx, client
 from aiven.client import envdefault
 from aiven.client.cliarg import arg
 from decimal import Decimal
+from urllib.parse import urlparse
+
 import errno
 import getpass
 import json as jsonlib
@@ -16,11 +17,6 @@ import requests
 import subprocess
 import sys
 import time
-
-try:
-    from urllib.parse import urlparse  # pylint: disable=import-error,no-name-in-module
-except ImportError:
-    from urlparse import urlparse  # pylint: disable=import-error,no-name-in-module
 
 AUTHENTICATION_METHOD_COLUMNS = [
     "account_id",
@@ -40,12 +36,6 @@ try:
     PLUGINS.append(adminplugin)
 except ImportError:
     pass
-
-try:
-    raw_input_func = raw_input  # pylint: disable=undefined-variable
-except NameError:
-    # python 3.x
-    raw_input_func = input
 
 
 def convert_str_to_value(schema, str_value):
@@ -241,7 +231,7 @@ class AivenCLI(argx.CommandLineTool):
         """Login as a user"""
         email = self.args.email
         if not email:
-            email = raw_input_func("Username (email): ")
+            email = input("Username (email): ")
 
         password = self.enter_password("{}'s Aiven password: ".format(email))
         try:
@@ -249,7 +239,7 @@ class AivenCLI(argx.CommandLineTool):
         except client.Error as ex:
             if ex.status == 510:  # NOT_EXTENDED
                 # Two-factor auth OTP required
-                otp = raw_input_func("Two-factor authentication OTP: ")
+                otp = input("Two-factor authentication OTP: ")
                 result = self.client.authenticate_user(email=email, password=password, otp=otp)
             else:
                 raise
@@ -1811,7 +1801,7 @@ ssl.truststore.type=JKS
             print("*" * longest)
 
             for name in self.args.name:
-                user_input = raw_input_func("Re-enter service name {!r} for immediate termination: ".format(name))
+                user_input = input("Re-enter service name {!r} for immediate termination: ".format(name))
                 if user_input != name:
                     raise argx.UserError("Not confirmed by user. Aborting termination.")
 

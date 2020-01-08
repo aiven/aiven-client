@@ -9,9 +9,10 @@ python:
   - "pypy3"
 
 install:
-  - "pip install flake8 pylint pytest requests"
+  - "pip install flake8 pylint pytest requests isort"
 
 script:
   - "make flake8"
   - "make pylint"
   - "make pytest"
+  - "make validate-style"
