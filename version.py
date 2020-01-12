@@ -3,7 +3,7 @@ automatically maintains the latest git tag + revision info in a python file
 
 """
 
-import importlib
+import importlib.machinery
 import os
 import subprocess
 
@@ -11,7 +11,7 @@ import subprocess
 def get_project_version(version_file):
     version_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), version_file)
     try:
-        module = importlib.load_module(version_file)
+        module = importlib.machinery.SourceFileLoader("version", version_file).load_module()
         file_ver = module.__version__
     except:  # pylint: disable=bare-except
         file_ver = None
