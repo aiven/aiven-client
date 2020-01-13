@@ -886,7 +886,7 @@ class AivenCLI(argx.CommandLineTool):
         """Get migration status"""
         response = self.client.get_service_migration_status(project=self.get_project(), service=self.args.name)
         layout = ["status", "method", "error"]
-        self.print_response(response, json=self.args.json, single_item=True, table_layout=layout)
+        self.print_response(response["migration"], json=self.args.json, single_item=True, table_layout=layout)
 
     @arg.project
     @arg.service_name
