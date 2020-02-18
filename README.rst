@@ -6,7 +6,7 @@ Aiven Client |BuildStatus|_
 
 Aiven is a next-generation managed cloud services platform.  Its focus is in
 ease of adoption, high fault resilience, customer's peace of mind and
-advanced features at competetive price points.  See https://aiven.io/ for
+advanced features at competitive price points.  See https://aiven.io/ for
 more information about the backend service.
 
 aiven-client (``avn``) is the official command-line client for Aiven.
@@ -117,14 +117,14 @@ Note that the system has hard limits for the number of tokens you can create. If
 permanently done using a token you should always use ``user access-token revoke`` operation
 to revoke the token so that it does not count towards the quota.
 
-Alternatively, you can add 2 json files, first create a default config in ``~/.config/aiven/aiven-credentials.json`` containing the json with an auth_token::
+Alternatively, you can add 2 JSON files, first create a default config in ``~/.config/aiven/aiven-credentials.json`` containing the JSON with an ``auth_token``::
 
   {
       "auth_token": "ABC1+123...TOKEN==",
       "user_email": "your.email@aiven.com"
   }
 
-Second create a default config in `~/.config/aiven/aiven-client.json` containing the json with the default_project::
+Second create a default config in ``~/.config/aiven/aiven-client.json`` containing the json with the ``default_project``::
 
   {"default_project": "yourproject-abcd"}
 
@@ -192,7 +192,7 @@ Verbose list (includes connection information, etc.)::
 
   $ avn service list db1 -v
 
-Full service information in json, as it is returned by the Aiven REST API::
+Full service information in JSON, as it is returned by the Aiven REST API::
 
   $ avn service list db1 --json
 
