@@ -406,6 +406,16 @@ class AivenClient(AivenClientBase):
             "username": username,
         })
 
+    def create_connector_config_based_on_current(self, project, service, connector_name, config_update):
+        current_connectors = self.list_kafka_connectors(project, service)
+        connector = [conn for conn in current_connectors["connectors"] if conn["name"] == connector_name]
+        if not connector:
+            raise KeyError("Current configuration for connector '{}' not in connector list".format(connector_name))
+        assert len(connector) == 1
+        full_config = connector[0]["config"]
+        full_config.update(config_update)
+        return full_config
+
     def delete_service_kafka_acl(self, project, service, acl_id):
         return self.verify(self.delete, self.build_path("project", project, "service", service, "acl", acl_id))
 
@@ -426,8 +436,10 @@ class AivenClient(AivenClientBase):
     def create_kafka_connector(self, project, service, config):
         return self.verify(self.post, self.build_path("project", project, "service", service, "connectors"), body=config)
 
-    def update_kafka_connector(self, project, service, connector_name, config):
+    def update_kafka_connector(self, project, service, connector_name, config, fetch_current=False):
         path = self.build_path("project", project, "service", service, "connectors", connector_name)
+        if fetch_current:
+            config = self.create_connector_config_based_on_current(project, service, connector_name, config)
         return self.verify(self.put, path, body=config)
 
     def delete_kafka_connector(self, project, service, connector_name):
