@@ -1,10 +1,9 @@
+from aiven.client import AivenClient
+from aiven.client.client import Error
 from unittest import mock
 from unittest.mock import Mock
 
 import pytest
-
-from aiven.client import AivenClient
-from aiven.client.client import Error
 
 
 def test_it_raises_an_error_when_something_unexpected_happens_while_listing_project_invoices():
