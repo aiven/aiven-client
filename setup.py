@@ -35,9 +35,6 @@ setup(
         ],
     },
     install_requires=REQUIRES,
-    tests_require=[
-        'pytest >=5.3.5'
-    ],
     license="Apache 2.0",
     name="aiven-client",
     packages=find_packages(exclude=["tests"]),
