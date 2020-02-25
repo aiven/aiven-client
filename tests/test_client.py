@@ -33,6 +33,57 @@ def test_it_raises_an_error_when_something_unexpected_happens_while_listing_proj
             client.get_project_invoices('the_project_id')
 
 
+def test_it_raises_an_error_when_something_unexpected_happens_while_downloading_an_invoice():
+    with pytest.raises(Error):
+        mock_response_content = {
+            "message": "Authentication failed",
+            "errors": [
+                {
+                    "status": "403",
+                    "message": "Authentication failed"
+                }
+            ]
+        }
+
+        with mock.patch('requests.sessions') as session:
+            mock_response = Mock()
+            mock_response.status_code = "400"
+            mock_response.headers = {}
+            mock_response.text = mock_response_content
+            mock_response.json.return_value = mock_response.text
+
+            session.get.return_value = mock_response
+
+            client = AivenClient(base_url='http://the-aiven-api-url')
+            client.session = session
+
+            client.download_invoice('the_project_id', 'the_invoice_number', 'the_download_cookie')
+
+
+def test_it_downloads_an_invoice():
+    # Missing proper mocking of response due to https://github.com/aiven/aiven-client/issues/136
+    mock_response_content = {
+        "message": "Completed",
+        "errors": []
+    }
+
+    with mock.patch('requests.sessions') as session:
+        mock_response = Mock()
+        mock_response.status_code = "200"
+        mock_response.headers = {}
+        mock_response.text = mock_response_content
+        mock_response.json.return_value = mock_response.text
+
+        session.get.return_value = mock_response
+
+        client = AivenClient(base_url='http://the-aiven-api-url')
+        client.session = session
+
+        response = client.download_invoice('the_project_id', 'the_invoice_number', 'the_download_cookie')
+
+        assert response == mock_response_content
+
+
 def test_it_lists_the_project_invoices():
     mock_response_content = {
         "errors": [

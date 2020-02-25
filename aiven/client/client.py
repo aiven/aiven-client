@@ -1002,3 +1002,6 @@ class AivenClient(AivenClientBase):
 
     def get_service_migration_status(self, project, service):
         return self.verify(self.get, self.build_path("project", project, "service", service, "migration"))
+
+    def download_invoice(self, project, invoice_number, download_cookie):
+        return self.verify(self.get, self.build_path("project", project, "invoice", invoice_number, download_cookie))
