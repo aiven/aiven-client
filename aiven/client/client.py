@@ -159,6 +159,9 @@ class AivenClientBase:  # pylint: disable=old-style-class
 class AivenClient(AivenClientBase):
     """Aiven Client with high-level operations"""
 
+    def get_project_invoices(self, project):
+        return self.verify(self.get, self.build_path("project", project), result_key="invoices")
+
     def get_service_indexes(self, project, service):
         return self.verify(self.get, self.build_path("project", project, "service", service, "index"), result_key="indexes")
 
