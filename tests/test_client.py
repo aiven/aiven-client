@@ -21,7 +21,9 @@ def test_it_raises_an_error_when_something_unexpected_happens_while_listing_proj
         with mock.patch('requests.sessions') as session:
             mock_response = Mock()
             mock_response.status_code = "400"
-            mock_response.headers = {}
+            mock_response.headers = {
+                'content-type': 'application/json'
+            }
             mock_response.text = mock_response_content
             mock_response.json.return_value = mock_response.text
 
@@ -48,7 +50,9 @@ def test_it_raises_an_error_when_something_unexpected_happens_while_downloading_
         with mock.patch('requests.sessions') as session:
             mock_response = Mock()
             mock_response.status_code = "400"
-            mock_response.headers = {}
+            mock_response.headers = {
+                'content-type': 'application/json'
+            }
             mock_response.text = mock_response_content
             mock_response.json.return_value = mock_response.text
 
@@ -62,15 +66,14 @@ def test_it_raises_an_error_when_something_unexpected_happens_while_downloading_
 
 def test_it_downloads_an_invoice():
     # Missing proper mocking of response due to https://github.com/aiven/aiven-client/issues/136
-    mock_response_content = {
-        "message": "Completed",
-        "errors": []
-    }
+    mock_response_content = "the_PDF_blob"
 
     with mock.patch('requests.sessions') as session:
         mock_response = Mock()
         mock_response.status_code = "200"
-        mock_response.headers = {}
+        mock_response.headers = {
+            'content-type': 'application/pdf'
+        }
         mock_response.text = mock_response_content
         mock_response.json.return_value = mock_response.text
 
@@ -107,7 +110,9 @@ def test_it_lists_the_project_invoices():
     with mock.patch('requests.sessions') as session:
         mock_response = Mock()
         mock_response.status_code = "200"
-        mock_response.headers = {}
+        mock_response.headers = {
+            'content-type': 'application/json'
+        }
         mock_response.text = mock_response_content
         mock_response.json.return_value = mock_response.text
 
