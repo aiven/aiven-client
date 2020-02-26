@@ -147,7 +147,7 @@ class AivenClientBase:  # pylint: disable=old-style-class
         else:
             result = response.json()
 
-        if type(result) is dict and result.get("error"):
+        if isinstance(result, dict) and result.get("error"):
             raise Error("server returned error: {op} {base_url}{path} {result}".format(
                 op=op.__doc__, base_url=self.base_url, path=path, result=result))
 
