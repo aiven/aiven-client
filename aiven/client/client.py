@@ -142,8 +142,12 @@ class AivenClientBase:  # pylint: disable=old-style-class
                                  op.__name__.upper(), path, ex.__class__.__name__, ex, attempts)
                 time.sleep(0.2)
 
-        result = response.json()
-        if result.get("error"):
+        if response.headers['content-type'] == 'application/pdf':
+            result = response.text
+        else:
+            result = response.json()
+
+        if type(result) is dict and result.get("error"):
             raise Error("server returned error: {op} {base_url}{path} {result}".format(
                 op=op.__doc__, base_url=self.base_url, path=path, result=result))
 
