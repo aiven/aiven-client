@@ -91,3 +91,6 @@ arg.compatibility = arg(
     help="Choose a compatibility level for the subject"
 )
 arg.schema = arg("--schema", required=True, help="Schema string quote escaped")
+
+arg.source_cluster = arg("-s", "--source-cluster", required=True, help="Source cluster alias")
+arg.target_cluster = arg("-t", "--target-cluster", required=True, help="Target cluster alias")

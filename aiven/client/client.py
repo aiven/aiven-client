@@ -536,6 +536,38 @@ class AivenClient(AivenClientBase):
         )
         return self.verify(self.delete, path)
 
+    def list_mirrormaker_replication_flows(self, project, service):
+        path = self.build_path("project", project, "service", service, "mirrormaker", "replication-flows")
+        return self.verify(self.get, path, result_key="replication_flows")
+
+    def create_mirrormaker_replication_flow(self, project, service, source_cluster, target_cluster, config):
+        path = self.build_path("project", project, "service", service, "mirrormaker", "replication-flows")
+        body = {}
+        body.update(config)
+        body["source_cluster"] = source_cluster
+        body["target_cluster"] = target_cluster
+        return self.verify(self.post, path, body=body)
+
+    def update_mirrormaker_replication_flow(self, project, service, source_cluster, target_cluster, config):
+        path = self.build_path(
+            "project", project, "service", service, "mirrormaker", "replication-flows", source_cluster, target_cluster
+        )
+        body = {}
+        body.update(config)
+        return self.verify(self.put, path, body=body, result_key="replication_flow")
+
+    def get_mirrormaker_replication_flow(self, project, service, source_cluster, target_cluster):
+        path = self.build_path(
+            "project", project, "service", service, "mirrormaker", "replication-flows", source_cluster, target_cluster
+        )
+        return self.verify(self.get, path, result_key="replication_flow")
+
+    def delete_mirrormaker_replication_flow(self, project, service, source_cluster, target_cluster):
+        path = self.build_path(
+            "project", project, "service", service, "mirrormaker", "replication-flows", source_cluster, target_cluster
+        )
+        return self.verify(self.delete, path)
+
     def list_project_vpcs(self, project):
         return self.verify(self.get, self.build_path("project", project, "vpcs"))
 
