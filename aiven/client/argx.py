@@ -15,6 +15,13 @@ import os
 import requests.exceptions
 import sys
 
+# Optional shell completions
+try:
+    import argcomplete  # pylint: disable=import-error
+    ARGCOMPLETE_INSTALLED = True
+except ImportError:
+    ARGCOMPLETE_INSTALLED = False
+
 try:
     from .version import __version__  # pylint: disable=no-name-in-module
 except ImportError:
@@ -155,6 +162,10 @@ class CommandLineTool:  # pylint: disable=old-style-class
 
     def parse_args(self, args=None):
         self.extend_commands(self)
+
+        if ARGCOMPLETE_INSTALLED:
+            argcomplete.autocomplete(self.parser)
+
         args = self.parser.parse_args(args=args)
         for ext in self._extensions:
             ext.args = args
