@@ -250,6 +250,19 @@ Terminate a service (all data will be gone!)::
 Updating service configuration
 ------------------------------
 
+Shell completions
+-----------------
+
+avn supports shell completions. It requires an optional dependency: argcomplete. Install it::
+
+  $ python3 -m pip install argcomplete
+
+To use completions in bash, add following line to `~/.bashrc`::
+
+  eval "$(register-python-argcomplete avn)"
+
+For more information (including completions usage in other shells) see https://kislyuk.github.io/argcomplete/.
+
 More help
 ---------
 ::
