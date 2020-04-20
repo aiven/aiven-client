@@ -1751,6 +1751,73 @@ ssl.truststore.type=JKS
         self.client.delete_schema_subject_version(project_name, self.args.name, self.args.subject, self.args.version_id)
 
     @arg.project
+    @arg.service_name
+    def mirrormaker__replication_flow__list(self):
+        """List Kafka MirrorMaker replication flows"""
+        project_name = self.get_project()
+        self.print_response(self.client.list_mirrormaker_replication_flows(project_name, self.args.name))
+
+    @arg.project
+    @arg.service_name
+    @arg.source_cluster
+    @arg.target_cluster
+    @arg.json_path_or_string("replication_flow_config")
+    def mirrormaker__replication_flow__create(self):
+        """Create a Kafka MirrorMaker replication flow"""
+        project_name = self.get_project()
+        self.client.create_mirrormaker_replication_flow(
+            project_name,
+            self.args.name,
+            self.args.source_cluster,
+            self.args.target_cluster,
+            self.args.replication_flow_config,
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg.source_cluster
+    @arg.target_cluster
+    @arg.json_path_or_string("replication_flow_config")
+    def mirrormaker__replication_flow__update(self):
+        """Update a Kafka MirrorMaker replication flow"""
+        project_name = self.get_project()
+        self.print_response(self.client.update_mirrormaker_replication_flow(
+            project_name,
+            self.args.name,
+            self.args.source_cluster,
+            self.args.target_cluster,
+            self.args.replication_flow_config,
+        ))
+
+    @arg.project
+    @arg.service_name
+    @arg.source_cluster
+    @arg.target_cluster
+    def mirrormaker__replication_flow__get(self):
+        """Get a Kafka MirrorMaker replication flow"""
+        project_name = self.get_project()
+        self.print_response(self.client.get_mirrormaker_replication_flow(
+            project_name,
+            self.args.name,
+            self.args.source_cluster,
+            self.args.target_cluster,
+        ))
+
+    @arg.project
+    @arg.service_name
+    @arg.source_cluster
+    @arg.target_cluster
+    def mirrormaker__replication_flow__delete(self):
+        """Delete a Kafka MirrorMaker replication flow"""
+        project_name = self.get_project()
+        self.client.delete_mirrormaker_replication_flow(
+            project_name,
+            self.args.name,
+            self.args.source_cluster,
+            self.args.target_cluster,
+        )
+
+    @arg.project
     @arg("service", nargs="+", help="Service to wait for")
     @arg.timeout
     def service__wait(self):  # pylint: disable=inconsistent-return-statements
