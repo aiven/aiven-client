@@ -1568,11 +1568,18 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.service_name
     @arg.connector_name
+    @arg("--fetch-current", action="store_true", help="Fetch current config first, and use as a base for update")
     @arg.json_path_or_string("connector_config")
     def service__connector__update(self):
         """Update a Kafka connector"""
         project_name = self.get_project()
-        self.client.update_kafka_connector(project_name, self.args.name, self.args.connector, self.args.connector_config)
+        self.client.update_kafka_connector(
+            project_name,
+            self.args.name,
+            self.args.connector,
+            self.args.connector_config,
+            self.args.fetch_current,
+        )
 
     @arg.project
     @arg.service_name
