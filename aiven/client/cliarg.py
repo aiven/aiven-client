@@ -72,10 +72,13 @@ arg.retention = arg("--retention", type=int, help="Retention period in hours (de
 arg.retention_bytes = arg("--retention-bytes", type=int, help="Retention limit in bytes (default: unlimited)")
 arg.service_name = arg("name", help="Service name")
 arg.service_type = arg("-t", "--service-type", help="Type of service (see 'service list-types')")
+arg.team_name = arg("--team-name", help="Team name", required=True)
+arg.team_id = arg("--team-id", help="Team identifier", required=True)
 arg.timeout = arg("--timeout", type=int, help="Wait for up to N seconds (default: infinite)")
 arg.topic = arg("topic", help="Topic name")
 arg.user_config = arg("-c", dest="user_config", metavar="KEY=VALUE", action="append", default=[],
                       help="Apply a configuration setting. See 'avn service types -v' for available values.")
+arg.user_id = arg("--user-id", help="User identifier", required=True)
 arg.user_option_remove = arg("--remove-option", dest="user_option_remove", action="append", default=[],
                              help="Remove a configuration setting. See 'avn service types -v' for available settings.")
 arg.vat_id = arg("--vat-id", help="VAT ID of an EU VAT area business")

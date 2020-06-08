@@ -542,6 +542,83 @@ class AivenCLI(argx.CommandLineTool):
         methods = self.client.get_account_authentication_methods(self.args.account_id)
         self.print_response(methods, json=self.args.json, table_layout=AUTHENTICATION_METHOD_COLUMNS)
 
+    @arg.json
+    @arg.account_id
+    def account__team__list(self):
+        """List account teams"""
+        self.print_response(self.client.list_teams(self.args.account_id), json=self.args.json)
+
+    @arg.json
+    @arg.account_id
+    @arg.team_name
+    def account__team__create(self):
+        """Create a team within an account"""
+        self.client.create_team(self.args.account_id, self.args.team_name)
+
+    @arg.json
+    @arg.account_id
+    @arg.team_id
+    def account__team__delete(self):
+        """Delete a team"""
+        self.client.delete_team(self.args.account_id, self.args.team_id)
+
+    @arg.json
+    @arg.account_id
+    @arg.team_id
+    def account__team__user_list(self):
+        """List team members"""
+        self.print_response(self.client.list_team_members(self.args.account_id, self.args.team_id), json=self.args.json)
+
+    @arg.json
+    @arg.account_id
+    @arg.team_id
+    @arg.email
+    def account__team__user_invite(self):
+        """Invite user to join a team"""
+        self.client.add_team_member(self.args.account_id, self.args.team_id, self.args.email)
+
+    @arg.json
+    @arg.account_id
+    @arg.team_id
+    def account__team__user_list_pending(self):
+        """List pending invitations to a team"""
+        self.print_response(self.client.list_team_invites(self.args.account_id, self.args.team_id), json=self.args.json)
+
+    @arg.json
+    @arg.account_id
+    @arg.team_id
+    @arg.user_id
+    def account__team__user_delete(self):
+        """Delete user from a team"""
+        self.client.delete_team_member(self.args.account_id, self.args.team_id, self.args.user_id)
+
+    @arg.json
+    @arg.account_id
+    @arg.team_id
+    def account__team__project_list(self):
+        """List projects associated to a team"""
+        self.print_response(self.client.list_team_projects(self.args.account_id, self.args.team_id),
+                            json=self.args.json)
+
+    @arg.json
+    @arg.account_id
+    @arg.team_id
+    @arg.project
+    @arg("--team-type", required=True, choices=["admin", "developer", "operator", "read_only"],
+         help="Team type (permission level)")
+    def account__team__project_attach(self):
+        """Attach team to a project"""
+        self.client.attach_team_to_project(self.args.account_id, self.args.team_id, self.args.project,
+                                           self.args.team_type)
+
+    @arg.json
+    @arg.account_id
+    @arg.team_id
+    @arg.project
+    def account__team__project_detach(self):
+        """Detach team from a project"""
+        self.client.detach_team_from_project(self.args.account_id, self.args.team_id, self.args.project)
+
     @optional_auth
     @arg.project
     @arg.cloud
