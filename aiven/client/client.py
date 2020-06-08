@@ -1043,3 +1043,43 @@ class AivenClient(AivenClientBase):
 
     def get_service_migration_status(self, project, service):
         return self.verify(self.get, self.build_path("project", project, "service", service, "migration"))
+
+    def list_teams(self, account_id):
+        return self.verify(self.get, self.build_path("account", account_id, "teams"), result_key="teams")
+
+    def create_team(self, account_id, team_name):
+        return self.verify(self.post, self.build_path("account", account_id, "teams"), body={
+            "team_name": team_name
+        })
+
+    def delete_team(self, account_id, team_id):
+        return self.verify(self.delete, self.build_path("account", account_id, "team", team_id))
+
+    def list_team_members(self, account_id, team_id):
+        return self.verify(self.get, self.build_path("account", account_id, "team", team_id, "members"),
+                           result_key="members")
+
+    def add_team_member(self, account_id, team_id, email):
+        return self.verify(self.post, self.build_path("account", account_id, "team", team_id, "members"), body={
+            "email": email
+        })
+
+    def list_team_invites(self, account_id, team_id):
+        return self.verify(self.get, self.build_path("account", account_id, "team", team_id, "invites"),
+                           result_key="account_invites")
+
+    def delete_team_member(self, account_id, team_id, user_id):
+        return self.verify(self.delete, self.build_path("account", account_id, "team", team_id, "member", user_id))
+
+    def list_team_projects(self, account_id, team_id):
+        return self.verify(self.get, self.build_path("account", account_id, "team", team_id, "projects"),
+                           result_key="projects")
+
+    def attach_team_to_project(self, account_id, team_id, project, team_type):
+        return self.verify(self.post, self.build_path("account", account_id, "team", team_id, "project", project),
+                           body={
+                               "team_type": team_type
+                           })
+
+    def detach_team_from_project(self, account_id, team_id, project):
+        return self.verify(self.delete, self.build_path("account", account_id, "team", team_id, "project", project))
