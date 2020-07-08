@@ -841,6 +841,19 @@ class AivenCLI(argx.CommandLineTool):
 
         self.print_response(services, format=self.args.format, json=self.args.json, table_layout=layout)
 
+    def print_service_notifications(self, service_notifications):
+        def make_bold(text):
+            bold = "\033[1m"
+            normal = "\033[0m"
+            return bold + text + normal
+
+        for service_notification in service_notifications:
+            text = service_notification["message"]
+            if service_notification["type"] == "service_end_of_life":
+                text += "\nRead more: " + service_notification['metadata']['end_of_life_help_article_url']
+            print(make_bold(text) if service_notification["level"] == "warning" else text)
+            print()
+
     @arg.project
     @arg.service_name
     @arg("--format", help="Format string for output, e.g. '{service_name} {service_uri}'")
@@ -863,6 +876,8 @@ class AivenCLI(argx.CommandLineTool):
                         service[key_uri] = connection_info[key_uri]
             layout.extend(ext_layout)
 
+        if "service_notifications" in service and not self.args.json:
+            self.print_service_notifications(service["service_notifications"])
         self.print_response(
             service,
             format=self.args.format,
