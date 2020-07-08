@@ -9,7 +9,8 @@ python:
   - "pypy3"
 
 install:
-  - "pip install flake8 pylint pytest requests isort"
+  # Force install an old version of isort (see https://github.com/timothycrosley/isort/issues/1273)
+  - "pip install flake8 pylint pytest requests 'isort<5.0'"
 
 script:
   - "make flake8"
