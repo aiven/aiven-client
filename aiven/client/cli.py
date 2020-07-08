@@ -2956,6 +2956,23 @@ server_encryption_options:
         ]
         self.print_response(result=tickets, table_layout=layout, json=self.args.json)
 
+    @arg.json
+    def service__versions(self):
+        """List service versions"""
+        service_versions = self.client.get_service_versions()
+        layout = [
+            "service_type",
+            "major_version",
+            "state",
+            "availability_start_time",
+            "availability_end_time",
+            "aiven_end_of_life_time",
+            "upstream_end_of_life_time",
+            "termination_time",
+            "end_of_life_help_article_url",
+        ]
+        self.print_response(service_versions, table_layout=layout, json=self.args.json)
+
 
 if __name__ == "__main__":
     AivenCLI().main()
