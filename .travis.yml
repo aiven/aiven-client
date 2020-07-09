@@ -37,6 +37,7 @@ jobs:
       name: PyLint
       script:
         - pip install -r requirements.dev.txt
+        - pip install -e .
         - make pylint
 
     # MacOS we want to ensure system-python is working properly

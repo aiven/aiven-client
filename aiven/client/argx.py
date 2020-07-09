@@ -2,18 +2,25 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
-
 from aiven.client import envdefault, pretty
+from collections.abc import Mapping, Sequence
 
 import aiven.client.client
 import argparse
 import csv as csvlib
+import enum
 import errno
 import json as jsonlib
 import logging
 import os
 import requests.exceptions
+import ruamel.yaml as yamllib
 import sys
+
+try:
+    basestring
+except NameError:
+    basestring = str  # pylint: disable=redefined-builtin
 
 # Optional shell completions
 try:
@@ -99,19 +106,76 @@ class Config(dict):
             jsonlib.dump(self, fp, sort_keys=True, indent=4)
 
 
-class CommandLineTool:  # pylint: disable=old-style-class
+class OutputFormats(enum.Enum):
+    """Defines the supported output formats on the command line."""
+    TABLE = "table"
+    TABLE_NOHEADER = "table-noheader"
+    CSV = "csv"
+    CSV_NOHEADER = "csv-noheader"
+    JSON = "json"
+    JSON_COMPACT = "json-compact"
+    YAML = "yaml"
+
+    def __str__(self):
+        return str(self.value)
+
+
+class CommandLineTool:  # pylint: disable=old-style-class,too-many-instance-attributes
     def __init__(self, name):
         self.log = logging.getLogger(name)
         self.config = None
         self._cats = {}
         self._extensions = []
-        self.parser = argparse.ArgumentParser(prog=name, formatter_class=CustomFormatter)
-        self.parser.add_argument(
-            "--config",
-            help="config file location %(default)r",
-            default=envdefault.AIVEN_CLIENT_CONFIG,
+
+        if name is None:
+            raise ValueError("name cannot be None")
+
+        if not isinstance(name, basestring):
+            raise ValueError("name must be a string")
+
+        self._output_format = OutputFormats.TABLE  # type: OutputFormats
+        self._output_stream = sys.stdout
+        self._single_item = False
+
+        # Early parser handles things like logging which need to be setup as early as possible.
+        # Output from early parser is never shown.
+        self.early_parser = argparse.ArgumentParser(
+            prog=name, formatter_class=CustomFormatter, add_help=False
+        )  # Important - help goes to real parser
+        self.early_parser.add_argument(
+            "--log-level",
+            choices=list(logging._nameToLevel),  # pylint: disable=protected-access
+            default=logging._levelToName[logging.INFO],
+            help="Log level"
         )
-        self.parser.add_argument("--version", action="version", version="aiven-client {}".format(__version__))
+        self.early_parser.add_argument(
+            "--request-log-level",
+            choices=list(logging._nameToLevel),
+            default=logging._levelToName[logging.WARNING],
+            help="HTTP request log level"
+        )
+        self.early_parser.add_argument(
+            "--output-format",
+            type=OutputFormats,
+            choices=list(OutputFormats),
+            default=self._output_format,
+            help="Output format"
+        )
+        self.early_parser.add_argument("--output", type=str, default="-", help="Output destination")
+
+        self.early_parser.add_argument(
+            "--config", help="config file location %(default)r", default=envdefault.AIVEN_CLIENT_CONFIG
+        )
+
+        # Parser is the actual command line parser which displays to the user.
+        self.parser = argparse.ArgumentParser(prog=name, formatter_class=CustomFormatter)
+        self.parser.add_argument('--version', action='version', version='aiven-client {}'.format(__version__))
+
+        # Add the early parser options to the real parser so they'll appear in the help we show the
+        # user.
+        for action in self.early_parser._actions:
+            self.parser._add_action(action)
+
         self.subparsers = self.parser.add_subparsers(title="command categories", dest="command", help="", metavar="")
         self.args = None
 
@@ -148,13 +212,7 @@ class CommandLineTool:  # pylint: disable=old-style-class
             parser.add_argument(*arg_prop[0], **arg_prop[1])
 
     def add_args(self, parser):
-        pass  # override in sub-class
-
-    def extend_commands(self, sub_client):
-        """Add top-level args and all commands from a CommandLineTool instance"""
-        sub_client.add_args(self.parser)  # top-level args
-        sub_client.add_cmds(self.add_cmd)  # sub-commands
-        self._extensions.append(sub_client)
+        """This method should be overriden in subclasses to add group arguments."""
 
     def add_cmds(self, add_func):
         """Add every method tagged with @arg as a command"""
@@ -166,6 +224,12 @@ class CommandLineTool:  # pylint: disable=old-style-class
             func = getattr(self, prop, None)
             if getattr(func, ARG_LIST_PROP, None) is not None:
                 add_func(func)
+
+    def extend_commands(self, sub_client):
+        """Add top-level args and all commands from a CommandLineTool instance"""
+        sub_client.add_args(self.parser)  # top-level args
+        sub_client.add_cmds(self.add_cmd)  # sub-commands
+        self._extensions.append(sub_client)
 
     def parse_args(self, args=None):
         self.extend_commands(self)
@@ -186,7 +250,7 @@ class CommandLineTool:  # pylint: disable=old-style-class
     def print_response(
         self,
         result,
-        json=True,
+        json=False,
         format=None,  # pylint: disable=redefined-builtin
         drop_fields=None,
         table_layout=None,
@@ -196,47 +260,98 @@ class CommandLineTool:  # pylint: disable=old-style-class
         file=None,
     ):  # pylint: disable=redefined-builtin
         """print request response in chosen format"""
-        if file is None:
-            file = sys.stdout
+
+        # Deprecation compatibility: map the old keyword args into the new enum:
+        output_stream = self._output_stream if file is None else file
+
+        output_format = self._output_format
+
+        if json is True:
+            output_format = OutputFormats.JSON
+        elif csv is True:
+            output_format = OutputFormats.CSV if header is True else OutputFormats.CSV_NOHEADER
+
+        # Detect when a single item has been passed and reframe it as a list.
+        if single_item is True or not isinstance(result, Sequence) or isinstance(result, str):
+            result = [result]
 
         if format is not None:
-            for item in result:
-                print(format.format(**item), file=file)
-        elif json:
-            print(
-                jsonlib.dumps(result, indent=4, sort_keys=True, cls=pretty.CustomJsonEncoder),
-                file=file,
-            )
-        elif csv:
-            fields = []
-            for field in table_layout:
-                if isinstance(field, str):
-                    fields.append(field)
-                else:
-                    fields.extend(field)
+            prepared_data = pretty.prepare_table(result, table_layout)
+            # This code supports the format arg exactly as currently used.
+            if not isinstance(result, (Mapping, Sequence)) or isinstance(result, basestring):
+                raise NotImplementedError(
+                    "Cannot output with format non-mapping or sequence types types: got {result_type}".format(
+                        result_type=type(result)
+                    )
+                )
+            for table_row in prepared_data.table_rows:
+                output_stream.write(format.format(**table_row))
+                output_stream.write("\n")
 
-            writer = csvlib.DictWriter(file, extrasaction="ignore", fieldnames=fields)
-            if header:
-                writer.writeheader()
-            for item in result:
-                writer.writerow(item)
-        else:
-            if single_item:
-                result = [result]
-
+        if output_format in (OutputFormats.TABLE, OutputFormats.TABLE_NOHEADER):
             pretty.print_table(
                 result,
                 drop_fields=drop_fields,
                 table_layout=table_layout,
-                header=header,
-                file=file,
+                header=output_format == OutputFormats.TABLE,
+                file=output_stream
             )
+
+        elif output_format in (OutputFormats.CSV, OutputFormats.CSV_NOHEADER):
+            prepared_data = pretty.prepare_table(result, table_layout)
+            fields = []
+            if len(prepared_data.vertical_fields) != 0:
+                fields.append("")
+
+            writer = csvlib.DictWriter(output_stream, extrasaction="ignore", fieldnames=fields)
+
+            if output_format == OutputFormats.CSV:
+                writer.writeheader()
+
+            for row in prepared_data.table_rows:
+                row_item = {k: pretty.format_item(v) for k, v in row.items()}
+                row_item[""] = "\n".join(pretty.yield_vertical_fields(row_item, prepared_data.vertical_fields))
+                writer.writerow(row_item)
+
+        elif output_format == OutputFormats.JSON:
+            jsonlib.dump(result, output_stream, indent=4, sort_keys=True, cls=pretty.CustomJsonEncoder)
+            output_stream.write("\n")
+        elif output_format == OutputFormats.JSON_COMPACT:
+            jsonlib.dump(result, output_stream, sort_keys=True, cls=pretty.CustomJsonEncoder)
+            output_stream.write("\n")
+        elif output_format == OutputFormats.YAML:
+            yamllib.round_trip_dump(result, output_stream, default_flow_style=False)
+
+        else:
+            raise ValueError("unrecognized output format: {output_format}".format(output_format=output_format.value))
 
     def run(self, args=None):
         args = args or sys.argv[1:]
         if not args:
             args = ["--help"]
 
+        # Parse the early arguments
+        early_args, _ = self.early_parser.parse_known_args(args)
+
+        # Configure log levels early
+        logging.basicConfig(
+            level=logging._nameToLevel[early_args.log_level],  # pylint: disable=protected-access
+            format=LOG_FORMAT
+        )
+        logging.getLogger("requests").setLevel(
+            logging._nameToLevel[early_args.request_log_level]  # pylint: disable=protected-access
+        )
+
+        self.config = Config(early_args.config)
+
+        self._output_format = early_args.output_format
+
+        if early_args.output == "-" or early_args.output == "":
+            self._output_stream = sys.stdout
+        else:
+            self._output_stream = open(early_args.output, "wb")
+
+        # Parse the other arguments (in practice parses them again - this catches errors in the early_args)
         self.parse_args(args=args)
         self.config = Config(self.args.config)
         expected_errors = [
@@ -273,7 +388,4 @@ class CommandLineTool:  # pylint: disable=old-style-class
         return func()  # pylint: disable=not-callable
 
     def main(self):
-        # TODO: configurable log level
-        logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
-        logging.getLogger("requests").setLevel(logging.WARNING)
         sys.exit(self.run())

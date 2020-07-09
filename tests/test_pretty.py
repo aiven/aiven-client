@@ -33,4 +33,4 @@ pytestmark = [pytest.mark.unittest, pytest.mark.all]
     ],
 )
 def test_format_item(value, expected):
-    assert format_item(None, value) == expected
+    assert format_item(value) == expected

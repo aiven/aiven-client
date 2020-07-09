@@ -7,23 +7,22 @@ from setuptools import setup, find_packages
 import sys
 import version
 
-LATEST = [
-    "requests >= 2.9.1",
-    "certifi >= 2015.11.20.1",
-]
+LATEST = {
+    "requests": ">= 2.9.1",
+    "certifi": ">= 2015.11.20.1",
+    "ruamel.yaml": ">= 0.16.5",
+}
+
+REQUIRES = LATEST.copy()
+
+if (sys.version_info.major, sys.version_info.minor) <= (3, 4):
+    # Use an older version of ruamel.yaml for Python 3.4
+    REQUIRES["ruamel.yaml"] = "== 0.15.94"
 
 if sys.platform.startswith("linux"):
-    REQUIRES = [
-        # no bundled certifi as distro packages are expected to be patched to use system ca certs
-        "requests >= 2.2.1",  # minimum defined by Ubuntu Trusty (14.04LTS)
-    ]
-elif sys.platform == "darwin":
-    REQUIRES = LATEST
-elif sys.platform.startswith("win"):
-    REQUIRES = LATEST
-else:
-    # default to latest version on unknown platforms
-    REQUIRES = LATEST
+    REQUIRES["requests"] = ">= 2.2.1"  # minimum defined by Ubuntu Trusty (14.04LTS)
+    # No bundled certifi as distro packages are expected to be patched to use system ca certs
+    REQUIRES.pop("certifi")
 
 setup(
     author="Aiven",
@@ -33,7 +32,7 @@ setup(
             "avn = aiven.client.__main__:main",
         ],
     },
-    install_requires=REQUIRES,
+    install_requires=["{} {}".format(name, version) for name, version in REQUIRES.items()],
     license="Apache 2.0",
     name="aiven-client",
     packages=find_packages(exclude=["tests"]),
