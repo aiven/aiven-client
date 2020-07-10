@@ -17,9 +17,11 @@ def get_project_version(version_file):
         file_ver = None
 
     try:
-        proc = subprocess.Popen(["git", "describe", "--always"],
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
+        proc = subprocess.Popen(
+            ["git", "describe", "--always"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
         stdout, _ = proc.communicate()
         if stdout:
             git_ver = stdout.splitlines()[0].strip().decode("utf-8")
@@ -30,12 +32,12 @@ def get_project_version(version_file):
         pass
 
     if not file_ver:
-        raise Exception("version not available from git or from file %r"
-                        % version_file)
+        raise Exception("version not available from git or from file %r" % version_file)
 
     return file_ver
 
 
 if __name__ == "__main__":
     import sys
+
     get_project_version(sys.argv[1])

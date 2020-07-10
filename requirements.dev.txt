@@ -3,3 +3,5 @@ pylint
 pytest
 # Lock isort version since pylint fails with the 5.x series at the moment.
 isort<5.0
+# Lock yapf version for consistent formatting behavior.
+yapf==0.27.0

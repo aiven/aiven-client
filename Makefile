@@ -13,6 +13,7 @@ test: flake8 pylint pytest
 
 reformat:
 	$(PYTHON) -m isort --recursive $(PYTHON_DIRS)
+	yapf --parallel --recursive --in-place .
 
 validate-style:
 	$(eval CHANGES_BEFORE := $(shell mktemp))

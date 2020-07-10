@@ -18,6 +18,7 @@ import sys
 # Optional shell completions
 try:
     import argcomplete  # pylint: disable=import-error
+
     ARGCOMPLETE_INSTALLED = True
 except ImportError:
     ARGCOMPLETE_INSTALLED = False
@@ -27,22 +28,23 @@ try:
 except ImportError:
     __version__ = "UNKNOWN"
 
-
 ARG_LIST_PROP = "_arg_list"
 LOG_FORMAT = "%(levelname)s\t%(message)s"
 
 
 class CustomFormatter(argparse.RawDescriptionHelpFormatter):
     """Help formatter to display the default value only for integers and non-empty strings"""
+
     def _get_help_string(self, action):
         help_text = action.help
-        if '%(default)' not in action.help and action.default is not argparse.SUPPRESS:
-            if action.option_strings or action.nargs in [argparse.OPTIONAL, argparse.ZERO_OR_MORE]:
-                if (
-                        (not isinstance(action.default, bool) and isinstance(action.default, int))
-                        or (isinstance(action.default, str) and action.default)
-                ):
-                    help_text += ' (default: %(default)s)'
+        if "%(default)" not in action.help and action.default is not argparse.SUPPRESS:
+            if action.option_strings or action.nargs in [
+                argparse.OPTIONAL,
+                argparse.ZERO_OR_MORE,
+            ]:
+                if (not isinstance(action.default, bool)
+                    and isinstance(action.default, int)) or (isinstance(action.default, str) and action.default):
+                    help_text += " (default: %(default)s)"
         return help_text
 
 
@@ -61,6 +63,7 @@ def arg(*args, **kwargs):
             arg_list.insert(0, (args, kwargs))
 
         return func
+
     return wrap
 
 
@@ -79,8 +82,9 @@ class Config(dict):
             if ex.errno == errno.ENOENT:
                 return
 
-            raise UserError("Failed to load configuration file {!r}: {}: {}".format(
-                self.file_path, ex.__class__.__name__, ex))
+            raise UserError(
+                "Failed to load configuration file {!r}: {}: {}".format(self.file_path, ex.__class__.__name__, ex)
+            )
         except ValueError:
             raise UserError("Invalid JSON in configuration file {!r}".format(self.file_path))
 
@@ -102,11 +106,13 @@ class CommandLineTool:  # pylint: disable=old-style-class
         self._cats = {}
         self._extensions = []
         self.parser = argparse.ArgumentParser(prog=name, formatter_class=CustomFormatter)
-        self.parser.add_argument("--config", help="config file location %(default)r",
-                                 default=envdefault.AIVEN_CLIENT_CONFIG)
-        self.parser.add_argument('--version', action='version', version='aiven-client {}'.format(__version__))
-        self.subparsers = self.parser.add_subparsers(title="command categories", dest="command",
-                                                     help="", metavar="")
+        self.parser.add_argument(
+            "--config",
+            help="config file location %(default)r",
+            default=envdefault.AIVEN_CLIENT_CONFIG,
+        )
+        self.parser.add_argument("--version", action="version", version="aiven-client {}".format(__version__))
+        self.subparsers = self.parser.add_subparsers(title="command categories", dest="command", help="", metavar="")
         self.args = None
 
     def add_cmd(self, func):
@@ -130,7 +136,8 @@ class CommandLineTool:  # pylint: disable=old-style-class
                 parser = subparsers.add_parser(
                     cat[-1],
                     help=" ".join(cat).title() + " commands",
-                    formatter_class=CustomFormatter)
+                    formatter_class=CustomFormatter,
+                )
                 self._cats[cat] = parser.add_subparsers()
             subparsers = self._cats[cat]
 
@@ -177,16 +184,17 @@ class CommandLineTool:  # pylint: disable=old-style-class
         return []
 
     def print_response(
-            self,
-            result,
-            json=True,
-            format=None,  # pylint: disable=redefined-builtin
-            drop_fields=None,
-            table_layout=None,
-            single_item=False,
-            header=True,
-            csv=False,
-            file=None):  # pylint: disable=redefined-builtin
+        self,
+        result,
+        json=True,
+        format=None,  # pylint: disable=redefined-builtin
+        drop_fields=None,
+        table_layout=None,
+        single_item=False,
+        header=True,
+        csv=False,
+        file=None,
+    ):  # pylint: disable=redefined-builtin
         """print request response in chosen format"""
         if file is None:
             file = sys.stdout
@@ -195,7 +203,10 @@ class CommandLineTool:  # pylint: disable=old-style-class
             for item in result:
                 print(format.format(**item), file=file)
         elif json:
-            print(jsonlib.dumps(result, indent=4, sort_keys=True, cls=pretty.CustomJsonEncoder), file=file)
+            print(
+                jsonlib.dumps(result, indent=4, sort_keys=True, cls=pretty.CustomJsonEncoder),
+                file=file,
+            )
         elif csv:
             fields = []
             for field in table_layout:
@@ -213,17 +224,26 @@ class CommandLineTool:  # pylint: disable=old-style-class
             if single_item:
                 result = [result]
 
-            pretty.print_table(result, drop_fields=drop_fields, table_layout=table_layout,
-                               header=header, file=file)
+            pretty.print_table(
+                result,
+                drop_fields=drop_fields,
+                table_layout=table_layout,
+                header=header,
+                file=file,
+            )
 
     def run(self, args=None):
         args = args or sys.argv[1:]
         if not args:
-            args = ['--help']
+            args = ["--help"]
 
         self.parse_args(args=args)
         self.config = Config(self.args.config)
-        expected_errors = [requests.exceptions.ConnectionError, UserError, aiven.client.client.Error]
+        expected_errors = [
+            requests.exceptions.ConnectionError,
+            UserError,
+            aiven.client.client.Error,
+        ]
         for ext in self._extensions:  # note: _extensions includes self
             expected_errors.extend(ext.expected_errors())
             ext.config = self.config
