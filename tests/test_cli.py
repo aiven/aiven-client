@@ -56,18 +56,18 @@ def test_create_user_config():
                             },
                             "with.dot": {
                                 "type": "integer",
-                            }
-                        }
+                            },
+                        },
                     }
-                }
+                },
             },
             "foo": {
                 "type": ["integer", "null"],
             },
             "main": {
                 "type": "integer",
-            }
-        }
+            },
+        },
     }
     config = cli.create_user_config(schema)
     assert config == {

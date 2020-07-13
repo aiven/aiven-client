@@ -30,9 +30,11 @@ AUTHENTICATION_METHOD_COLUMNS = [
 ]
 PLUGINS = []
 
-
 try:
-    from aiven.admin import plugin as adminplugin  # pylint: disable=import-error,no-name-in-module
+    from aiven.admin import (
+        plugin as adminplugin,
+    )  # pylint: disable=import-error,no-name-in-module
+
     PLUGINS.append(adminplugin)
 except ImportError:
     pass
@@ -55,8 +57,7 @@ def convert_str_to_value(schema, str_value):
         try:
             return values[str_value]
         except KeyError:
-            raise argx.UserError("Invalid boolean value {!r}: expected one of {}"
-                                 .format(str_value, ", ".join(values)))
+            raise argx.UserError("Invalid boolean value {!r}: expected one of {}".format(str_value, ", ".join(values)))
     elif "array" in schema["type"]:
         return [convert_str_to_value(schema["items"], val) for val in str_value.split(",")]
     elif "null" in schema["type"] and str_value is None:
@@ -84,14 +85,23 @@ class AivenCLI(argx.CommandLineTool):
             self.extend_commands(plugincli)
 
     def add_args(self, parser):
-        parser.add_argument("--auth-ca", help="CA certificate to use [AIVEN_CA_CERT], default %(default)r",
-                            default=envdefault.AIVEN_CA_CERT, metavar="FILE")
-        parser.add_argument("--auth-token",
-                            help="Client auth token to use [AIVEN_AUTH_TOKEN], [AIVEN_CREDENTIALS_FILE]",
-                            default=envdefault.AIVEN_AUTH_TOKEN)
+        parser.add_argument(
+            "--auth-ca",
+            help="CA certificate to use [AIVEN_CA_CERT], default %(default)r",
+            default=envdefault.AIVEN_CA_CERT,
+            metavar="FILE",
+        )
+        parser.add_argument(
+            "--auth-token",
+            help="Client auth token to use [AIVEN_AUTH_TOKEN], [AIVEN_CREDENTIALS_FILE]",
+            default=envdefault.AIVEN_AUTH_TOKEN,
+        )
         parser.add_argument("--show-http", help="Show HTTP requests and responses", action="store_true")
-        parser.add_argument("--url", help="Server base url default %(default)r",
-                            default=envdefault.AIVEN_WEB_URL or "https://api.aiven.io")
+        parser.add_argument(
+            "--url",
+            help="Server base url default %(default)r",
+            default=envdefault.AIVEN_WEB_URL or "https://api.aiven.io",
+        )
 
     def collect_user_config_options(self, obj_def, prefixes=None):
         opts = {}
@@ -136,8 +146,9 @@ class AivenCLI(argx.CommandLineTool):
             try:
                 key, value = key_value.split("=", 1)
             except ValueError:
-                raise argx.UserError("Invalid config value: {!r}, expected '<KEY>[.<SUBKEY>]=<JSON_VALUE>'"
-                                     .format(key_value))
+                raise argx.UserError(
+                    "Invalid config value: {!r}, expected '<KEY>[.<SUBKEY>]=<JSON_VALUE>'".format(key_value)
+                )
 
             opt_schema = options.get(key)
             if not opt_schema:
@@ -146,8 +157,9 @@ class AivenCLI(argx.CommandLineTool):
                 opt_schema = options.get(generic_key)
 
             if not opt_schema:
-                raise argx.UserError("Unsupported option {!r}, available options: {}"
-                                     .format(key, ", ".join(options) or "none"))
+                raise argx.UserError(
+                    "Unsupported option {!r}, available options: {}".format(key, ", ".join(options) or "none")
+                )
 
             try:
                 value = convert_str_to_value(opt_schema, value)
@@ -160,8 +172,9 @@ class AivenCLI(argx.CommandLineTool):
         for opt in user_option_remove:
             opt_schema = options.get(opt)
             if not opt_schema:
-                raise argx.UserError("Unsupported option {!r}, available options: {}"
-                                     .format(opt, ", ".join(options) or "none"))
+                raise argx.UserError(
+                    "Unsupported option {!r}, available options: {}".format(opt, ", ".join(options) or "none")
+                )
 
             if "null" not in opt_schema["type"]:
                 raise argx.UserError("Removing option {!r} is not supported".format(opt))
@@ -261,7 +274,10 @@ class AivenCLI(argx.CommandLineTool):
             default_project = projects[0]["project_name"]
             self.config["default_project"] = default_project
             self.config.save()
-            self.log.info("Default project set as '%s' (change with 'avn project switch <project>')", default_project)
+            self.log.info(
+                "Default project set as '%s' (change with 'avn project switch <project>')",
+                default_project,
+            )
         else:
             self.log.info("No projects exists. You should probably create one with 'avn project create <name>'")
 
@@ -279,33 +295,53 @@ class AivenCLI(argx.CommandLineTool):
 
     @arg("--description", required=True, help="Description of how the token will be used")
     @arg("--max-age-seconds", type=int, help="Maximum age of the token, if any")
-    @arg("--extend-when-used", action="store_true",
-         help="Extend token's expiry time when used (only applicable if token is set to expire)")
+    @arg(
+        "--extend-when-used",
+        action="store_true",
+        help="Extend token's expiry time when used (only applicable if token is set to expire)",
+    )
     @arg.json
     def user__access_token__create(self):
         """Creates new access token"""
         token_info = self.client.access_token_create(
             description=self.args.description,
             extend_when_used=self.args.extend_when_used,
-            max_age_seconds=self.args.max_age_seconds
+            max_age_seconds=self.args.max_age_seconds,
         )
-        layout = ["expiry_time", "description", "max_age_seconds", "extend_when_used", "full_token"]
+        layout = [
+            "expiry_time",
+            "description",
+            "max_age_seconds",
+            "extend_when_used",
+            "full_token",
+        ]
         self.print_response([token_info], json=self.args.json, table_layout=layout)
 
-    @arg("token_prefix", help="The full token or token prefix identifying the token to update")
+    @arg(
+        "token_prefix",
+        help="The full token or token prefix identifying the token to update",
+    )
     @arg("--description", required=True, help="Description of how the token will be used")
     @arg.json
     def user__access_token__update(self):
         """Updates an existing access token"""
-        token_info = self.client.access_token_update(
-            token_prefix=self.args.token_prefix,
-            description=self.args.description
-        )
-        layout = ["expiry_time", "token_prefix", "description", "max_age_seconds", "extend_when_used",
-                  "last_used_time", "last_ip", "last_user_agent"]
+        token_info = self.client.access_token_update(token_prefix=self.args.token_prefix, description=self.args.description)
+        layout = [
+            "expiry_time",
+            "token_prefix",
+            "description",
+            "max_age_seconds",
+            "extend_when_used",
+            "last_used_time",
+            "last_ip",
+            "last_user_agent",
+        ]
         self.print_response([token_info], json=self.args.json, table_layout=layout)
 
-    @arg("token_prefix", help="The full token or token prefix identifying the token to revoke")
+    @arg(
+        "token_prefix",
+        help="The full token or token prefix identifying the token to revoke",
+    )
     def user__access_token__revoke(self):
         """Revokes an access token"""
         self.client.access_token_revoke(token_prefix=self.args.token_prefix)
@@ -315,8 +351,16 @@ class AivenCLI(argx.CommandLineTool):
     def user__access_token__list(self):
         """List all of your access tokens"""
         tokens = self.client.access_tokens_list()
-        layout = ["expiry_time", "token_prefix", "description", "max_age_seconds", "extend_when_used",
-                  "last_used_time", "last_ip", "last_user_agent"]
+        layout = [
+            "expiry_time",
+            "token_prefix",
+            "description",
+            "max_age_seconds",
+            "extend_when_used",
+            "last_used_time",
+            "last_ip",
+            "last_user_agent",
+        ]
         self.print_response(tokens, json=self.args.json, table_layout=layout)
 
     def _show_logs(self, msgs):
@@ -330,7 +374,14 @@ class AivenCLI(argx.CommandLineTool):
     @arg.project
     @arg.service_name
     @arg.json
-    @arg("-S", "--sort-order", type=str, default="asc", choices=["desc", "asc"], help="Sort direction for log fetching")
+    @arg(
+        "-S",
+        "--sort-order",
+        type=str,
+        default="asc",
+        choices=["desc", "asc"],
+        help="Sort direction for log fetching",
+    )
     @arg("-n", "--limit", type=int, default=100, help="Get up to N rows of logs")
     @arg("-f", "--follow", action="store_true", default=False)
     def service__logs(self):
@@ -357,7 +408,7 @@ class AivenCLI(argx.CommandLineTool):
                 continue
             consecutive_errors = 0
             new_offset = self._show_logs(msgs)
-            if not msgs["logs"] and previous_offset is not None and self.args.sort_order == "desc":
+            if (not msgs["logs"] and previous_offset is not None and self.args.sort_order == "desc"):
                 # Quit because since we didn't find older messages than this, we'll never find any.
                 break
             if not self.args.follow:
@@ -372,9 +423,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg("-n", "--limit", type=int, default=100, help="Get up to N rows of logs")
     def events(self):
         """View project event logs"""
-        events = self.client.get_events(
-            project=self.get_project(),
-            limit=self.args.limit)
+        events = self.client.get_events(project=self.get_project(), limit=self.args.limit)
 
         if self.args.json:
             print(jsonlib.dumps(events, indent=4, sort_keys=True))
@@ -479,14 +528,23 @@ class AivenCLI(argx.CommandLineTool):
     @arg.json
     @arg.account_id
     @arg("-n", "--name", required=True, help="Authentication method name")
-    @arg("-t", "--type", required=True, help="Authentication method type", choices=["saml"])
+    @arg(
+        "-t",
+        "--type",
+        required=True,
+        help="Authentication method type",
+        choices=["saml"],
+    )
     @arg.config_cmdline
     @arg.config_file
     def account__authentication_method__create(self):
         """Create new account authentication method"""
         options = self._parse_auth_config_options(self.args.config_cmdline, self.args.config_file)
         method = self.client.create_account_authentication_method(
-            self.args.account_id, method_name=self.args.name, method_type=self.args.type, options=options
+            self.args.account_id,
+            method_name=self.args.name,
+            method_type=self.args.type,
+            options=options,
         )
         acs_url = "https://api.aiven.io/v1/sso/saml/account/{}/method/{}/acs".format(
             self.args.account_id, method["authentication_method_id"]
@@ -524,9 +582,14 @@ class AivenCLI(argx.CommandLineTool):
             self.args.authentication_id,
             method_enable=enable,
             method_name=self.args.name,
-            options=options
+            options=options,
         )
-        self.print_response(account, json=self.args.json, single_item=True, table_layout=AUTHENTICATION_METHOD_COLUMNS)
+        self.print_response(
+            account,
+            json=self.args.json,
+            single_item=True,
+            table_layout=AUTHENTICATION_METHOD_COLUMNS,
+        )
 
     @arg.account_id
     @arg.authentication_id
@@ -567,7 +630,10 @@ class AivenCLI(argx.CommandLineTool):
     @arg.team_id
     def account__team__user_list(self):
         """List team members"""
-        self.print_response(self.client.list_team_members(self.args.account_id, self.args.team_id), json=self.args.json)
+        self.print_response(
+            self.client.list_team_members(self.args.account_id, self.args.team_id),
+            json=self.args.json,
+        )
 
     @arg.json
     @arg.account_id
@@ -582,7 +648,10 @@ class AivenCLI(argx.CommandLineTool):
     @arg.team_id
     def account__team__user_list_pending(self):
         """List pending invitations to a team"""
-        self.print_response(self.client.list_team_invites(self.args.account_id, self.args.team_id), json=self.args.json)
+        self.print_response(
+            self.client.list_team_invites(self.args.account_id, self.args.team_id),
+            json=self.args.json,
+        )
 
     @arg.json
     @arg.account_id
@@ -597,19 +666,29 @@ class AivenCLI(argx.CommandLineTool):
     @arg.team_id
     def account__team__project_list(self):
         """List projects associated to a team"""
-        self.print_response(self.client.list_team_projects(self.args.account_id, self.args.team_id),
-                            json=self.args.json)
+        self.print_response(
+            self.client.list_team_projects(self.args.account_id, self.args.team_id),
+            json=self.args.json,
+        )
 
     @arg.json
     @arg.account_id
     @arg.team_id
     @arg.project
-    @arg("--team-type", required=True, choices=["admin", "developer", "operator", "read_only"],
-         help="Team type (permission level)")
+    @arg(
+        "--team-type",
+        required=True,
+        choices=["admin", "developer", "operator", "read_only"],
+        help="Team type (permission level)",
+    )
     def account__team__project_attach(self):
         """Attach team to a project"""
-        self.client.attach_team_to_project(self.args.account_id, self.args.team_id, self.args.project,
-                                           self.args.team_type)
+        self.client.attach_team_to_project(
+            self.args.account_id,
+            self.args.team_id,
+            self.args.project,
+            self.args.team_type,
+        )
 
     @arg.json
     @arg.account_id
@@ -664,7 +743,11 @@ class AivenCLI(argx.CommandLineTool):
                 else:
                     price_str = price_dec.quantize(dformat)
                     price = "${}/h".format(price_str)
-                description = self.describe_plan(plan["regions"][self.args.cloud], plan["node_count"], plan["service_plan"])
+                description = self.describe_plan(
+                    plan["regions"][self.args.cloud],
+                    plan["node_count"],
+                    plan["service_plan"],
+                )
                 print("    {:<28} {:>10}  {}".format(args, price, description))
 
             if not info["service_plans"]:
@@ -699,24 +782,43 @@ class AivenCLI(argx.CommandLineTool):
                 else:
                     for name, spec in sorted(options.items()):
                         default = spec.get("default")
-                        default_desc = "(default={!r})".format(default) if default is not None else ""
-                        description = ": {}".format(spec["description"]) if "description" in spec else ""
+                        default_desc = ("(default={!r})".format(default) if default is not None else "")
+                        description = (": {}".format(spec["description"]) if "description" in spec else "")
                         types = spec["type"]
                         if isinstance(types, str) and types == "null":
-                            print("  {title}{description}\n"
-                                  "     => --remove-option {name}"
-                                  .format(name=name, title=spec["title"], description=description))
+                            print(
+                                "  {title}{description}\n"
+                                "     => --remove-option {name}".format(
+                                    name=name,
+                                    title=spec["title"],
+                                    description=description,
+                                )
+                            )
                         else:
                             if not isinstance(types, list):
                                 types = [types]
                             type_str = " or ".join(t for t in types if t != "null")
-                            print("  {title}{description}\n"
-                                  "     => -c {name}=<{type}>  {default}"
-                                  .format(name=name, type=type_str,
-                                          default=default_desc, title=spec["title"], description=description))
+                            print(
+                                "  {title}{description}\n"
+                                "     => -c {name}=<{type}>  {default}".format(
+                                    name=name,
+                                    type=type_str,
+                                    default=default_desc,
+                                    title=spec["title"],
+                                    description=description,
+                                )
+                            )
 
-    SERVICE_LAYOUT = [["service_name", "service_type", "state", "cloud_name", "plan",
-                       "group_list", "create_time", "update_time"]]
+    SERVICE_LAYOUT = [[
+        "service_name",
+        "service_type",
+        "state",
+        "cloud_name",
+        "plan",
+        "group_list",
+        "create_time",
+        "update_time",
+    ]]
     EXT_SERVICE_LAYOUT = ["service_uri", "user_config.*", "databases", "users"]
 
     @arg.project
@@ -737,8 +839,7 @@ class AivenCLI(argx.CommandLineTool):
         if self.args.verbose:
             layout.extend(self.EXT_SERVICE_LAYOUT)
 
-        self.print_response(services, format=self.args.format, json=self.args.json,
-                            table_layout=layout)
+        self.print_response(services, format=self.args.format, json=self.args.json, table_layout=layout)
 
     @arg.project
     @arg.service_name
@@ -762,13 +863,27 @@ class AivenCLI(argx.CommandLineTool):
                         service[key_uri] = connection_info[key_uri]
             layout.extend(ext_layout)
 
-        self.print_response(service, format=self.args.format, json=self.args.json,
-                            table_layout=layout, single_item=True)
+        self.print_response(
+            service,
+            format=self.args.format,
+            json=self.args.json,
+            table_layout=layout,
+            single_item=True,
+        )
 
         if self.args.verbose and not self.args.json and service.get("node_states"):
             print("Service node states")
             collapsed = []
-            layout = ["name", "state", "phase", "min", "current", "max", "unit", "progress"]
+            layout = [
+                "name",
+                "state",
+                "phase",
+                "min",
+                "current",
+                "max",
+                "unit",
+                "progress",
+            ]
             for node_state in sorted(service["node_states"], key=lambda ns: ns["name"]):
                 collapsed.append({
                     "current": "",
@@ -802,8 +917,12 @@ class AivenCLI(argx.CommandLineTool):
     @optional_auth
     @arg.project
     @arg.service_name
-    @arg("arg", nargs="*",
-         help="Pass arguments directly for service client, use '--' to separate from avn args", default=[])
+    @arg(
+        "arg",
+        nargs="*",
+        help="Pass arguments directly for service client, use '--' to separate from avn args",
+        default=[],
+    )
     def service__cli(self):
         """Open interactive shell to given service (if supported)"""
         if "://" in self.args.name:
@@ -821,24 +940,30 @@ class AivenCLI(argx.CommandLineTool):
         elif service_type == "postgres":
             command, params, env = self._build_psql_start_info(url)
         else:
-            raise argx.UserError("Unsupported service type {}. Only InfluxDB and PostgreSQL are supported".format(
-                service_type))
+            raise argx.UserError(
+                "Unsupported service type {}. Only InfluxDB and PostgreSQL are supported".format(service_type)
+            )
 
         try:
             os.execvpe(command, [command] + params + self.args.arg, dict(os.environ, **env))
         except EnvironmentError as e:
             if e.errno != errno.ENOENT:
                 raise
-            raise argx.UserError("Executable '{}' is not available, cannot launch {} client".format(
-                command, service_type))
+            raise argx.UserError("Executable '{}' is not available, cannot launch {} client".format(command, service_type))
 
     def _build_influx_start_info(self, url):
         info = urlparse(url)
-        params = ["-host", info.hostname,
-                  "-port", str(info.port),
-                  "-database", info.path.lstrip("/"),
-                  "-username", info.username,
-                  "-ssl"]
+        params = [
+            "-host",
+            info.hostname,
+            "-port",
+            str(info.port),
+            "-database",
+            info.path.lstrip("/"),
+            "-username",
+            info.username,
+            "-ssl",
+        ]
         return ("influx", params, {"INFLUX_PASSWORD": info.password})
 
     def _build_psql_start_info(self, url):
@@ -855,19 +980,33 @@ class AivenCLI(argx.CommandLineTool):
     def service__credentials_reset(self):
         """Reset service credentials"""
         service = self.client.reset_service_credentials(project=self.get_project(), service=self.args.name)
-        layout = [["service_name", "service_type", "state", "cloud_name", "plan",
-                   "group_list", "create_time", "update_time"]]
+        layout = [[
+            "service_name",
+            "service_type",
+            "state",
+            "cloud_name",
+            "plan",
+            "group_list",
+            "create_time",
+            "update_time",
+        ]]
         if self.args.verbose:
             layout.extend(["service_uri", "user_config.*"])
         self.print_response([service], format=self.args.format, json=self.args.json, table_layout=layout)
 
     @arg.project
     @arg.service_name
-    @arg("--period", help="Metrics period", default="hour", choices=["hour", "day", "week", "month", "year"])
+    @arg(
+        "--period",
+        help="Metrics period",
+        default="hour",
+        choices=["hour", "day", "week", "month", "year"],
+    )
     def service__metrics(self):
         """Get service metrics"""
-        metrics = self.client.get_service_metrics(project=self.get_project(), service=self.args.name,
-                                                  period=self.args.period)
+        metrics = self.client.get_service_metrics(
+            project=self.get_project(), service=self.args.name, period=self.args.period
+        )
         print(jsonlib.dumps(metrics, indent=2, sort_keys=True))
 
     @arg.project
@@ -887,7 +1026,8 @@ class AivenCLI(argx.CommandLineTool):
             dbname=self.args.dbname,
             username=self.args.username,
             pool_size=self.args.pool_size,
-            pool_mode=self.args.pool_mode)
+            pool_mode=self.args.pool_mode,
+        )
 
     @arg.project
     @arg.service_name
@@ -906,7 +1046,8 @@ class AivenCLI(argx.CommandLineTool):
             dbname=self.args.dbname,
             username=self.args.username,
             pool_size=self.args.pool_size,
-            pool_mode=self.args.pool_mode)
+            pool_mode=self.args.pool_mode,
+        )
 
     @arg.project
     @arg.service_name
@@ -914,8 +1055,11 @@ class AivenCLI(argx.CommandLineTool):
     @arg.json
     def service__connection_pool_delete(self):
         """Delete a connection pool from a given service"""
-        self.client.delete_service_connection_pool(project=self.get_project(), service=self.args.name,
-                                                   pool_name=self.args.pool_name)
+        self.client.delete_service_connection_pool(
+            project=self.get_project(),
+            service=self.args.name,
+            pool_name=self.args.pool_name,
+        )
 
     @arg.project
     @arg.service_name
@@ -928,8 +1072,12 @@ class AivenCLI(argx.CommandLineTool):
         layout = ["pool_name", "database", "username", "pool_mode", "pool_size"]
         if self.args.verbose:
             layout.append("connection_uri")
-        self.print_response(service["connection_pools"], format=self.args.format, json=self.args.json,
-                            table_layout=[layout])
+        self.print_response(
+            service["connection_pools"],
+            format=self.args.format,
+            json=self.args.json,
+            table_layout=[layout],
+        )
 
     @arg.project
     @arg.service_name
@@ -937,8 +1085,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg.json
     def service__database_create(self):
         """Create a database within a given service"""
-        self.client.create_service_database(project=self.get_project(), service=self.args.name,
-                                            dbname=self.args.dbname)
+        self.client.create_service_database(project=self.get_project(), service=self.args.name, dbname=self.args.dbname)
 
     @arg.project
     @arg.service_name
@@ -946,8 +1093,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg.json
     def service__database_delete(self):
         """Delete a database within a given service"""
-        self.client.delete_service_database(project=self.get_project(), service=self.args.name,
-                                            dbname=self.args.dbname)
+        self.client.delete_service_database(project=self.get_project(), service=self.args.name, dbname=self.args.dbname)
 
     @arg.project
     @arg.service_name
@@ -963,7 +1109,12 @@ class AivenCLI(argx.CommandLineTool):
         """Get migration status"""
         response = self.client.get_service_migration_status(project=self.get_project(), service=self.args.name)
         layout = ["status", "method", "error"]
-        self.print_response(response["migration"], json=self.args.json, single_item=True, table_layout=layout)
+        self.print_response(
+            response["migration"],
+            json=self.args.json,
+            single_item=True,
+            table_layout=layout,
+        )
 
     @arg.project
     @arg.service_name
@@ -971,8 +1122,11 @@ class AivenCLI(argx.CommandLineTool):
     @arg.json
     def service__user_create(self):
         """Create service user"""
-        self.client.create_service_user(project=self.get_project(), service=self.args.name,
-                                        username=self.args.username)
+        self.client.create_service_user(
+            project=self.get_project(),
+            service=self.args.name,
+            username=self.args.username,
+        )
 
     @arg.project
     @arg.service_name
@@ -980,8 +1134,11 @@ class AivenCLI(argx.CommandLineTool):
     @arg.json
     def service__user_delete(self):
         """Delete a service user"""
-        self.client.delete_service_user(project=self.get_project(), service=self.args.name,
-                                        username=self.args.username)
+        self.client.delete_service_user(
+            project=self.get_project(),
+            service=self.args.name,
+            username=self.args.username,
+        )
 
     @arg.project
     @arg.service_name
@@ -991,34 +1148,56 @@ class AivenCLI(argx.CommandLineTool):
         """List service users """
         service = self.client.get_service(project=self.get_project(), service=self.args.name)
         layout = [["username", "type"]]
-        self.print_response(service["users"], format=self.args.format, json=self.args.json,
-                            table_layout=layout)
+        self.print_response(
+            service["users"],
+            format=self.args.format,
+            json=self.args.json,
+            table_layout=layout,
+        )
 
     @arg.project
     @arg.service_name
     @arg("--username", help="Service user username", required=True)
-    @arg("-d", "--target-directory", help="Directory to write credentials to", required=False, default=os.getcwd())
+    @arg(
+        "-d",
+        "--target-directory",
+        help="Directory to write credentials to",
+        required=False,
+        default=os.getcwd(),
+    )
     @arg("-p", "--password", help="Truststore password", default="changeit")
     def service__user_kafka_java_creds(self):
         """Download user certificate/key/CA certificate and create a Java keystore/truststore/properties from them"""
         self.service__user_creds_download()
         # First create the truststore
         subprocess.check_call([
-            "keytool", "-importcert",
-            "-alias", "Aiven CA",
-            "-keystore", os.path.join(self.args.target_directory, "client.truststore.jks"),
-            "-storepass", self.args.password,
-            "-file", os.path.join(self.args.target_directory, "ca.pem"),
+            "keytool",
+            "-importcert",
+            "-alias",
+            "Aiven CA",
+            "-keystore",
+            os.path.join(self.args.target_directory, "client.truststore.jks"),
+            "-storepass",
+            self.args.password,
+            "-file",
+            os.path.join(self.args.target_directory, "ca.pem"),
             "-noprompt",
         ])
         # Then create the keystore
         subprocess.check_call([
-            "openssl", "pkcs12", "-export",
-            "-out", os.path.join(self.args.target_directory, "client.keystore.p12"),
-            "-inkey", os.path.join(self.args.target_directory, "service.key"),
-            "-in", os.path.join(self.args.target_directory, "service.cert"),
-            "-certfile", os.path.join(self.args.target_directory, "ca.pem"),
-            "-passout", "pass:{}".format(self.args.password),
+            "openssl",
+            "pkcs12",
+            "-export",
+            "-out",
+            os.path.join(self.args.target_directory, "client.keystore.p12"),
+            "-inkey",
+            os.path.join(self.args.target_directory, "service.key"),
+            "-in",
+            os.path.join(self.args.target_directory, "service.cert"),
+            "-certfile",
+            os.path.join(self.args.target_directory, "ca.pem"),
+            "-passout",
+            "pass:{}".format(self.args.password),
         ])
         service = self.client.get_service(project=self.get_project(), service=self.args.name)
         with open(os.path.join(self.args.target_directory, "client.properties"), "w") as fp:
@@ -1043,7 +1222,13 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.service_name
     @arg("--username", help="Service user username", required=True)
-    @arg("-d", "--target-directory", help="Directory to write credentials to", required=False, default=os.getcwd())
+    @arg(
+        "-d",
+        "--target-directory",
+        help="Directory to write credentials to",
+        required=False,
+        default=os.getcwd(),
+    )
     def service__user_creds_download(self):
         """Download service user certificate/key/CA certificate"""
         project_name = self.get_project()
@@ -1073,8 +1258,12 @@ ssl.truststore.type=JKS
     @arg.json
     def service__user_password_reset(self):
         """Reset service user password"""
-        self.client.reset_service_user_password(project=self.get_project(), service=self.args.name,
-                                                username=self.args.username, password=self.args.new_password)
+        self.client.reset_service_user_password(
+            project=self.get_project(),
+            service=self.args.name,
+            username=self.args.username,
+            password=self.args.new_password,
+        )
 
     @arg.project
     @arg.json
@@ -1094,7 +1283,8 @@ ssl.truststore.type=JKS
         if self.args.user_config:
             project = self.get_project()
             user_config_schema = self._get_endpoint_user_config_schema(
-                project=project, endpoint_type_name=self.args.endpoint_type)
+                project=project, endpoint_type_name=self.args.endpoint_type
+            )
             user_config = self.create_user_config(user_config_schema)
         else:
             user_config = {}
@@ -1124,8 +1314,7 @@ ssl.truststore.type=JKS
             if not endpoint_type:
                 raise argx.UserError("Endpoint id does not exist")
 
-            user_config_schema = self._get_endpoint_user_config_schema(
-                project=project, endpoint_type_name=endpoint_type)
+            user_config_schema = self._get_endpoint_user_config_schema(project=project, endpoint_type_name=endpoint_type)
             user_config = self.create_user_config(user_config_schema)
         else:
             user_config = {}
@@ -1156,7 +1345,12 @@ ssl.truststore.type=JKS
         layout = [["endpoint_id", "endpoint_name", "endpoint_type"]]
         if self.args.verbose:
             layout.extend(["user_config"])
-        self.print_response(service_integration_endpoints, format=self.args.format, json=self.args.json, table_layout=layout)
+        self.print_response(
+            service_integration_endpoints,
+            format=self.args.format,
+            json=self.args.json,
+            table_layout=layout,
+        )
 
     @arg.project
     @arg.json
@@ -1164,7 +1358,11 @@ ssl.truststore.type=JKS
         """List all available integration types for given project"""
         endpoint_types = self.client.get_service_integration_types(self.args.project)
         layout = [
-            "integration_type", "dest_description", "dest_service_type", "source_description", "source_service_types"
+            "integration_type",
+            "dest_description",
+            "dest_service_type",
+            "source_description",
+            "source_service_types",
         ]
         self.print_response(endpoint_types, json=self.args.json, table_layout=layout)
 
@@ -1181,7 +1379,8 @@ ssl.truststore.type=JKS
         if self.args.user_config:
             project = self.get_project()
             user_config_schema = self._get_integration_user_config_schema(
-                project=project, integration_type_name=self.args.integration_type)
+                project=project, integration_type_name=self.args.integration_type
+            )
             user_config = self.create_user_config(user_config_schema)
         else:
             user_config = {}
@@ -1213,7 +1412,8 @@ ssl.truststore.type=JKS
             if integration["service_integration_id"] == integration_id:
                 integration_type = integration["integration_type"]
             user_config_schema = self._get_integration_user_config_schema(
-                project=project, integration_type_name=integration_type)
+                project=project, integration_type_name=integration_type
+            )
             user_config = self.create_user_config(user_config_schema)
         else:
             user_config = {}
@@ -1243,15 +1443,27 @@ ssl.truststore.type=JKS
         """List service integrations"""
         service_integrations = self.client.get_service_integrations(project=self.get_project(), service=self.args.name)
         for item in service_integrations:
-            item["service_integration_id"] = item["service_integration_id"] or "(integration not enabled)"
+            item["service_integration_id"] = (item["service_integration_id"] or "(integration not enabled)")
             item["source"] = item["source_service"] or item["source_endpoint_id"]
             item["dest"] = item["dest_service"] or item["dest_endpoint_id"]
 
-        layout = [["service_integration_id", "source", "dest",
-                   "integration_type", "enabled", "active", "description"]]
+        layout = [[
+            "service_integration_id",
+            "source",
+            "dest",
+            "integration_type",
+            "enabled",
+            "active",
+            "description",
+        ]]
         if self.args.verbose:
             layout.extend(["source_project", "dest_project"])
-        self.print_response(service_integrations, format=self.args.format, json=self.args.json, table_layout=layout)
+        self.print_response(
+            service_integrations,
+            format=self.args.format,
+            json=self.args.json,
+            table_layout=layout,
+        )
 
     @arg.project
     @arg.service_name
@@ -1282,10 +1494,27 @@ ssl.truststore.type=JKS
         queries = self.client.get_service_current_queries(project=self.get_project(), service=self.args.name)
         layout = [["pid", "query", "query_duration", "client_addr", "application_name"]]
         if self.args.verbose:
-            layout.extend(["datid", "datname", "pid", "usesysid", "usename", "application_name", "client_addr",
-                           "client_hostname", "client_port", "backend_start", "xact_start", "query_start",
-                           "state_change", "waiting", "state", "backend_xid", "backend_xmin", "query",
-                           "query_duration"])
+            layout.extend([
+                "datid",
+                "datname",
+                "pid",
+                "usesysid",
+                "usename",
+                "application_name",
+                "client_addr",
+                "client_hostname",
+                "client_port",
+                "backend_start",
+                "xact_start",
+                "query_start",
+                "state_change",
+                "waiting",
+                "state",
+                "backend_xid",
+                "backend_xmin",
+                "query",
+                "query_duration",
+            ])
         self.print_response(queries, format=self.args.format, json=self.args.json, table_layout=layout)
 
     @arg.project
@@ -1299,12 +1528,25 @@ ssl.truststore.type=JKS
         service = self.args.name
         service_type = self.client.get_service(project, service)["service_type"]
         queries = self.client.get_service_query_stats(project=project, service=service, service_type=service_type)
-        layout = (
-            [["query", "max_time", "stddev_time", "min_time", "mean_time", "rows", "calls", "total_time"]]
-            if service_type == "pg" else
-            [["digest_text", "max_timer_wait", "min_timer_wait", "avg_timer_wait", "sum_rows_affected", "sum_rows_sent",
-              "count_star", "sum_timer_wait"]]
-        )
+        layout = ([[
+            "query",
+            "max_time",
+            "stddev_time",
+            "min_time",
+            "mean_time",
+            "rows",
+            "calls",
+            "total_time",
+        ]] if service_type == "pg" else [[
+            "digest_text",
+            "max_timer_wait",
+            "min_timer_wait",
+            "avg_timer_wait",
+            "sum_rows_affected",
+            "sum_rows_sent",
+            "count_star",
+            "sum_timer_wait",
+        ]])
         if self.args.verbose:
             layout.extend([
                 "database_name",
@@ -1367,8 +1609,11 @@ ssl.truststore.type=JKS
     @arg.index_name
     def service__index_delete(self):
         """Delete Elasticsearch service index"""
-        self.client.delete_service_index(project=self.get_project(), service=self.args.name,
-                                         index_name=self.args.index_name)
+        self.client.delete_service_index(
+            project=self.get_project(),
+            service=self.args.name,
+            index_name=self.args.index_name,
+        )
 
     @arg.project
     @arg.service_name
@@ -1380,8 +1625,15 @@ ssl.truststore.type=JKS
         for topic in topics:
             if topic["retention_hours"] == -1:
                 topic["retention_hours"] = "unlimited"
-        layout = [["topic_name", "partitions", "replication", "min_insync_replicas", "retention_bytes",
-                   "retention_hours", "cleanup_policy"]]
+        layout = [[
+            "topic_name",
+            "partitions",
+            "replication",
+            "min_insync_replicas",
+            "retention_bytes",
+            "retention_hours",
+            "cleanup_policy",
+        ]]
         self.print_response(topics, format=self.args.format, json=self.args.json, table_layout=layout)
 
     @arg.project
@@ -1392,13 +1644,17 @@ ssl.truststore.type=JKS
     @arg.verbose
     def service__topic_get(self):
         """Get Kafka service topic"""
-        topic = self.client.get_service_topic(project=self.get_project(), service=self.args.name,
-                                              topic=self.args.topic)
+        topic = self.client.get_service_topic(project=self.get_project(), service=self.args.name, topic=self.args.topic)
         layout = [["partition", "isr", "size", "earliest_offset", "latest_offset", "groups"]]
         for p in topic["partitions"]:
             p["groups"] = len(p["consumer_groups"])
 
-        self.print_response(topic["partitions"], format=self.args.format, json=self.args.json, table_layout=layout)
+        self.print_response(
+            topic["partitions"],
+            format=self.args.format,
+            json=self.args.json,
+            table_layout=layout,
+        )
         print()
 
         layout = [["partition", "consumer_group", "offset", "lag"]]
@@ -1413,18 +1669,32 @@ ssl.truststore.type=JKS
                     "partition": p["partition"],
                     "consumer_group": cg["group_name"],
                     "offset": cg["offset"],
-                    "lag": lag
+                    "lag": lag,
                 })
 
         if not cgroups:
             print("(No consumer groups)")
         else:
-            self.print_response(cgroups, format=self.args.format, json=self.args.json, table_layout=layout)
+            self.print_response(
+                cgroups,
+                format=self.args.format,
+                json=self.args.json,
+                table_layout=layout,
+            )
 
     @arg.project
     @arg.service_name
-    @arg("--operation", help="Task operation", choices=["upgrade_check"], default="upgrade_check")
-    @arg("--target_version", help="Upgrade target version", choices=["9.5", "9.6", "10", "11"])
+    @arg(
+        "--operation",
+        help="Task operation",
+        choices=["upgrade_check"],
+        default="upgrade_check",
+    )
+    @arg(
+        "--target_version",
+        help="Upgrade target version",
+        choices=["9.5", "9.6", "10", "11"],
+    )
     @arg("--format", help="Format string for output, e.g. '{name} {retention_hours}'")
     @arg.json
     def service__task_create(self):
@@ -1433,10 +1703,14 @@ ssl.truststore.type=JKS
             project=self.get_project(),
             service=self.args.name,
             operation=self.args.operation,
-            target_version=self.args.target_version
+            target_version=self.args.target_version,
         )
-        self.print_response([response["task"]], format=self.args.format, json=self.args.json,
-                            table_layout=["task_type", "success"])
+        self.print_response(
+            [response["task"]],
+            format=self.args.format,
+            json=self.args.json,
+            table_layout=["task_type", "success"],
+        )
         print(response["task"]["result"])
 
     @arg.project
@@ -1447,7 +1721,12 @@ ssl.truststore.type=JKS
     @arg.min_insync_replicas
     @arg.retention
     @arg.retention_bytes
-    @arg("--cleanup-policy", help="Topic cleanup policy", choices=["delete", "compact"], default="delete")
+    @arg(
+        "--cleanup-policy",
+        help="Topic cleanup policy",
+        choices=["delete", "compact"],
+        default="delete",
+    )
     def service__topic_create(self):
         """Create a Kafka topic"""
         response = self.client.create_service_topic(
@@ -1459,7 +1738,8 @@ ssl.truststore.type=JKS
             min_insync_replicas=self.args.min_insync_replicas,
             retention_bytes=self.args.retention_bytes,
             retention_hours=self.args.retention,
-            cleanup_policy=self.args.cleanup_policy)
+            cleanup_policy=self.args.cleanup_policy,
+        )
         print(response)
 
     @arg.project
@@ -1489,23 +1769,37 @@ ssl.truststore.type=JKS
     @arg.topic
     def service__topic_delete(self):
         """Delete a Kafka topic"""
-        response = self.client.delete_service_topic(project=self.get_project(),
-                                                    service=self.args.name,
-                                                    topic=self.args.topic)
+        response = self.client.delete_service_topic(
+            project=self.get_project(), service=self.args.name, topic=self.args.topic
+        )
         print(response["message"])
 
     @arg.project
     @arg.service_name
-    @arg("--permission", help="Permission, one of read, write or readwrite", required=True)
-    @arg("--topic", help="Topic name, accepts * and ? as wildcard characters", required=True)
-    @arg("--username", help="Username, accepts * and ? as wildcard characters", required=True)
+    @arg(
+        "--permission",
+        help="Permission, one of read, write or readwrite",
+        required=True,
+    )
+    @arg(
+        "--topic",
+        help="Topic name, accepts * and ? as wildcard characters",
+        required=True,
+    )
+    @arg(
+        "--username",
+        help="Username, accepts * and ? as wildcard characters",
+        required=True,
+    )
     def service__acl_add(self):
         """Add a Kafka ACL entry"""
-        response = self.client.add_service_kafka_acl(project=self.get_project(),
-                                                     service=self.args.name,
-                                                     permission=self.args.permission,
-                                                     topic=self.args.topic,
-                                                     username=self.args.username)
+        response = self.client.add_service_kafka_acl(
+            project=self.get_project(),
+            service=self.args.name,
+            permission=self.args.permission,
+            topic=self.args.topic,
+            username=self.args.username,
+        )
         print(response["message"])
 
     @arg.project
@@ -1513,9 +1807,9 @@ ssl.truststore.type=JKS
     @arg("acl_id", help="ID of the ACL entry to delete")
     def service__acl_delete(self):
         """Delete a Kafka ACL entry"""
-        response = self.client.delete_service_kafka_acl(project=self.get_project(),
-                                                        service=self.args.name,
-                                                        acl_id=self.args.acl_id)
+        response = self.client.delete_service_kafka_acl(
+            project=self.get_project(), service=self.args.name, acl_id=self.args.acl_id
+        )
         print(response["message"])
 
     @arg.project
@@ -1527,8 +1821,7 @@ ssl.truststore.type=JKS
 
         layout = ["id", "username", "topic", "permission"]
 
-        self.print_response(service.get("acl", []), json=self.args.json,
-                            table_layout=layout)
+        self.print_response(service.get("acl", []), json=self.args.json, table_layout=layout)
 
     @arg.project
     @arg.service_name
@@ -1552,7 +1845,8 @@ ssl.truststore.type=JKS
     def service__es_acl_enable(self):
         """Enable Elasticsearch ACL configuration"""
         response = self.client.update_service_elasticsearch_acl_config(
-            project=self.get_project(), service=self.args.name, enabled=True)
+            project=self.get_project(), service=self.args.name, enabled=True
+        )
         print(response.get("message"))
 
     @arg.project
@@ -1560,7 +1854,8 @@ ssl.truststore.type=JKS
     def service__es_acl_extended_enable(self):
         """Enable Elasticsearch Extended ACL"""
         response = self.client.update_service_elasticsearch_acl_config(
-            project=self.get_project(), service=self.args.name, extended_acl=True)
+            project=self.get_project(), service=self.args.name, extended_acl=True
+        )
         print(response.get("message"))
 
     @arg.project
@@ -1568,7 +1863,8 @@ ssl.truststore.type=JKS
     def service__es_acl_disable(self):
         """Disable Elasticsearch ACL configuration"""
         response = self.client.update_service_elasticsearch_acl_config(
-            project=self.get_project(), service=self.args.name, enabled=False)
+            project=self.get_project(), service=self.args.name, enabled=False
+        )
         print(response.get("message"))
 
     @arg.project
@@ -1576,32 +1872,47 @@ ssl.truststore.type=JKS
     def service__es_acl_extended_disable(self):
         """Disable Elasticsearch Extended ACL"""
         response = self.client.update_service_elasticsearch_acl_config(
-            project=self.get_project(), service=self.args.name, extended_acl=False)
+            project=self.get_project(), service=self.args.name, extended_acl=False
+        )
         print(response.get("message"))
 
     @arg.project
     @arg.service_name
     @arg("--username", help="Service user (no wildcards)", required=True)
-    @arg("rule", nargs="+",
-         help=("index/permission (index accepts * and ? as wildcard characters, "
-               "allowed permissions are admin,read,write,readwrite,deny)."))
+    @arg(
+        "rule",
+        nargs="+",
+        help=(
+            "index/permission (index accepts * and ? as wildcard characters, "
+            "allowed permissions are admin,read,write,readwrite,deny)."
+        ),
+    )
     def service__es_acl_add(self):
         """Add rules to elastic ACL configuration"""
         response = self.client.update_service_elasticsearch_acl_config(
-            project=self.get_project(), service=self.args.name,
-            username=self.args.username, add_rules=self.args.rule)
+            project=self.get_project(),
+            service=self.args.name,
+            username=self.args.username,
+            add_rules=self.args.rule,
+        )
         print(response.get("message"))
 
     @arg.project
     @arg.service_name
     @arg("--username", help="Service username (no wildcards)", required=True)
-    @arg("rule", nargs="*",
-         help="index rule to remove (if none given all rules are removed).")
+    @arg(
+        "rule",
+        nargs="*",
+        help="index rule to remove (if none given all rules are removed).",
+    )
     def service__es_acl_del(self):
         """Delete rules from elastic ACL configuration"""
         response = self.client.update_service_elasticsearch_acl_config(
-            project=self.get_project(), service=self.args.name,
-            username=self.args.username, del_rules=self.args.rule)
+            project=self.get_project(),
+            service=self.args.name,
+            username=self.args.username,
+            del_rules=self.args.rule,
+        )
         print(response.get("message"))
 
     @arg.project
@@ -1645,7 +1956,11 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.service_name
     @arg.connector_name
-    @arg("--fetch-current", action="store_true", help="Fetch current config first, and use as a base for update")
+    @arg(
+        "--fetch-current",
+        action="store_true",
+        help="Fetch current config first, and use as a base for update",
+    )
     @arg.json_path_or_string("connector_config")
     def service__connector__update(self):
         """Update a Kafka connector"""
@@ -1727,7 +2042,11 @@ ssl.truststore.type=JKS
         """Check Kafka Schema Registry schema compatibility"""
         project_name = self.get_project()
         schema = self.client.check_schema_compatibility(
-            project_name, self.args.name, self.args.subject, self.args.version_id, self.args.schema
+            project_name,
+            self.args.name,
+            self.args.subject,
+            self.args.version_id,
+            self.args.schema,
         )
         self.print_response(schema)
 
@@ -1865,13 +2184,15 @@ ssl.truststore.type=JKS
     def mirrormaker__replication_flow__update(self):
         """Update a Kafka MirrorMaker replication flow"""
         project_name = self.get_project()
-        self.print_response(self.client.update_mirrormaker_replication_flow(
-            project_name,
-            self.args.name,
-            self.args.source_cluster,
-            self.args.target_cluster,
-            self.args.replication_flow_config,
-        ))
+        self.print_response(
+            self.client.update_mirrormaker_replication_flow(
+                project_name,
+                self.args.name,
+                self.args.source_cluster,
+                self.args.target_cluster,
+                self.args.replication_flow_config,
+            )
+        )
 
     @arg.project
     @arg.service_name
@@ -1880,12 +2201,14 @@ ssl.truststore.type=JKS
     def mirrormaker__replication_flow__get(self):
         """Get a Kafka MirrorMaker replication flow"""
         project_name = self.get_project()
-        self.print_response(self.client.get_mirrormaker_replication_flow(
-            project_name,
-            self.args.name,
-            self.args.source_cluster,
-            self.args.target_cluster,
-        ))
+        self.print_response(
+            self.client.get_mirrormaker_replication_flow(
+                project_name,
+                self.args.name,
+                self.args.source_cluster,
+                self.args.target_cluster,
+            )
+        )
 
     @arg.project
     @arg.service_name
@@ -1924,7 +2247,7 @@ ssl.truststore.type=JKS
                 self.log.info("Service(s) RUNNING: %s", ", ".join(self.args.service))
                 return 0
 
-            if self.args.timeout is not None and (time.time() - start_time) > self.args.timeout:
+            if (self.args.timeout is not None and (time.time() - start_time) > self.args.timeout):
                 self.log.error("Timeout waiting for service(s) to start")
                 return 1
 
@@ -1995,7 +2318,11 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.json
     @arg.cloud
-    @arg("--network-cidr", help="The network range in the Aiven project VPC in CIDR format (a.b.c.d/e)", required=True)
+    @arg(
+        "--network-cidr",
+        help="The network range in the Aiven project VPC in CIDR format (a.b.c.d/e)",
+        required=True,
+    )
     def vpc__create(self):
         """Create a VPC for a project"""
         return self._vpc_create()
@@ -2003,7 +2330,11 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.json
     @arg.cloud
-    @arg("--network-cidr", help="The network range in the Aiven project VPC in CIDR format (a.b.c.d/e)", required=True)
+    @arg(
+        "--network-cidr",
+        help="The network range in the Aiven project VPC in CIDR format (a.b.c.d/e)",
+        required=True,
+    )
     def vpc__request(self):
         """Request a VPC for a project (Deprecated: use vpc create)"""
         self.log.warning("'vpc request' is going to be deprecated. Use the 'vpc create' command instead.")
@@ -2040,12 +2371,20 @@ ssl.truststore.type=JKS
                 project=project_name,
                 project_vpc_id=self.args.project_vpc_id,
             )["peering_connections"]
-            layout = ["peer_cloud_account", "peer_resource_group", "peer_vpc", "peer_region", "state"]
+            layout = [
+                "peer_cloud_account",
+                "peer_resource_group",
+                "peer_vpc",
+                "peer_region",
+                "state",
+            ]
             if self.args.verbose:
                 layout += ["create_time", "update_time"]
             self.print_response(
                 [dict(pcx, peer_resource_group=pcx.get("peer_resource_group")) for pcx in peering_connections],
-                json=self.args.json, table_layout=layout)
+                json=self.args.json,
+                table_layout=layout,
+            )
         except client.Error as ex:
             print(ex.response.text)
             msg = "Peering connection listing for VPC '{}' of project '{}' failed".format(
@@ -2054,15 +2393,19 @@ ssl.truststore.type=JKS
             )
             raise argx.UserError(msg)
 
-    _peer_cloud_account_help = "AWS account ID, Google project ID, or Azure subscription ID"
+    _peer_cloud_account_help = ("AWS account ID, Google project ID, or Azure subscription ID")
     _peer_resource_group_help = "Azure resource group name"
     _peer_vpc_help = "AWS VPC ID, Google VPC network name, or Azure VNet name"
-    _peer_region_help = "AWS region of peer VPC, if other than the region of the Aiven project VPC"
+    _peer_region_help = ("AWS region of peer VPC, if other than the region of the Aiven project VPC")
 
     @arg.project
     @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
     @arg("--peer-cloud-account", required=True, help=_peer_cloud_account_help)
-    @arg("--peer-resource-group", help=_peer_resource_group_help, default=client.UNDEFINED)
+    @arg(
+        "--peer-resource-group",
+        help=_peer_resource_group_help,
+        default=client.UNDEFINED,
+    )
     @arg("--peer-vpc", required=True, help=_peer_vpc_help)
     @arg.json
     @arg.verbose
@@ -2100,8 +2443,14 @@ ssl.truststore.type=JKS
             )
             raise argx.UserError(msg)
 
-    def _vpc_peering_connection_create(self, peer_region, peer_resource_group, peer_azure_app_id, peer_azure_tenant_id,
-                                       user_peer_network_cidrs):
+    def _vpc_peering_connection_create(
+        self,
+        peer_region,
+        peer_resource_group,
+        peer_azure_app_id,
+        peer_azure_tenant_id,
+        user_peer_network_cidrs,
+    ):
         """Helper method for vpc__peering_connection__create and vpc__peering_connection__request"""
         project_name = self.get_project()
         try:
@@ -2130,15 +2479,21 @@ ssl.truststore.type=JKS
     @arg("--peer-resource-group", help=_peer_resource_group_help)
     @arg("--peer-azure-app-id", help="Azure app object ID")
     @arg("--peer-azure-tenant-id", help="Azure AD tenant ID")
-    @arg("--user-peer-network-cidr", help="User-defined peer network IP range for routing/firewall", action="append",
-         dest="user_peer_network_cidrs")
+    @arg(
+        "--user-peer-network-cidr",
+        help="User-defined peer network IP range for routing/firewall",
+        action="append",
+        dest="user_peer_network_cidrs",
+    )
     def vpc__peering_connection__create(self):
         """Create a peering connection for a project VPC"""
-        return self._vpc_peering_connection_create(peer_region=self.args.peer_region,
-                                                   peer_resource_group=self.args.peer_resource_group,
-                                                   peer_azure_app_id=self.args.peer_azure_app_id,
-                                                   peer_azure_tenant_id=self.args.peer_azure_tenant_id,
-                                                   user_peer_network_cidrs=self.args.user_peer_network_cidrs)
+        return self._vpc_peering_connection_create(
+            peer_region=self.args.peer_region,
+            peer_resource_group=self.args.peer_resource_group,
+            peer_azure_app_id=self.args.peer_azure_app_id,
+            peer_azure_tenant_id=self.args.peer_azure_tenant_id,
+            user_peer_network_cidrs=self.args.user_peer_network_cidrs,
+        )
 
     @arg.project
     @arg.json
@@ -2151,17 +2506,24 @@ ssl.truststore.type=JKS
             "'vpc peering-connection request' is going to be deprecated. Use the 'vpc peering-connection create' command "
             "instead."
         )
-        return self._vpc_peering_connection_create(peer_region=None,
-                                                   peer_resource_group=None,
-                                                   peer_azure_app_id=None,
-                                                   peer_azure_tenant_id=None,
-                                                   user_peer_network_cidrs=None)
+        return self._vpc_peering_connection_create(
+            peer_region=None,
+            peer_resource_group=None,
+            peer_azure_app_id=None,
+            peer_azure_tenant_id=None,
+            user_peer_network_cidrs=None,
+        )
 
     @arg.project
     @arg.json
     @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
     @arg("--peer-cloud-account", required=True, help=_peer_cloud_account_help)
-    @arg("--peer-resource-group", required=False, help=_peer_resource_group_help, default=client.UNDEFINED)
+    @arg(
+        "--peer-resource-group",
+        required=False,
+        help=_peer_resource_group_help,
+        default=client.UNDEFINED,
+    )
     @arg("--peer-vpc", required=True, help=_peer_vpc_help)
     @arg("--peer-region", help=_peer_region_help)
     def vpc__peering_connection__delete(self):
@@ -2207,9 +2569,7 @@ ssl.truststore.type=JKS
         }
         if self.args.peer_resource_group is not None:
             add_base["peer_resource_group"] = self.args.peer_resource_group
-        add = [
-            dict(add_base, cidr=cidr) for cidr in self.args.cidrs
-        ]
+        add = [dict(add_base, cidr=cidr) for cidr in self.args.cidrs]
         self.client.update_project_vpc_user_peer_network_cidrs(
             project=project_name,
             project_vpc_id=self.args.project_vpc_id,
@@ -2232,19 +2592,40 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.service_name
     @arg("--group-name", help="service group", default="default")
-    @arg("-t", "--service-type", help="type of service (see 'service types')", required=True)
+    @arg(
+        "-t",
+        "--service-type",
+        help="type of service (see 'service types')",
+        required=True,
+    )
     @arg("-p", "--plan", help="subscription plan of service", required=False)
     @arg.cloud
-    @arg("--no-fail-if-exists", action="store_true", default=False,
-         help="do not fail if service already exists")
+    @arg(
+        "--no-fail-if-exists",
+        action="store_true",
+        default=False,
+        help="do not fail if service already exists",
+    )
     @arg.user_config
-    @arg("--project-vpc-id", help="Put service into a project VPC. The VPC's cloud must match the service's cloud")
-    @arg("--no-project-vpc",
-         action="store_true",
-         help="Do not put the service into a project VPC even if the project has one in the selected cloud")
-    @arg("--read-replica-for",
-         help="Creates a read replica for given source service. Only applicable for certain service types")
-    @arg("--enable-termination-protection", action="store_true", default=False, help="Enable termination protection")
+    @arg(
+        "--project-vpc-id",
+        help="Put service into a project VPC. The VPC's cloud must match the service's cloud",
+    )
+    @arg(
+        "--no-project-vpc",
+        action="store_true",
+        help="Do not put the service into a project VPC even if the project has one in the selected cloud",
+    )
+    @arg(
+        "--read-replica-for",
+        help="Creates a read replica for given source service. Only applicable for certain service types",
+    )
+    @arg(
+        "--enable-termination-protection",
+        action="store_true",
+        default=False,
+        help="Enable termination protection",
+    )
     def service__create(self):
         """Create a service"""
         service_type_info = self.args.service_type.split(":")
@@ -2271,7 +2652,7 @@ ssl.truststore.type=JKS
             else:
                 service_integrations.append({
                     "integration_type": "read_replica",
-                    "source_service": self.args.read_replica_for
+                    "source_service": self.args.read_replica_for,
                 })
 
         try:
@@ -2285,7 +2666,8 @@ ssl.truststore.type=JKS
                 user_config=user_config,
                 project_vpc_id=project_vpc_id,
                 termination_protection=self.args.enable_termination_protection,
-                service_integrations=service_integrations)
+                service_integrations=service_integrations,
+            )
         except client.Error as ex:
             print(ex.response)
             if not self.args.no_fail_if_exists or ex.response.status_code != 409:
@@ -2308,8 +2690,9 @@ ssl.truststore.type=JKS
         try:
             service_def = service_types[service_type]
         except KeyError:
-            raise argx.UserError("Unknown service type {!r}, available options: {}".format(
-                service_type, ", ".join(service_types)))
+            raise argx.UserError(
+                "Unknown service type {!r}, available options: {}".format(service_type, ", ".join(service_types))
+            )
 
         return service_def["user_config_schema"]
 
@@ -2319,8 +2702,9 @@ ssl.truststore.type=JKS
         try:
             return endpoint_types[endpoint_type_name]["user_config_schema"]
         except KeyError:
-            raise argx.UserError("Unknown endpoint type {!r}, available options: {}".format(
-                endpoint_type_name, ", ".join(endpoint_types)))
+            raise argx.UserError(
+                "Unknown endpoint type {!r}, available options: {}".format(endpoint_type_name, ", ".join(endpoint_types))
+            )
 
     def _get_integration_user_config_schema(self, project, integration_type_name):
         integration_types_list = self.client.get_service_integration_types(project=project)
@@ -2328,8 +2712,11 @@ ssl.truststore.type=JKS
         try:
             return integration_types[integration_type_name]["user_config_schema"]
         except KeyError:
-            raise argx.UserError("Unknown integration type {!r}, available options: {}".format(
-                integration_type_name, ", ".join(integration_types)))
+            raise argx.UserError(
+                "Unknown integration type {!r}, available options: {}".format(
+                    integration_type_name, ", ".join(integration_types)
+                )
+            )
 
     @arg.project
     @arg.service_name
@@ -2339,16 +2726,49 @@ ssl.truststore.type=JKS
     @arg.user_option_remove
     @arg("-p", "--plan", help="subscription plan of service", required=False)
     @arg("--power-on", action="store_true", default=False, help="Power-on the service")
-    @arg("--power-off", action="store_true", default=False, help="Temporarily power-off the service")
-    @arg("--maintenance-dow", help="Set automatic maintenance window's day of week",
-         choices=["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "never"])
-    @arg("--maintenance-time", help="Set automatic maintenance window's start time (HH:MM:SS)")
-    @arg("--enable-termination-protection", action="store_true", help="Enable termination protection")
-    @arg("--disable-termination-protection", action="store_true", help="Disable termination protection")
-    @arg("--project-vpc-id", help="Put service into a project VPC. The VPC's cloud must match the service's cloud")
-    @arg("--no-project-vpc",
-         action="store_true",
-         help="Do not put the service into a project VPC even if the project has one in the selected cloud")
+    @arg(
+        "--power-off",
+        action="store_true",
+        default=False,
+        help="Temporarily power-off the service",
+    )
+    @arg(
+        "--maintenance-dow",
+        help="Set automatic maintenance window's day of week",
+        choices=[
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+            "never",
+        ],
+    )
+    @arg(
+        "--maintenance-time",
+        help="Set automatic maintenance window's start time (HH:MM:SS)",
+    )
+    @arg(
+        "--enable-termination-protection",
+        action="store_true",
+        help="Enable termination protection",
+    )
+    @arg(
+        "--disable-termination-protection",
+        action="store_true",
+        help="Disable termination protection",
+    )
+    @arg(
+        "--project-vpc-id",
+        help="Put service into a project VPC. The VPC's cloud must match the service's cloud",
+    )
+    @arg(
+        "--no-project-vpc",
+        action="store_true",
+        help="Do not put the service into a project VPC even if the project has one in the selected cloud",
+    )
     def service__update(self):
         """Update service settings"""
         powered = self._get_powered()
@@ -2364,7 +2784,7 @@ ssl.truststore.type=JKS
             maintenance["time"] = self.args.maintenance_time
         project_vpc_id = self._get_service_project_vpc_id()
         termination_protection = None
-        if self.args.enable_termination_protection and self.args.disable_termination_protection:
+        if (self.args.enable_termination_protection and self.args.disable_termination_protection):
             raise argx.UserError(
                 "--enable-termination-protection and --disable-termination-protection are mutually exclusive."
             )
@@ -2400,8 +2820,9 @@ ssl.truststore.type=JKS
             self.config.save()
             self.log.info("Set project %r as the default project", self.args.name)
         else:
-            raise argx.UserError("Project {!r} does not exist, available projects: {}".format(
-                self.args.name, ", ".join(project_names)))
+            raise argx.UserError(
+                "Project {!r} does not exist, available projects: {}".format(self.args.name, ", ".join(project_names))
+            )
 
     @arg("name", help="Project name")
     @arg.cloud
@@ -2437,9 +2858,18 @@ ssl.truststore.type=JKS
     @arg("--account-id", help="Account ID of the project")
     @arg.card_id
     @arg.cloud
-    @arg("--no-fail-if-exists", action="store_true", default=False,
-         help="Do not fail if project already exists")
-    @arg("-c", "--copy-from-project", metavar="PROJECT", help="Copy project settings from an existing project")
+    @arg(
+        "--no-fail-if-exists",
+        action="store_true",
+        default=False,
+        help="Do not fail if project already exists",
+    )
+    @arg(
+        "-c",
+        "--copy-from-project",
+        metavar="PROJECT",
+        help="Copy project settings from an existing project",
+    )
     @arg.country_code
     @arg.billing_address
     @arg.billing_extra_text
@@ -2471,7 +2901,10 @@ ssl.truststore.type=JKS
         self.config.save()
 
         self._show_projects([project])
-        self.log.info("Project %r successfully created and set as default project", project["project_name"])
+        self.log.info(
+            "Project %r successfully created and set as default project",
+            project["project_name"],
+        )
 
     @arg.json
     @arg.project
@@ -2572,7 +3005,13 @@ ssl.truststore.type=JKS
 
     @arg.project
     @arg.service_name
-    @arg("-d", "--target-directory", help="Directory to write credentials to", required=False, default=os.getcwd())
+    @arg(
+        "-d",
+        "--target-directory",
+        help="Directory to write credentials to",
+        required=False,
+        default=os.getcwd(),
+    )
     @arg("-p", "--password", help="Keystore and truststore password", default="changeit")
     @arg(
         "--preserve-pem",
@@ -2580,7 +3019,7 @@ ssl.truststore.type=JKS
         help=(
             "Keep PEM encoded unencrypted service CA and keypair files in addition to the Java keystore and truststore "
             "files created from them"
-        )
+        ),
     )
     def service__sstableloader__get_credentials(self):
         """Download credentials and generate cassandra.yaml suitable for running Cassandra sstableloader"""
@@ -2588,10 +3027,14 @@ ssl.truststore.type=JKS
 
         project_name = self.get_project()
         client_keypair = self.client.get_service_keypair(
-            project=project_name, service=self.args.name, keypair="cassandra_migrate_sstableloader_user"
+            project=project_name,
+            service=self.args.name,
+            keypair="cassandra_migrate_sstableloader_user",
         )
         internode_ca = self.client.get_service_ca(
-            project=project_name, service=self.args.name, ca="cassandra_internode_service_nodes_ca"
+            project=project_name,
+            service=self.args.name,
+            ca="cassandra_internode_service_nodes_ca",
         )
         project_ca = self.client.get_project_ca(project=project_name)
 
@@ -2619,7 +3062,8 @@ ssl.truststore.type=JKS
             # keystore/truststore files from default locations, and failing when they do not exist, even if the actual
             # certificates/keys in them would not be used
             with open(os.path.join(self.args.target_directory, "cassandra.yaml"), "w") as fp:
-                fp.write("""\
+                fp.write(
+                    """\
 client_encryption_options:
     enabled: true
     optional: false
@@ -2633,38 +3077,62 @@ server_encryption_options:
     keystore_password: {password}
     truststore: ./sstableloader.truststore.jks
     truststore_password: {password}
-""".format(password=self.args.password))
+""".format(password=self.args.password)
+                )
 
             # The Project CA signs the certificate used by the Cassandra native transport, aka the regular client port
             # The internode CA signs the certificate used by SSL storage port, aka the internode port used to stream data
-            for path, alias in [(project_ca_path, "Project"), (internode_ca_path, "Cassandra internode service nodes")]:
+            for path, alias in [
+                (project_ca_path, "Project"),
+                (internode_ca_path, "Cassandra internode service nodes"),
+            ]:
                 subprocess.check_call([
-                    "keytool", "-importcert",
-                    "-alias", "{} CA".format(alias),
-                    "-keystore", os.path.join(self.args.target_directory, "sstableloader.truststore.jks"),
-                    "-storepass", self.args.password,
-                    "-file", path,
+                    "keytool",
+                    "-importcert",
+                    "-alias",
+                    "{} CA".format(alias),
+                    "-keystore",
+                    os.path.join(self.args.target_directory, "sstableloader.truststore.jks"),
+                    "-storepass",
+                    self.args.password,
+                    "-file",
+                    path,
                     "-noprompt",
                 ])
             # Connecting to the native transport port happens via username and password credentials, while connecting to
             # the SSL storage port requires this client certificate
             subprocess.check_call([
-                "openssl", "pkcs12", "-export",
-                "-out", os.path.join(self.args.target_directory, "sstableloader.keystore.p12"),
-                "-inkey", client_key_path,
-                "-in", client_cert_path,
-                "-passout", "pass:{}".format(self.args.password),
+                "openssl",
+                "pkcs12",
+                "-export",
+                "-out",
+                os.path.join(self.args.target_directory, "sstableloader.keystore.p12"),
+                "-inkey",
+                client_key_path,
+                "-in",
+                client_cert_path,
+                "-passout",
+                "pass:{}".format(self.args.password),
             ])
         finally:
             # These are not used when connecting with the Java based sstableloader utility
             if not self.args.preserve_pem:
-                for path in client_key_path, client_cert_path, internode_ca_path, project_ca_path:
+                for path in (
+                    client_key_path,
+                    client_cert_path,
+                    internode_ca_path,
+                    project_ca_path,
+                ):
                     if os.path.isfile(path):
                         os.unlink(path)
 
     @arg.project
     @arg.service_name
-    @arg("--cassandra-yaml", default="cassandra.yaml", help="Path to cassandra.yaml configuration file")
+    @arg(
+        "--cassandra-yaml",
+        default="cassandra.yaml",
+        help="Path to cassandra.yaml configuration file",
+    )
     def service__sstableloader__command(self):
         """Outputs a string that can be used to run the sstableloader utility to upload Cassandra data
         files directly to the internode port of a Cassandra cluster."""
@@ -2673,32 +3141,36 @@ server_encryption_options:
         cassandra_component = None
         internode_component = None
         for component in service["components"]:
-            if (component["component"] == "cassandra" and
-                    component["route"] == "dynamic" and
-                    component["usage"] == "primary"):
+            if (
+                component["component"] == "cassandra" and component["route"] == "dynamic" and component["usage"] == "primary"
+            ):
                 cassandra_component = component
-            elif (component["component"] == "cassandra_internode" and
-                  component["route"] == "dynamic" and
-                  component["usage"] == "primary"):
+            elif (
+                component["component"] == "cassandra_internode" and component["route"] == "dynamic"
+                and component["usage"] == "primary"
+            ):
                 internode_component = component
 
         if cassandra_component is None or internode_component is None:
             raise ValueError("Cassandra service component information missing")
 
-        print((
-            "sstableloader -f {yaml} -d {hostname} -ssp {internode_port} -p {client_port} -u {user} -pw {password}"
-        ).format(
-            yaml=self.args.cassandra_yaml,
-            hostname=cassandra_component["host"],
-            internode_port=internode_component["port"],
-            client_port=cassandra_component["port"],
-            user=service["service_uri_params"]["user"],
-            password=service["service_uri_params"]["password"]
-        ))
+        print(
+            ("sstableloader -f {yaml} -d {hostname} -ssp {internode_port} -p {client_port} -u {user} -pw {password}").format(
+                yaml=self.args.cassandra_yaml,
+                hostname=cassandra_component["host"],
+                internode_port=internode_component["port"],
+                client_port=cassandra_component["port"],
+                user=service["service_uri_params"]["user"],
+                password=service["service_uri_params"]["password"],
+            )
+        )
 
     @arg.project
     @arg.email
-    @arg("--role", help="Project role for new invited user ('admin', 'operator', 'developer')")
+    @arg(
+        "--role",
+        help="Project role for new invited user ('admin', 'operator', 'developer')",
+    )
     def project__user_invite(self):
         """Invite a new user to the project"""
         project_name = self.get_project()
@@ -2742,11 +3214,12 @@ server_encryption_options:
     @arg("--real-name", help="User real name", required=True)
     def user__create(self):
         """Create a user"""
-        password = self.enter_password("New aiven.io password for {}: ".format(self.args.email),
-                                       var="AIVEN_NEW_PASSWORD", confirm=True)
-        result = self.client.create_user(email=self.args.email,
-                                         password=password,
-                                         real_name=self.args.real_name)
+        password = self.enter_password(
+            "New aiven.io password for {}: ".format(self.args.email),
+            var="AIVEN_NEW_PASSWORD",
+            confirm=True,
+        )
+        result = self.client.create_user(email=self.args.email, password=password, real_name=self.args.real_name)
 
         self._write_auth_token_file(token=result["token"], email=self.args.email)
 
@@ -2800,8 +3273,7 @@ server_encryption_options:
             raise
 
     def pre_run(self, func):
-        self.client = client.AivenClient(base_url=self.args.url,
-                                         show_http=self.args.show_http)
+        self.client = client.AivenClient(base_url=self.args.url, show_http=self.args.show_http)
         # Always set CA if we have anything set at the command line or in the env
         if self.args.auth_ca is not None:
             self.client.set_ca(self.args.auth_ca)
@@ -2822,13 +3294,7 @@ server_encryption_options:
         layout = [["card_id", "name", "country", "exp_year", "exp_month", "last4"]]
         self.print_response(self.client.get_cards(), json=self.args.json, table_layout=layout)
 
-    def _card_get_stripe_token(self,
-                               stripe_publishable_key,
-                               name,
-                               number,
-                               exp_month,
-                               exp_year,
-                               cvc):
+    def _card_get_stripe_token(self, stripe_publishable_key, name, number, exp_month, exp_year, cvc):
         data = {
             "card[name]": name,
             "card[number]": number,
@@ -2914,7 +3380,12 @@ server_encryption_options:
     @arg.json
     @arg.project
     @arg("--service", help="Related service name")
-    @arg("--severity", required=True, choices=["low", "high", "critical"], help="Ticket severity")
+    @arg(
+        "--severity",
+        required=True,
+        choices=["low", "high", "critical"],
+        help="Ticket severity",
+    )
     @arg("--title", required=True, help="Short description")
     @arg("--description", required=True, help="Longer description")
     def ticket__create(self):
@@ -2952,7 +3423,7 @@ server_encryption_options:
             "description",
             "update_time",
             "user_email",
-            "user_real_name"
+            "user_real_name",
         ]
         self.print_response(result=tickets, table_layout=layout, json=self.args.json)
 

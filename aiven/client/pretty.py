@@ -3,7 +3,6 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
-
 """Pretty-print JSON objects and lists as tables"""
 import datetime
 import decimal
@@ -43,7 +42,7 @@ def format_item(key, value):
         # as the output without quotes we'll go with the original
         json_v = json.dumps(value)
         quoted_v = '"{}"'.format(value)
-        if json_v == quoted_v or json_v.replace("\\u00a3", "£").replace("\\u20ac", "€") == quoted_v:
+        if (json_v == quoted_v or json_v.replace("\\u00a3", "£").replace("\\u20ac", "€") == quoted_v):
             formatted = value
         else:
             formatted = json_v
@@ -56,7 +55,7 @@ def format_item(key, value):
         json_v = json.dumps(value, sort_keys=True, cls=CustomJsonEncoder)
         quoted_v = '"{}"'.format(value)
         if json_v == quoted_v:
-            formatted = '{}'.format(value)
+            formatted = "{}".format(value)
         else:
             formatted = json_v
 
@@ -128,13 +127,7 @@ def yield_table(result, drop_fields=None, table_layout=None, header=True):
                 yield "    {:{}} = {}".format(key, max_key_width, value)
 
 
-def print_table(
-        result,
-        drop_fields=None,
-        table_layout=None,
-        header=True,
-        file=None):  # pylint: disable=redefined-builtin
+def print_table(result, drop_fields=None, table_layout=None, header=True, file=None):  # pylint: disable=redefined-builtin
     """print a list of dicts in a nicer table format"""
-    for row in yield_table(result, drop_fields=drop_fields, table_layout=table_layout,
-                           header=header):
+    for row in yield_table(result, drop_fields=drop_fields, table_layout=table_layout, header=header):
         print(row, file=file or sys.stdout)
