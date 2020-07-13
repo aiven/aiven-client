@@ -170,6 +170,9 @@ class AivenClientBase:  # pylint: disable=old-style-class
 class AivenClient(AivenClientBase):
     """Aiven Client with high-level operations"""
 
+    def get_service_versions(self):
+        return self.verify(self.get, "/service_versions", result_key="service_versions")
+
     def get_service_indexes(self, project, service):
         return self.verify(
             self.get,
