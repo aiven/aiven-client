@@ -84,9 +84,9 @@ class Config(dict):
 
             raise UserError(
                 "Failed to load configuration file {!r}: {}: {}".format(self.file_path, ex.__class__.__name__, ex)
-            )
-        except ValueError:
-            raise UserError("Invalid JSON in configuration file {!r}".format(self.file_path))
+            ) from ex
+        except ValueError as ex:
+            raise UserError("Invalid JSON in configuration file {!r}".format(self.file_path)) from ex
 
     def save(self):
         config_dir = os.path.dirname(self.file_path)

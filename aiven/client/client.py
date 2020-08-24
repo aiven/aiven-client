@@ -518,8 +518,8 @@ class AivenClient(AivenClientBase):
         if add_rules is not None:
             try:
                 rules = {index.strip(): permission.strip() for index, permission in [rule.split("/") for rule in add_rules]}
-            except ValueError:
-                raise ValueError("Unrecognized index-pattern/permission rule")
+            except ValueError as ex:
+                raise ValueError("Unrecognized index-pattern/permission rule") from ex
             self._add_es_acl_rules(config=acl_config, user=username, rules=rules)
         if del_rules is not None:
             self._del_es_acl_rules(
