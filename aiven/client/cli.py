@@ -56,8 +56,10 @@ def convert_str_to_value(schema, str_value):
         }
         try:
             return values[str_value]
-        except KeyError:
-            raise argx.UserError("Invalid boolean value {!r}: expected one of {}".format(str_value, ", ".join(values)))
+        except KeyError as ex:
+            raise argx.UserError(
+                "Invalid boolean value {!r}: expected one of {}".format(str_value, ", ".join(values))
+            ) from ex
     elif "array" in schema["type"]:
         return [convert_str_to_value(schema["items"], val) for val in str_value.split(",")]
     elif "null" in schema["type"] and str_value is None:
@@ -145,10 +147,10 @@ class AivenCLI(argx.CommandLineTool):
         for key_value in self.args.user_config:
             try:
                 key, value = key_value.split("=", 1)
-            except ValueError:
+            except ValueError as ex:
                 raise argx.UserError(
                     "Invalid config value: {!r}, expected '<KEY>[.<SUBKEY>]=<JSON_VALUE>'".format(key_value)
-                )
+                ) from ex
 
             opt_schema = options.get(key)
             if not opt_schema:
@@ -408,7 +410,7 @@ class AivenCLI(argx.CommandLineTool):
                 continue
             consecutive_errors = 0
             new_offset = self._show_logs(msgs)
-            if (not msgs["logs"] and previous_offset is not None and self.args.sort_order == "desc"):
+            if not msgs["logs"] and previous_offset is not None and self.args.sort_order == "desc":
                 # Quit because since we didn't find older messages than this, we'll never find any.
                 break
             if not self.args.follow:
@@ -979,13 +981,13 @@ class AivenCLI(argx.CommandLineTool):
             info.username,
             "-ssl",
         ]
-        return ("influx", params, {"INFLUX_PASSWORD": info.password})
+        return "influx", params, {"INFLUX_PASSWORD": info.password}
 
     def _build_psql_start_info(self, url):
         pw_pattern = "([a-z\\+]+://[^:]+):([^@]+)@(.*)"
         match = re.match(pw_pattern, url)
         connect_info = re.sub(pw_pattern, "\\1@\\3", url)
-        return ("psql", [connect_info], {"PGPASSWORD": match.group(2)})
+        return "psql", [connect_info], {"PGPASSWORD": match.group(2)}
 
     @arg.project
     @arg.service_name
@@ -1312,18 +1314,17 @@ ssl.truststore.type=JKS
         )
 
     @arg.project
-    @arg("endpoint-id", help="Service integration endpoint ID")
+    @arg("endpoint_id", help="Service integration endpoint ID")
     @arg.user_config
     @arg.json
     def service__integration_endpoint_update(self):
         """Update a service integration endpoint"""
         if self.args.user_config:
             project = self.get_project()
-            endpoint_id = getattr(self.args, "endpoint-id")
             integration_endpoints = self.client.get_service_integration_endpoints(project=self.get_project())
             endpoint_type = None
             for endpoint in integration_endpoints:
-                if endpoint["endpoint_id"] == endpoint_id:
+                if endpoint["endpoint_id"] == self.args.endpoint_id:
                     endpoint_type = endpoint["endpoint_type"]
 
             if not endpoint_type:
@@ -1336,18 +1337,18 @@ ssl.truststore.type=JKS
 
         self.client.update_service_integration_endpoint(
             project=self.get_project(),
-            endpoint_id=endpoint_id,
+            endpoint_id=self.args.endpoint_id,
             user_config=user_config,
         )
 
     @arg.project
-    @arg("endpoint-id", help="Service integration endpoint ID")
+    @arg("endpoint_id", help="Service integration endpoint ID")
     @arg.json
     def service__integration_endpoint_delete(self):
         """Delete a service integration endpoint"""
         self.client.delete_service_integration_endpoint(
             project=self.get_project(),
-            endpoint_id=getattr(self.args, "endpoint-id"),
+            endpoint_id=self.args.endpoint_id,
         )
 
     @arg.project
@@ -1411,20 +1412,19 @@ ssl.truststore.type=JKS
         )
 
     @arg.project
-    @arg("integration-id", help="Service integration ID")
+    @arg("integration_id", help="Service integration ID")
     @arg.user_config
     @arg.json
     def service__integration_update(self):
         """Update a service integration"""
         if self.args.user_config:
             project = self.get_project()
-            integration_id = getattr(self.args, "integration-id")
             integration = self.client.get_service_integration(
                 project=project,
-                integration_id=integration_id,
+                integration_id=self.args.integration_id,
             )
             integration_type = None
-            if integration["service_integration_id"] == integration_id:
+            if integration["service_integration_id"] == self.args.integration_id:
                 integration_type = integration["integration_type"]
             user_config_schema = self._get_integration_user_config_schema(
                 project=project, integration_type_name=integration_type
@@ -1435,18 +1435,18 @@ ssl.truststore.type=JKS
 
         self.client.update_service_integration(
             project=self.get_project(),
-            integration_id=integration_id,
+            integration_id=self.args.integration_id,
             user_config=user_config,
         )
 
     @arg.project
-    @arg("integration-id", help="Service integration ID")
+    @arg("integration_id", help="Service integration ID")
     @arg.json
     def service__integration_delete(self):
         """Delete a service integration"""
         self.client.delete_service_integration(
             project=self.get_project(),
-            integration_id=getattr(self.args, "integration-id"),
+            integration_id=self.args.integration_id,
         )
 
     @arg.project
@@ -2262,7 +2262,7 @@ ssl.truststore.type=JKS
                 self.log.info("Service(s) RUNNING: %s", ", ".join(self.args.service))
                 return 0
 
-            if (self.args.timeout is not None and (time.time() - start_time) > self.args.timeout):
+            if self.args.timeout is not None and (time.time() - start_time) > self.args.timeout:
                 self.log.error("Timeout waiting for service(s) to start")
                 return 1
 
@@ -2408,10 +2408,10 @@ ssl.truststore.type=JKS
             )
             raise argx.UserError(msg)
 
-    _peer_cloud_account_help = ("AWS account ID, Google project ID, or Azure subscription ID")
+    _peer_cloud_account_help = "AWS account ID, Google project ID, or Azure subscription ID"
     _peer_resource_group_help = "Azure resource group name"
     _peer_vpc_help = "AWS VPC ID, Google VPC network name, or Azure VNet name"
-    _peer_region_help = ("AWS region of peer VPC, if other than the region of the Aiven project VPC")
+    _peer_region_help = "AWS region of peer VPC, if other than the region of the Aiven project VPC"
 
     @arg.project
     @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
@@ -2436,8 +2436,8 @@ ssl.truststore.type=JKS
                     peer_resource_group=self.args.peer_resource_group,
                     peer_vpc=self.args.peer_vpc,
                 )
-            except KeyError:
-                raise argx.UserError("Peering connection does not exist")
+            except KeyError as ex:
+                raise argx.UserError("Peering connection does not exist") from ex
             if self.args.json:
                 print(jsonlib.dumps(peering_connection, indent=4, sort_keys=True))
             else:
@@ -2704,10 +2704,10 @@ ssl.truststore.type=JKS
         service_types = self.client.get_service_types(project=project)
         try:
             service_def = service_types[service_type]
-        except KeyError:
+        except KeyError as ex:
             raise argx.UserError(
                 "Unknown service type {!r}, available options: {}".format(service_type, ", ".join(service_types))
-            )
+            ) from ex
 
         return service_def["user_config_schema"]
 
@@ -2716,22 +2716,22 @@ ssl.truststore.type=JKS
         endpoint_types = {item["endpoint_type"]: item for item in endpoint_types_list}
         try:
             return endpoint_types[endpoint_type_name]["user_config_schema"]
-        except KeyError:
+        except KeyError as ex:
             raise argx.UserError(
                 "Unknown endpoint type {!r}, available options: {}".format(endpoint_type_name, ", ".join(endpoint_types))
-            )
+            ) from ex
 
     def _get_integration_user_config_schema(self, project, integration_type_name):
         integration_types_list = self.client.get_service_integration_types(project=project)
         integration_types = {item["integration_type"]: item for item in integration_types_list}
         try:
             return integration_types[integration_type_name]["user_config_schema"]
-        except KeyError:
+        except KeyError as ex:
             raise argx.UserError(
                 "Unknown integration type {!r}, available options: {}".format(
                     integration_type_name, ", ".join(integration_types)
                 )
-            )
+            ) from ex
 
     @arg.project
     @arg.service_name
@@ -2799,7 +2799,7 @@ ssl.truststore.type=JKS
             maintenance["time"] = self.args.maintenance_time
         project_vpc_id = self._get_service_project_vpc_id()
         termination_protection = None
-        if (self.args.enable_termination_protection and self.args.disable_termination_protection):
+        if self.args.enable_termination_protection and self.args.disable_termination_protection:
             raise argx.UserError(
                 "--enable-termination-protection and --disable-termination-protection are mutually exclusive."
             )
@@ -3170,7 +3170,7 @@ server_encryption_options:
             raise ValueError("Cassandra service component information missing")
 
         print(
-            ("sstableloader -f {yaml} -d {hostname} -ssp {internode_port} -p {client_port} -u {user} -pw {password}").format(
+            "sstableloader -f {yaml} -d {hostname} -ssp {internode_port} -p {client_port} -u {user} -pw {password}".format(
                 yaml=self.args.cassandra_yaml,
                 hostname=cassandra_component["host"],
                 internode_port=internode_component["port"],
