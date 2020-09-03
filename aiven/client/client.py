@@ -1286,11 +1286,13 @@ class AivenClient(AivenClientBase):
     def list_project_users(self, project):
         return self.verify(self.get, self.build_path("project", project, "users"), result_key="users")
 
-    def create_user(self, email, password, real_name):
+    def create_user(self, email, password, real_name, *, tenant=None):
         request = {
             "email": email,
             "real_name": real_name,
         }
+        if tenant is not None:
+            request["tenant"] = tenant
         if password is not None:
             request["password"] = password
         return self.verify(self.post, "/user", body=request)
