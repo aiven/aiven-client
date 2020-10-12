@@ -53,6 +53,23 @@ class UserError(Exception):
 
 
 def arg(*args, **kwargs):
+    """ Declares an argument of an CLI command.
+
+    This decorator accepts the same arguments as `argparse.Parser::add_argument`.
+
+    Methods marked with this decorator will be exposed as a CLI command, the
+    argument is made available through the instance attribute `self.args`.
+    `args` is an `argparse.Namespace` instance.
+
+    Example usage::
+
+        class CLI(CommandLineTool):
+
+            @arg("n", type=int)
+            def command(self):
+                print(self.args.n)
+    """
+
     def wrap(func):
         arg_list = getattr(func, ARG_LIST_PROP, None)
         if arg_list is None:
