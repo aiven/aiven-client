@@ -31,9 +31,7 @@ AUTHENTICATION_METHOD_COLUMNS = [
 PLUGINS = []
 
 try:
-    from aiven.admin import (
-        plugin as adminplugin,
-    )  # pylint: disable=import-error,no-name-in-module
+    from aiven.admin import plugin as adminplugin  # pylint: disable=import-error,no-name-in-module
 
     PLUGINS.append(adminplugin)
 except ImportError:
@@ -228,7 +226,7 @@ class AivenCLI(argx.CommandLineTool):
                 if prop_name.startswith("_"):
                     continue
                 prop = getattr(plugin, prop_name)
-                arg_list = getattr(prop, "_arg_list", None)
+                arg_list = getattr(prop, argx.ARG_LIST_PROP, None)
                 if arg_list is not None:
                     cmd = prop_name.replace("__", " ").replace("_", "-")
                     if patterns and not all((p.search(cmd) or p.search(prop.__doc__)) for p in patterns):
