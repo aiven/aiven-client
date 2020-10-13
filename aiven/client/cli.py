@@ -1251,20 +1251,57 @@ ssl.truststore.type=JKS
         if not os.path.exists(self.args.target_directory):
             os.makedirs(self.args.target_directory)
 
+        error_messages = []
+        downloaded_items = []
+
         try:
             result = self.client.get_project_ca(project=project_name)
             with open(os.path.join(self.args.target_directory, "ca.pem"), "w") as fp:
                 fp.write(result["certificate"])
+            downloaded_items.append("CA certificate")
         except client.Error as ex:
-            raise argx.UserError("Project '{}' CA get failed: {}".format(project_name, ex.response.text))
+            error_messages.append("Project '{}' CA get failed: {}".format(project_name, ex.response.text))
 
+        missing_user_items = []
         service = self.client.get_service(project=self.get_project(), service=self.args.name)
         for user in service["users"]:
             if user["username"] == self.args.username:
-                with open(os.path.join(self.args.target_directory, "service.cert"), "w") as fp:
-                    fp.write(user["access_cert"])
-                with open(os.path.join(self.args.target_directory, "service.key"), "w") as fp:
-                    fp.write(user["access_key"])
+                cert = user.get("access_cert")
+                if cert is None:
+                    missing_user_items.append("certificate")
+                else:
+                    with open(os.path.join(self.args.target_directory, "service.cert"), "w") as fp:
+                        fp.write(cert)
+                    downloaded_items.append("certificate")
+
+                key = user.get("access_key")
+                if key is None:
+                    missing_user_items.append("key")
+                else:
+                    with open(os.path.join(self.args.target_directory, "service.key"), "w") as fp:
+                        fp.write(key)
+                    downloaded_items.append("key")
+
+                break
+
+        if downloaded_items:
+            print("Downloaded to directory '{}': {}".format(self.args.target_directory, ", ".join(downloaded_items)))
+            print()
+
+        print("To get the user passwords type:")
+        print(
+            "avn service user-list --format '{{username}} {{password}}' --project {} {}".format(
+                project_name, self.args.name
+            )
+        )
+
+        if missing_user_items:
+            missing_items_str = " and ".join(missing_user_items)
+            error_messages.append("The user '{}' does not have {}".format(self.args.username, missing_items_str))
+
+        if error_messages:
+            print()
+            raise argx.UserError(". ".join(error_messages))
 
     @arg.project
     @arg.service_name
