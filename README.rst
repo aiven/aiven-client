@@ -48,7 +48,7 @@ Platform requirements
 =====================
 
 Aiven Client has been tested and developed on Linux and Mac OS X systems.
-It is a Python program that works with Python 3.4 or newer versions.
+It is a Python program that works with Python 3.6 or newer versions.
 The only external dependency is Requests_ (and certifi_ on Windows/OSX).
 
 .. _`Requests`: http://www.python-requests.org/
