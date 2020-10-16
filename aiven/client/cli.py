@@ -3260,6 +3260,19 @@ server_encryption_options:
             print(ex.response.text)
             raise argx.UserError("Project user listing for '{}' failed".format(project_name))
 
+    @arg.json
+    @arg.project
+    def project__invite_list(self):
+        """Project user list"""
+        project_name = self.get_project()
+        try:
+            user_list = self.client.list_invited_project_users(project=project_name)
+            layout = [["invited_user_email", "inviting_user_email", "member_type", "invite_time"]]
+            self.print_response(user_list, json=self.args.json, table_layout=layout)
+        except client.Error as ex:
+            print(ex.response.text)
+            raise argx.UserError("Project user listing for '{}' failed".format(project_name))
+
     @arg.email
     @arg("--real-name", help="User real name", required=True)
     def user__create(self):
