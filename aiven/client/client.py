@@ -1228,6 +1228,7 @@ class AivenClient(AivenClientBase):
     def update_project(
         self,
         project,
+        new_project_name=None,
         account_id=None,
         card_id=None,
         cloud=None,
@@ -1238,6 +1239,8 @@ class AivenClient(AivenClientBase):
         vat_id=None,
     ):
         body = {}
+        if new_project_name is not None:
+            body["project_name"] = new_project_name
         if account_id is not None:
             body["account_id"] = account_id
         if card_id is not None:
