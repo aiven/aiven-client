@@ -2,7 +2,6 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
-
 from aiven.client import envdefault, pretty
 
 import aiven.client.client
@@ -163,6 +162,9 @@ class CommandLineTool:  # pylint: disable=old-style-class
 
         for arg_prop in getattr(func, ARG_LIST_PROP, []):
             parser.add_argument(*arg_prop[0], **arg_prop[1])
+
+        # Ensure the list of actions remains sorted as we append to to it.
+        self.subparsers._choices_actions.sort(key=lambda item: item.dest)  # pylint: disable=protected-access
 
     def add_args(self, parser):
         pass  # override in sub-class
