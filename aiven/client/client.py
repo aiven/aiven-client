@@ -274,13 +274,14 @@ class AivenClient(AivenClientBase):
         path = self.build_path("project", project, "service", service, "db", dbname)
         return self.verify(self.delete, path)
 
-    def create_service_user(self, project, service, username):
+    def create_service_user(self, project, service, username, extra_params=None):
+        body = {"username": username}
+        if extra_params:
+            body.update(extra_params)
         return self.verify(
             self.post,
             self.build_path("project", project, "service", service, "user"),
-            body={
-                "username": username,
-            },
+            body=body,
             result_key="user",
         )
 
