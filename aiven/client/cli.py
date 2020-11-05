@@ -1134,13 +1134,26 @@ class AivenCLI(argx.CommandLineTool):
     @arg.project
     @arg.service_name
     @arg("--username", help="Service user username", required=True)
+    @arg("--redis-acl-keys", help="ACL rules for keys (Redis only)")
+    @arg("--redis-acl-commands", help="ACL rules for commands (Redis only)")
+    @arg("--redis-acl-categories", help="ACL rules for command categories (Redis only)")
     @arg.json
     def service__user_create(self):
         """Create service user"""
+        arg_vars = vars(self.args)
+        extra_params = {}
+        acl_params = {
+            key: arg_vars[key].split()
+            for key in {"redis_acl_keys", "redis_acl_commands", "redis_acl_categories"}
+            if key in arg_vars
+        }
+        if acl_params:
+            extra_params = {"access_control": acl_params}
         self.client.create_service_user(
             project=self.get_project(),
             service=self.args.name,
             username=self.args.username,
+            extra_params=extra_params,
         )
 
     @arg.project
@@ -1163,6 +1176,12 @@ class AivenCLI(argx.CommandLineTool):
         """List service users """
         service = self.client.get_service(project=self.get_project(), service=self.args.name)
         layout = [["username", "type"]]
+        if service["service_type"] == "redis":
+            layout[0].extend([
+                "access_control.redis_acl_keys",
+                "access_control.redis_acl_commands",
+                "access_control.redis_acl_categories",
+            ])
         self.print_response(
             service["users"],
             format=self.args.format,

@@ -290,6 +290,24 @@ Terminate a service (all data will be gone!)::
 
   $ avn service terminate mydb
 
+Managing service users
+----------------------
+Some service types support multiple users (e.g. PostgreSQL database users).
+
+List, add and delete service users::
+
+  $ avn service user-list
+  $ avn service user-create
+  $ avn service user-delete
+
+For Redis services running version 6 or above, it's possible to create users with ACLs_::
+
+  $ avn service user-create --username new_user --redis-acl-keys "prefix* another_key" --redis-acl-commands "+set" --redis-acl-categories "-@all +@admin" my-redis-service
+
+.. _`ACLs`: https://redis.io/topics/acl
+
+Service users are created with strong random passwords.
+
 Updating service configuration
 ------------------------------
 
