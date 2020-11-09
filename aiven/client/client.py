@@ -2,12 +2,14 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
+from requests.adapters import HTTPAdapter
+from typing import Dict, Optional, Text, Union
+from urllib3.util.retry import Retry
 from urllib.parse import quote
 
 import json
 import logging
 import requests
-import time
 import warnings
 
 try:
@@ -18,7 +20,6 @@ except ImportError:
 
 class Error(Exception):
     """Request error"""
-
     def __init__(self, response, status=520):
         Exception.__init__(self, response.text)
         self.response = response
@@ -28,15 +29,23 @@ class Error(Exception):
 UNDEFINED = object()
 
 
+def session_with_retries(retry: Retry) -> requests.Session:
+    session = requests.Session()
+    adapter_with_retries = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter_with_retries)
+    session.mount('https://', adapter_with_retries)
+    return session
+
+
 class AivenClientBase:  # pylint: disable=old-style-class
     """Aiven Client with low-level HTTP operations"""
-
     def __init__(self, base_url, show_http=False):
         self.log = logging.getLogger("AivenClient")
         self.auth_token = None
         self.base_url = base_url
         self.log.debug("using %r", self.base_url)
-        self.session = requests.Session()
+
+        self.session = session_with_retries(Retry(total=3))
         self.session.verify = True
         self.session.headers = {
             "content-type": "application/json",
@@ -60,20 +69,11 @@ class AivenClientBase:  # pylint: disable=old-style-class
     def set_ca(self, ca):
         self.session.verify = ca
 
-    def _execute(self, func, method, path, body, params=None):
-        url = self.base_url + path
-        headers = {}
+    def _log_request(self, url, method, body, headers, params=None):
         if isinstance(body, dict):
-            headers["content-type"] = "application/json"
-            data = json.dumps(body)
             log_data = json.dumps(body, sort_keys=True, indent=4)
         else:
-            headers["content-type"] = "application/octet-stream"
-            data = body
-            log_data = data or ""
-
-        if self.auth_token:
-            headers["authorization"] = "aivenv1 {token}".format(token=self.auth_token)
+            log_data = body or ""
 
         self.http_log.debug("-----Request Begin-----")
         self.http_log.debug("%s %s %s", method, url, params if params else "")
@@ -84,8 +84,7 @@ class AivenClientBase:  # pylint: disable=old-style-class
         self.http_log.debug("%s", log_data)
         self.http_log.debug("-----Request End-----")
 
-        response = func(url, headers=headers, params=params, data=data)
-
+    def _log_response(self, response):
         self.http_log.debug("-----Response Begin-----")
         self.http_log.debug("%s %s", response.status_code, response.reason)
         for header, header_value in response.headers.items():
@@ -99,56 +98,53 @@ class AivenClientBase:  # pylint: disable=old-style-class
 
         self.http_log.debug("-----Response End-----")
 
-        if not str(response.status_code).startswith("2"):
-            raise Error(response, status=response.status_code)
-
-        return response
-
-    def get(self, path="", params=None):
-        """HTTP GET"""
-        return self._execute(self.session.get, "GET", path, body=None, params=params)
-
-    def post(self, path="", body=None, params=None):
-        """HTTP POST"""
-        return self._execute(self.session.post, "POST", path, body, params)
-
-    def put(self, path="", body=None, params=None):
-        """HTTP PUT"""
-        return self._execute(self.session.put, "PUT", path, body, params)
-
-    def delete(self, path="", body=None, params=None):
-        """HTTP DELETE"""
-        return self._execute(self.session.delete, "DELETE", path, body, params)
-
-    def verify(self, op, path, body=None, params=None, result_key=None, retry=None):
-        # Retry GET operations by default
-        if retry is None and op == self.get:  # pylint: disable=comparison-with-callable
-            attempts = 3
-        else:
-            attempts = 1 + (retry or 0)
-
+    def verify(
+        self,
+        op: str,
+        path: str,
+        body: Union[Dict, Text] = None,
+        params: Dict = None,
+        result_key: str = None,
+        retry: Union[Retry, None, int] = None
+    ) -> Dict:
         path = self.api_prefix + path
 
-        while attempts:
-            attempts -= 1
-            try:
-                if body is not None:
-                    response = op(path=path, body=body, params=params)
-                else:
-                    response = op(path=path, params=params)
-                break
-            except requests.exceptions.ConnectionError as ex:
-                if attempts <= 0:
-                    raise
-                self.log.warning(
-                    "%s %s failed: %s: %s; retrying in 0.2 seconds, %s attempts left",
-                    op.__name__.upper(),
-                    path,
-                    ex.__class__.__name__,
-                    ex,
-                    attempts,
-                )
-                time.sleep(0.2)
+        if retry is not None:
+            if isinstance(retry, Retry):
+                attempts = 1 + (retry or 0)
+                retry = Retry.from_int(attempts)
+
+            # If `retry` was explicit provided assume the operation is
+            # idempotent regardless of the verb.
+            retry.new(method_whitelist=[op])
+
+            # Retry is only configurable at the session level, so a new session
+            # is necessary.
+            session = session_with_retries(retry)
+        else:
+            session = self.session
+
+        url = self.base_url + path
+
+        headers = dict()
+        if self.auth_token:
+            headers["authorization"] = "aivenv1 {token}".format(token=self.auth_token)
+
+        data = None
+        jsondata: Optional[Dict] = None
+
+        if isinstance(body, dict):
+            jsondata = body
+        else:
+            data = body
+            headers["content-type"] = "application/octet-stream"
+
+        self._log_request(url, op, body, headers, params)
+        response = session.request(op, url, data=data, json=jsondata, headers=headers, params=params)
+        self._log_response(response)
+
+        if not str(response.status_code).startswith("2"):
+            raise Error(response, status=response.status_code)
 
         result = response.json()
         if result.get("error"):
@@ -169,20 +165,19 @@ class AivenClientBase:  # pylint: disable=old-style-class
 
 class AivenClient(AivenClientBase):
     """Aiven Client with high-level operations"""
-
     def get_service_versions(self):
-        return self.verify(self.get, "/service_versions", result_key="service_versions")
+        return self.verify("GET", "/service_versions", result_key="service_versions")
 
     def get_service_indexes(self, project, service):
         return self.verify(
-            self.get,
+            "GET",
             self.build_path("project", project, "service", service, "index"),
             result_key="indexes",
         )
 
     def delete_service_index(self, project, service, index_name):
         return self.verify(
-            self.delete,
+            "DELETE",
             self.build_path("project", project, "service", service, "index", index_name),
         )
 
@@ -191,18 +186,18 @@ class AivenClient(AivenClientBase):
             path = "/clouds"
         else:
             path = self.build_path("project", project, "clouds")
-        return self.verify(self.get, path, result_key="clouds")
+        return self.verify("GET", path, result_key="clouds")
 
     def get_service(self, project, service):
         return self.verify(
-            self.get,
+            "GET",
             self.build_path("project", project, "service", service),
             result_key="service",
         )
 
     def get_service_metrics(self, project, service, period):
         path = self.build_path("project", project, "service", service, "metrics")
-        return self.verify(self.post, path, result_key="metrics", body={"period": period})
+        return self.verify("POST", path, result_key="metrics", body={"period": period})
 
     def authenticate_user(self, email, password, otp=None, tenant_id=None):
         body = {
@@ -214,7 +209,7 @@ class AivenClient(AivenClientBase):
         if tenant_id is not None:
             body["tenant"] = tenant_id
 
-        return self.verify(self.post, "/userauth", body=body)
+        return self.verify("POST", "/userauth", body=body)
 
     def create_service_connection_pool(
         self,
@@ -232,7 +227,7 @@ class AivenClient(AivenClientBase):
         if pool_mode:
             body["pool_mode"] = pool_mode
         return self.verify(
-            self.post,
+            "POST",
             self.build_path("project", project, "service", service, "connection_pool"),
             body=body,
         )
@@ -257,29 +252,29 @@ class AivenClient(AivenClientBase):
         if pool_mode is not None:
             body["pool_mode"] = pool_mode
         path = self.build_path("project", project, "service", service, "connection_pool", pool_name)
-        return self.verify(self.put, path, body=body)
+        return self.verify("PUT", path, body=body)
 
     def delete_service_connection_pool(self, project, service, pool_name):
         path = self.build_path("project", project, "service", service, "connection_pool", pool_name)
-        return self.verify(self.delete, path)
+        return self.verify("DELETE", path)
 
     def create_service_database(self, project, service, dbname):
         return self.verify(
-            self.post,
+            "POST",
             self.build_path("project", project, "service", service, "db"),
             body={"database": dbname},
         )
 
     def delete_service_database(self, project, service, dbname):
         path = self.build_path("project", project, "service", service, "db", dbname)
-        return self.verify(self.delete, path)
+        return self.verify("DELETE", path)
 
     def create_service_user(self, project, service, username, extra_params=None):
         body = {"username": username}
         if extra_params:
             body.update(extra_params)
         return self.verify(
-            self.post,
+            "POST",
             self.build_path("project", project, "service", service, "user"),
             body=body,
             result_key="user",
@@ -287,26 +282,26 @@ class AivenClient(AivenClientBase):
 
     def delete_service_user(self, project, service, username):
         path = self.build_path("project", project, "service", service, "user", username)
-        return self.verify(self.delete, path)
+        return self.verify("DELETE", path)
 
     def reset_service_user_password(self, project, service, username, password):
         path = self.build_path("project", project, "service", service, "user", username)
         body = {"operation": "reset-credentials"}
         if password is not None:
             body["new_password"] = password
-        return self.verify(self.put, path, body=body)
+        return self.verify("PUT", path, body=body)
 
     def get_service_integration_endpoints(self, project):
         path = self.build_path("project", project, "integration_endpoint")
-        return self.verify(self.get, path, result_key="service_integration_endpoints")
+        return self.verify("GET", path, result_key="service_integration_endpoints")
 
     def get_service_integration_endpoint_types(self, project):
         path = self.build_path("project", project, "integration_endpoint_types")
-        return self.verify(self.get, path, result_key="endpoint_types")
+        return self.verify("GET", path, result_key="endpoint_types")
 
     def create_service_integration_endpoint(self, project, endpoint_name, endpoint_type, user_config):
         return self.verify(
-            self.post,
+            "POST",
             self.build_path("project", project, "integration_endpoint"),
             body={
                 "endpoint_name": endpoint_name,
@@ -317,7 +312,7 @@ class AivenClient(AivenClientBase):
 
     def update_service_integration_endpoint(self, project, endpoint_id, user_config):
         return self.verify(
-            self.put,
+            "PUT",
             self.build_path("project", project, "integration_endpoint", endpoint_id),
             body={
                 "user_config": user_config,
@@ -326,17 +321,17 @@ class AivenClient(AivenClientBase):
 
     def delete_service_integration_endpoint(self, project, endpoint_id):
         return self.verify(
-            self.delete,
+            "DELETE",
             self.build_path("project", project, "integration_endpoint", endpoint_id),
         )
 
     def get_service_integrations(self, project, service):
         path = self.build_path("project", project, "service", service, "integration")
-        return self.verify(self.get, path, result_key="service_integrations")
+        return self.verify("GET", path, result_key="service_integrations")
 
     def get_service_integration_types(self, project):
         path = self.build_path("project", project, "integration_types")
-        return self.verify(self.get, path, result_key="integration_types")
+        return self.verify("GET", path, result_key="integration_types")
 
     def create_service_integration(
         self,
@@ -350,7 +345,7 @@ class AivenClient(AivenClientBase):
     ):
         user_config = user_config or {}
         return self.verify(
-            self.post,
+            "POST",
             self.build_path("project", project, "integration"),
             body={
                 "source_endpoint_id": source_endpoint_id,
@@ -364,7 +359,7 @@ class AivenClient(AivenClientBase):
 
     def update_service_integration(self, project, integration_id, user_config):
         return self.verify(
-            self.put,
+            "PUT",
             self.build_path("project", project, "integration", integration_id),
             body={
                 "user_config": user_config,
@@ -374,17 +369,17 @@ class AivenClient(AivenClientBase):
 
     def get_service_integration(self, project, integration_id):
         path = self.build_path("project", project, "integration", integration_id)
-        return self.verify(self.get, path, result_key="service_integration")
+        return self.verify("GET", path, result_key="service_integration")
 
     def delete_service_integration(self, project, integration_id):
         return self.verify(
-            self.delete,
+            "DELETE",
             self.build_path("project", project, "integration", integration_id),
         )
 
     def create_service_task(self, project, service, operation, target_version):
         return self.verify(
-            self.post,
+            "POST",
             self.build_path("project", project, "service", service, "task"),
             body={
                 "task_type": operation,
@@ -394,15 +389,15 @@ class AivenClient(AivenClientBase):
 
     def get_service_task(self, project, service, task_id):
         path = self.build_path("project", project, "service", service, "task", task_id)
-        return self.verify(self.get, path, result_key="task")
+        return self.verify("GET", path, result_key="task")
 
     def get_service_topic(self, project, service, topic):
         path = self.build_path("project", project, "service", service, "topic", topic)
-        return self.verify(self.get, path, result_key="topic")
+        return self.verify("GET", path, result_key="topic")
 
     def list_service_topics(self, project, service):
         return self.verify(
-            self.get,
+            "GET",
             self.build_path("project", project, "service", service, "topic"),
             result_key="topics",
         )
@@ -420,7 +415,7 @@ class AivenClient(AivenClientBase):
         cleanup_policy,
     ):
         return self.verify(
-            self.post,
+            "POST",
             self.build_path("project", project, "service", service, "topic"),
             body={
                 "cleanup_policy": cleanup_policy,
@@ -445,7 +440,7 @@ class AivenClient(AivenClientBase):
         replication=None,
     ):
         return self.verify(
-            self.put,
+            "PUT",
             self.build_path("project", project, "service", service, "topic", topic),
             body={
                 "partitions": partitions,
@@ -458,13 +453,13 @@ class AivenClient(AivenClientBase):
 
     def delete_service_topic(self, project, service, topic):
         return self.verify(
-            self.delete,
+            "DELETE",
             self.build_path("project", project, "service", service, "topic", topic),
         )
 
     def list_service_elasticsearch_acl_config(self, project, service):
         return self.verify(
-            self.get,
+            "GET",
             self.build_path("project", project, "service", service, "elasticsearch", "acl"),
         )
 
@@ -530,11 +525,11 @@ class AivenClient(AivenClientBase):
             )
 
         path = self.build_path("project", project, "service", service, "elasticsearch", "acl")
-        return self.verify(self.put, path, body={"elasticsearch_acl_config": acl_config})
+        return self.verify("PUT", path, body={"elasticsearch_acl_config": acl_config})
 
     def add_service_kafka_acl(self, project, service, permission, topic, username):
         return self.verify(
-            self.post,
+            "POST",
             self.build_path("project", project, "service", service, "acl"),
             body={
                 "permission": permission,
@@ -555,19 +550,19 @@ class AivenClient(AivenClientBase):
 
     def delete_service_kafka_acl(self, project, service, acl_id):
         return self.verify(
-            self.delete,
+            "DELETE",
             self.build_path("project", project, "service", service, "acl", acl_id),
         )
 
     def get_available_kafka_connectors(self, project, service):
         return self.verify(
-            self.get,
+            "GET",
             self.build_path("project", project, "service", service, "available-connectors"),
         )
 
     def list_kafka_connectors(self, project, service):
         return self.verify(
-            self.get,
+            "GET",
             self.build_path("project", project, "service", service, "connectors"),
         )
 
@@ -581,7 +576,7 @@ class AivenClient(AivenClientBase):
             connector_name,
             "status",
         )
-        return self.verify(self.get, path)
+        return self.verify("GET", path)
 
     def get_kafka_connector_schema(self, project, service, connector_name):
         path = self.build_path(
@@ -593,11 +588,11 @@ class AivenClient(AivenClientBase):
             connector_name,
             "configuration",
         )
-        return self.verify(self.get, path)
+        return self.verify("GET", path)
 
     def create_kafka_connector(self, project, service, config):
         return self.verify(
-            self.post,
+            "POST",
             self.build_path("project", project, "service", service, "connectors"),
             body=config,
         )
@@ -606,11 +601,11 @@ class AivenClient(AivenClientBase):
         path = self.build_path("project", project, "service", service, "connectors", connector_name)
         if fetch_current:
             config = self.create_connector_config_based_on_current(project, service, connector_name, config)
-        return self.verify(self.put, path, body=config)
+        return self.verify("PUT", path, body=config)
 
     def delete_kafka_connector(self, project, service, connector_name):
         path = self.build_path("project", project, "service", service, "connectors", connector_name)
-        return self.verify(self.delete, path)
+        return self.verify("DELETE", path)
 
     def pause_kafka_connector(self, project, service, connector_name):
         path = self.build_path(
@@ -622,7 +617,7 @@ class AivenClient(AivenClientBase):
             connector_name,
             "pause",
         )
-        return self.verify(self.post, path)
+        return self.verify("POST", path)
 
     def resume_kafka_connector(self, project, service, connector_name):
         path = self.build_path(
@@ -634,7 +629,7 @@ class AivenClient(AivenClientBase):
             connector_name,
             "resume",
         )
-        return self.verify(self.post, path)
+        return self.verify("POST", path)
 
     def restart_kafka_connector(self, project, service, connector_name):
         path = self.build_path(
@@ -646,7 +641,7 @@ class AivenClient(AivenClientBase):
             connector_name,
             "restart",
         )
-        return self.verify(self.post, path)
+        return self.verify("POST", path)
 
     def restart_kafka_connector_task(self, project, service, connector_name, task_id):
         path = self.build_path(
@@ -660,7 +655,7 @@ class AivenClient(AivenClientBase):
             task_id,
             "restart",
         )
-        return self.verify(self.post, path)
+        return self.verify("POST", path)
 
     def get_schema(self, project, service, schema_id):
         path = self.build_path(
@@ -674,7 +669,7 @@ class AivenClient(AivenClientBase):
             "ids",
             schema_id,
         )
-        return self.verify(self.get, path)
+        return self.verify("GET", path)
 
     def check_schema_compatibility(self, project, service, subject, version, schema):
         path = self.build_path(
@@ -690,27 +685,27 @@ class AivenClient(AivenClientBase):
             "versions",
             version,
         )
-        return self.verify(self.post, path, body={"schema": schema})
+        return self.verify("POST", path, body={"schema": schema})
 
     def get_schema_global_configuration(self, project, service):
         path = self.build_path("project", project, "service", service, "kafka", "schema", "config")
-        return self.verify(self.get, path)
+        return self.verify("GET", path)
 
     def update_schema_global_configuration(self, project, service, compatibility):
         path = self.build_path("project", project, "service", service, "kafka", "schema", "config")
-        return self.verify(self.put, path, body={"compatibility": compatibility})
+        return self.verify("PUT", path, body={"compatibility": compatibility})
 
     def get_schema_subject_configuration(self, project, service, subject):
         path = self.build_path("project", project, "service", service, "kafka", "schema", "config", subject)
-        return self.verify(self.get, path)
+        return self.verify("GET", path)
 
     def update_schema_subject_configuration(self, project, service, subject, compatibility):
         path = self.build_path("project", project, "service", service, "kafka", "schema", "config", subject)
-        return self.verify(self.put, path, body={"compatibility": compatibility})
+        return self.verify("PUT", path, body={"compatibility": compatibility})
 
     def list_schema_subjects(self, project, service):
         path = self.build_path("project", project, "service", service, "kafka", "schema", "subjects")
-        return self.verify(self.get, path)
+        return self.verify("GET", path)
 
     def delete_schema_subject(self, project, service, subject):
         path = self.build_path(
@@ -723,7 +718,7 @@ class AivenClient(AivenClientBase):
             "subjects",
             subject,
         )
-        return self.verify(self.delete, path)
+        return self.verify("DELETE", path)
 
     def get_schema_subject_version(self, project, service, subject, version):
         path = self.build_path(
@@ -738,7 +733,7 @@ class AivenClient(AivenClientBase):
             "versions",
             version,
         )
-        return self.verify(self.get, path)
+        return self.verify("GET", path)
 
     def get_schema_subject_version_schema(self, project, service, subject, version):
         path = self.build_path(
@@ -754,7 +749,7 @@ class AivenClient(AivenClientBase):
             version,
             "schema",
         )
-        return self.verify(self.get, path)
+        return self.verify("GET", path)
 
     def list_schema_subject_versions(self, project, service, subject):
         path = self.build_path(
@@ -768,7 +763,7 @@ class AivenClient(AivenClientBase):
             subject,
             "versions",
         )
-        return self.verify(self.get, path)
+        return self.verify("GET", path)
 
     def create_schema_subject_version(self, project, service, subject, schema):
         path = self.build_path(
@@ -782,7 +777,7 @@ class AivenClient(AivenClientBase):
             subject,
             "versions",
         )
-        return self.verify(self.post, path, body={"schema": schema})
+        return self.verify("POST", path, body={"schema": schema})
 
     def delete_schema_subject_version(self, project, service, subject, version):
         path = self.build_path(
@@ -797,11 +792,11 @@ class AivenClient(AivenClientBase):
             "versions",
             version,
         )
-        return self.verify(self.delete, path)
+        return self.verify("DELETE", path)
 
     def list_mirrormaker_replication_flows(self, project, service):
         path = self.build_path("project", project, "service", service, "mirrormaker", "replication-flows")
-        return self.verify(self.get, path, result_key="replication_flows")
+        return self.verify("GET", path, result_key="replication_flows")
 
     def create_mirrormaker_replication_flow(self, project, service, source_cluster, target_cluster, config):
         path = self.build_path("project", project, "service", service, "mirrormaker", "replication-flows")
@@ -809,7 +804,7 @@ class AivenClient(AivenClientBase):
         body.update(config)
         body["source_cluster"] = source_cluster
         body["target_cluster"] = target_cluster
-        return self.verify(self.post, path, body=body)
+        return self.verify("POST", path, body=body)
 
     def update_mirrormaker_replication_flow(self, project, service, source_cluster, target_cluster, config):
         path = self.build_path(
@@ -824,7 +819,7 @@ class AivenClient(AivenClientBase):
         )
         body = {}
         body.update(config)
-        return self.verify(self.put, path, body=body, result_key="replication_flow")
+        return self.verify("PUT", path, body=body, result_key="replication_flow")
 
     def get_mirrormaker_replication_flow(self, project, service, source_cluster, target_cluster):
         path = self.build_path(
@@ -837,7 +832,7 @@ class AivenClient(AivenClientBase):
             source_cluster,
             target_cluster,
         )
-        return self.verify(self.get, path, result_key="replication_flow")
+        return self.verify("GET", path, result_key="replication_flow")
 
     def delete_mirrormaker_replication_flow(self, project, service, source_cluster, target_cluster):
         path = self.build_path(
@@ -850,14 +845,14 @@ class AivenClient(AivenClientBase):
             source_cluster,
             target_cluster,
         )
-        return self.verify(self.delete, path)
+        return self.verify("DELETE", path)
 
     def list_project_vpcs(self, project):
-        return self.verify(self.get, self.build_path("project", project, "vpcs"))
+        return self.verify("GET", self.build_path("project", project, "vpcs"))
 
     def create_project_vpc(self, project, cloud, network_cidr, peering_connections):
         return self.verify(
-            self.post,
+            "POST",
             self.build_path("project", project, "vpcs"),
             body={
                 "cloud_name": cloud,
@@ -876,10 +871,10 @@ class AivenClient(AivenClientBase):
         )
 
     def get_project_vpc(self, project, project_vpc_id):
-        return self.verify(self.get, self.build_path("project", project, "vpcs", project_vpc_id))
+        return self.verify("GET", self.build_path("project", project, "vpcs", project_vpc_id))
 
     def delete_project_vpc(self, project, project_vpc_id):
-        return self.verify(self.delete, self.build_path("project", project, "vpcs", project_vpc_id))
+        return self.verify("DELETE", self.build_path("project", project, "vpcs", project_vpc_id))
 
     def create_project_vpc_peering_connection(
         self,
@@ -908,7 +903,7 @@ class AivenClient(AivenClientBase):
             body["peer_azure_tenant_id"] = peer_azure_tenant_id
         if user_peer_network_cidrs is not None:
             body["user_peer_network_cidrs"] = user_peer_network_cidrs
-        return self.verify(self.post, path, body=body)
+        return self.verify("POST", path, body=body)
 
     def request_project_vpc_peering_connection(self, project, project_vpc_id, peer_cloud_account, peer_vpc):
         warnings.warn("Use the create_project_vpc_peering_connection method", DeprecationWarning)
@@ -942,7 +937,7 @@ class AivenClient(AivenClientBase):
         path += self.build_path("peer-vpcs", peer_vpc)
         if peer_region is not None:
             path += self.build_path("peer-regions", peer_region)
-        return self.verify(self.delete, path)
+        return self.verify("DELETE", path)
 
     def get_project_vpc_peering_connection(
         self,
@@ -991,7 +986,7 @@ class AivenClient(AivenClientBase):
             body["add"] = add
         if delete:
             body["delete"] = delete
-        return self.verify(self.put, path, body=body)
+        return self.verify("PUT", path, body=body)
 
     def create_service(
         self,
@@ -1020,7 +1015,7 @@ class AivenClient(AivenClientBase):
         if project_vpc_id is not UNDEFINED:
             body["project_vpc_id"] = project_vpc_id
         return self.verify(
-            self.post,
+            "POST",
             self.build_path("project", project, "service"),
             body=body,
             result_key="service",
@@ -1059,14 +1054,14 @@ class AivenClient(AivenClientBase):
             body["termination_protection"] = termination_protection
 
         path = self.build_path("project", project, "service", service)
-        return self.verify(self.put, path, body=body, result_key="service")
+        return self.verify("PUT", path, body=body, result_key="service")
 
     def reset_service_credentials(self, project, service):
         path = self.build_path("project", project, "service", service, "credentials", "reset")
-        return self.verify(self.put, path, result_key="service")
+        return self.verify("PUT", path, result_key="service")
 
     def delete_service(self, project, service):
-        return self.verify(self.delete, self.build_path("project", project, "service", service))
+        return self.verify("DELETE", self.build_path("project", project, "service", service))
 
     def get_pg_service_current_queries(self, project, service):
         warnings.warn("Use the get_service_current_queries method", DeprecationWarning)
@@ -1083,7 +1078,7 @@ class AivenClient(AivenClientBase):
     def get_service_current_queries(self, project, service):
         path = self.build_path("project", project, "service", service, "query", "activity")
         return self.verify(
-            self.post,
+            "POST",
             path,
             result_key="queries",
             body={
@@ -1097,7 +1092,7 @@ class AivenClient(AivenClientBase):
             service_type = self.get_service(project, service)["service_type"]
         path = self.build_path("project", project, "service", service, service_type, "query", "stats")
         return self.verify(
-            self.post,
+            "POST",
             path,
             result_key="queries",
             body={
@@ -1108,11 +1103,11 @@ class AivenClient(AivenClientBase):
 
     def reset_service_query_stats(self, project, service):
         path = self.build_path("project", project, "service", service, "query", "stats", "reset")
-        return self.verify(self.put, path, result_key="queries")
+        return self.verify("PUT", path, result_key="queries")
 
     def get_services(self, project):
         return self.verify(
-            self.get,
+            "GET",
             self.build_path("project", project, "service"),
             result_key="services",
         )
@@ -1122,41 +1117,41 @@ class AivenClient(AivenClientBase):
             path = "/service_types"
         else:
             path = self.build_path("project", project, "service_types")
-        return self.verify(self.get, path, result_key="service_types")
+        return self.verify("GET", path, result_key="service_types")
 
     def create_account(self, account_name):
         body = {
             "account_name": account_name,
         }
-        return self.verify(self.post, "/account", body=body, result_key="account")
+        return self.verify("POST", "/account", body=body, result_key="account")
 
     def delete_account(self, account_id):
-        return self.verify(self.delete, self.build_path("account", account_id))
+        return self.verify("DELETE", self.build_path("account", account_id))
 
     def update_account(self, account_id, account_name):
         body = {
             "account_name": account_name,
         }
         return self.verify(
-            self.put,
+            "PUT",
             self.build_path("account", account_id),
             body=body,
             result_key="account",
         )
 
     def get_accounts(self):
-        return self.verify(self.get, "/account", result_key="accounts")
+        return self.verify("GET", "/account", result_key="accounts")
 
     def create_account_authentication_method(self, account_id, method_name, method_type, options=None):
         body = dict(options) if options else {}
         body["authentication_method_name"] = method_name
         body["authentication_method_type"] = method_type
         path = self.build_path("account", account_id, "authentication")
-        return self.verify(self.post, path, body=body, result_key="authentication_method")
+        return self.verify("POST", path, body=body, result_key="authentication_method")
 
     def delete_account_authentication_method(self, account_id, authentication_id):
         return self.verify(
-            self.delete,
+            "DELETE",
             self.build_path("account", account_id, "authentication", authentication_id),
         )
 
@@ -1175,11 +1170,11 @@ class AivenClient(AivenClientBase):
             body["authentication_method_enabled"] = method_enable
 
         path = self.build_path("account", account_id, "authentication", authentication_id)
-        return self.verify(self.put, path, body=body, result_key="authentication_method")
+        return self.verify("PUT", path, body=body, result_key="authentication_method")
 
     def get_account_authentication_methods(self, account_id):
         path = self.build_path("account", account_id, "authentication")
-        return self.verify(self.get, path, result_key="authentication_methods")
+        return self.verify("GET", path, result_key="authentication_methods")
 
     def create_project(
         self,
@@ -1214,16 +1209,16 @@ class AivenClient(AivenClientBase):
         if vat_id is not None:
             body["vat_id"] = vat_id
 
-        return self.verify(self.post, "/project", body=body, result_key="project")
+        return self.verify("POST", "/project", body=body, result_key="project")
 
     def delete_project(self, project):
-        return self.verify(self.delete, self.build_path("project", project))
+        return self.verify("DELETE", self.build_path("project", project))
 
     def get_project(self, project):
-        return self.verify(self.get, self.build_path("project", project), result_key="project")
+        return self.verify("GET", self.build_path("project", project), result_key="project")
 
     def get_projects(self):
-        return self.verify(self.get, "/project", result_key="projects")
+        return self.verify("GET", "/project", result_key="projects")
 
     def update_project(
         self,
@@ -1259,22 +1254,22 @@ class AivenClient(AivenClientBase):
             body["vat_id"] = vat_id
 
         return self.verify(
-            self.put,
+            "PUT",
             self.build_path("project", project),
             body=body,
             result_key="project",
         )
 
     def get_project_ca(self, project):
-        return self.verify(self.get, self.build_path("project", project, "kms", "ca"))
+        return self.verify("GET", self.build_path("project", project, "kms", "ca"))
 
     def get_service_ca(self, project, service, ca):
         path = self.build_path("project", project, "service", service, "kms", "ca", ca)
-        return self.verify(self.get, path)
+        return self.verify("GET", path)
 
     def get_service_keypair(self, project, service, keypair):
         path = self.build_path("project", project, "service", service, "kms", "keypairs", keypair)
-        return self.verify(self.get, path)
+        return self.verify("GET", path)
 
     def invite_project_user(self, project, user_email, member_type=None):
         body = {
@@ -1282,16 +1277,16 @@ class AivenClient(AivenClientBase):
         }
         if member_type is not None:
             body["member_type"] = member_type
-        return self.verify(self.post, self.build_path("project", project, "invite"), body=body)
+        return self.verify("POST", self.build_path("project", project, "invite"), body=body)
 
     def remove_project_user(self, project, user_email):
-        return self.verify(self.delete, self.build_path("project", project, "user", user_email))
+        return self.verify("DELETE", self.build_path("project", project, "user", user_email))
 
     def list_project_users(self, project):
-        return self.verify(self.get, self.build_path("project", project, "users"), result_key="users")
+        return self.verify("GET", self.build_path("project", project, "users"), result_key="users")
 
     def list_invited_project_users(self, project):
-        return self.verify(self.get, self.build_path("project", project, "users"), result_key="invitations")
+        return self.verify("GET", self.build_path("project", project, "users"), result_key="invitations")
 
     def create_user(self, email, password, real_name, *, tenant=None):
         request = {
@@ -1302,10 +1297,10 @@ class AivenClient(AivenClientBase):
             request["tenant"] = tenant
         if password is not None:
             request["password"] = password
-        return self.verify(self.post, "/user", body=request)
+        return self.verify("POST", "/user", body=request)
 
     def get_user_info(self):
-        return self.verify(self.get, "/me", result_key="user")
+        return self.verify("GET", "/me", result_key="user")
 
     def access_token_create(self, description, extend_when_used=False, max_age_seconds=None):
         request = {
@@ -1313,20 +1308,20 @@ class AivenClient(AivenClientBase):
             "extend_when_used": extend_when_used,
             "max_age_seconds": max_age_seconds,
         }
-        return self.verify(self.post, "/access_token", body=request)
+        return self.verify("POST", "/access_token", body=request)
 
     def access_token_revoke(self, token_prefix):
-        return self.verify(self.delete, self.build_path("access_token", token_prefix))
+        return self.verify("DELETE", self.build_path("access_token", token_prefix))
 
     def access_token_update(self, token_prefix, description):
         request = {"description": description}
-        return self.verify(self.put, self.build_path("access_token", token_prefix), body=request)
+        return self.verify("PUT", self.build_path("access_token", token_prefix), body=request)
 
     def access_tokens_list(self):
-        return self.verify(self.get, "/access_token", result_key="tokens")
+        return self.verify("GET", "/access_token", result_key="tokens")
 
     def expire_user_tokens(self):
-        return self.verify(self.post, "/me/expire_tokens")
+        return self.verify("POST", "/me/expire_tokens")
 
     def get_service_logs(self, project, service, sort_order=None, offset=None, limit=100):
         body = {"limit": limit}
@@ -1335,7 +1330,7 @@ class AivenClient(AivenClientBase):
         if sort_order is not None:
             body["sort_order"] = sort_order
         return self.verify(
-            self.post,
+            "POST",
             self.build_path("project", project, "service", service, "logs"),
             body=body,
         )
@@ -1343,20 +1338,20 @@ class AivenClient(AivenClientBase):
     def get_events(self, project, limit=100):
         params = {"limit": limit}
         return self.verify(
-            self.get,
+            "GET",
             self.build_path("project", project, "events"),
             params=params,
             result_key="events",
         )
 
     def get_cards(self):
-        return self.verify(self.get, "/card", result_key="cards")
+        return self.verify("GET", "/card", result_key="cards")
 
     def add_card(self, stripe_token):
         request = {
             "stripe_token": stripe_token,
         }
-        return self.verify(self.post, "/card", body=request, result_key="card")
+        return self.verify("POST", "/card", body=request, result_key="card")
 
     def update_card(self, card_id, **kwargs):
         keys = {"exp_month", "exp_year", "name"}
@@ -1375,24 +1370,24 @@ class AivenClient(AivenClientBase):
 
                 request[key] = value
 
-        return self.verify(self.put, self.build_path("card", card_id), body=request, result_key="card")
+        return self.verify("PUT", self.build_path("card", card_id), body=request, result_key="card")
 
     def remove_card(self, card_id):
-        return self.verify(self.delete, self.build_path("card", card_id))
+        return self.verify("DELETE", self.build_path("card", card_id))
 
     def get_stripe_key(self):
-        return self.verify(self.get, self.build_path("config", "stripe_key"))
+        return self.verify("GET", self.build_path("config", "stripe_key"))
 
     def list_project_credits(self, project):
         return self.verify(
-            self.get,
+            "GET",
             self.build_path("project", project, "credits"),
             result_key="credits",
         )
 
     def claim_project_credit(self, project, credit_code):
         return self.verify(
-            self.post,
+            "POST",
             self.build_path("project", project, "credits"),
             body={"code": credit_code},
             result_key="credit",
@@ -1400,7 +1395,7 @@ class AivenClient(AivenClientBase):
 
     def start_service_maintenance(self, project, service):
         return self.verify(
-            self.put,
+            "PUT",
             self.build_path("project", project, "service", service, "maintenance", "start"),
         )
 
@@ -1413,77 +1408,77 @@ class AivenClient(AivenClientBase):
         if service:
             body["service_name"] = service
 
-        return self.verify(self.post, self.build_path("project", project, "tickets"), body=body)
+        return self.verify("POST", self.build_path("project", project, "tickets"), body=body)
 
     def list_tickets(self, project):
-        return self.verify(self.get, self.build_path("project", project, "tickets"))
+        return self.verify("GET", self.build_path("project", project, "tickets"))
 
     def get_service_migration_status(self, project, service):
         return self.verify(
-            self.get,
+            "GET",
             self.build_path("project", project, "service", service, "migration"),
         )
 
     def list_teams(self, account_id):
         return self.verify(
-            self.get,
+            "GET",
             self.build_path("account", account_id, "teams"),
             result_key="teams",
         )
 
     def create_team(self, account_id, team_name):
         return self.verify(
-            self.post,
+            "POST",
             self.build_path("account", account_id, "teams"),
             body={"team_name": team_name},
         )
 
     def delete_team(self, account_id, team_id):
-        return self.verify(self.delete, self.build_path("account", account_id, "team", team_id))
+        return self.verify("DELETE", self.build_path("account", account_id, "team", team_id))
 
     def list_team_members(self, account_id, team_id):
         return self.verify(
-            self.get,
+            "GET",
             self.build_path("account", account_id, "team", team_id, "members"),
             result_key="members",
         )
 
     def add_team_member(self, account_id, team_id, email):
         return self.verify(
-            self.post,
+            "POST",
             self.build_path("account", account_id, "team", team_id, "members"),
             body={"email": email},
         )
 
     def list_team_invites(self, account_id, team_id):
         return self.verify(
-            self.get,
+            "GET",
             self.build_path("account", account_id, "team", team_id, "invites"),
             result_key="account_invites",
         )
 
     def delete_team_member(self, account_id, team_id, user_id):
         return self.verify(
-            self.delete,
+            "DELETE",
             self.build_path("account", account_id, "team", team_id, "member", user_id),
         )
 
     def list_team_projects(self, account_id, team_id):
         return self.verify(
-            self.get,
+            "GET",
             self.build_path("account", account_id, "team", team_id, "projects"),
             result_key="projects",
         )
 
     def attach_team_to_project(self, account_id, team_id, project, team_type):
         return self.verify(
-            self.post,
+            "POST",
             self.build_path("account", account_id, "team", team_id, "project", project),
             body={"team_type": team_type},
         )
 
     def detach_team_from_project(self, account_id, team_id, project):
         return self.verify(
-            self.delete,
+            "DELETE",
             self.build_path("account", account_id, "team", team_id, "project", project),
         )
