@@ -2991,6 +2991,7 @@ ssl.truststore.type=JKS
         self._show_projects(projects, verbose=self.args.verbose)
 
     @arg.project
+    @arg("--name", help="New project name")
     @arg("--account-id", help="Account ID of the project")
     @arg("--card-id", help="Card ID")
     @arg.cloud
@@ -3004,6 +3005,7 @@ ssl.truststore.type=JKS
         project_name = self.get_project()
         try:
             project = self.client.update_project(
+                new_project_name=self.args.name,
                 account_id=self.args.account_id,
                 billing_address=self.args.billing_address,
                 billing_currency=self.args.billing_currency,
@@ -3017,6 +3019,9 @@ ssl.truststore.type=JKS
         except client.Error as ex:
             print(ex.response.text)
             raise argx.UserError("Project '{}' update failed".format(project_name))
+        if self.args.name and self.config["default_project"] == project_name:
+            self.config["default_project"] = project["project_name"]
+            self.config.save()
         self._show_projects([project])
         self.log.info("Project %r successfully updated", project["project_name"])
 
