@@ -48,6 +48,7 @@ arg.billing_extra_text = arg(
     "--billing-extra-text",
     help="Extra text to include in invoices (e.g. cost center id)",
 )
+arg.billing_group = arg("id", help="Billing group ID")
 arg.card_id = arg("--card-id", help="Card ID")
 arg.cloud = arg("--cloud", help="Cloud to use (see 'cloud list' command)")
 arg.config_cmdline = arg(
