@@ -1688,6 +1688,116 @@ ssl.truststore.type=JKS
     @arg.service_name
     @arg("--format", help="Format string for output, e.g. '{name} {retention_hours}'")
     @arg.json
+    def service__m3__namespace__list(self):
+        """List M3 namespaces"""
+        namespaces = self.client.list_m3_namespaces(project=self.get_project(), service=self.args.name)
+        layout = [[
+            "name",
+            "type",
+            "resolution",
+            "retention_period_duration",
+            "blocksize_duration",
+            "block_data_expiry_duration",
+            "buffer_future_duration",
+            "buffer_past_duration",
+            "writes_to_commitlog",
+        ]]
+        if not self.args.json:
+            # Fix optional fields, flatten for output
+            def _f(ns):
+                o = ns.get('options', {})
+                ro = o.get('retention_options', {})
+                return {
+                    "name": ns["name"],
+                    "type": ns["type"],
+                    "resolution": ns.get('resolution', ''),
+                    "retention_period_duration": ro.get('retention_period_duration', ''),
+                    "blocksize_duration": ro.get('blocksize_duration', ''),
+                    "block_data_expiry_duration": ro.get('block_data_expiry_duration', ''),
+                    "buffer_future_duration": ro.get('buffer_future_duration', ''),
+                    "buffer_past_duration": ro.get('buffer_past_duration', ''),
+                    "writes_to_commitlog": o.get('writes_to_commitlog', ''),
+                }
+
+            namespaces = [_f(ns) for ns in namespaces]
+        self.print_response(namespaces, format=self.args.format, json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg.service_name
+    @arg.ns_name
+    def service__m3__namespace__delete(self):
+        """Delete M3 namespaces"""
+        try:
+            self.client.delete_m3_namespace(project=self.get_project(), service=self.args.name, ns_name=self.args.ns_name)
+        except KeyError as ex:  # namespace does not exist
+            raise argx.UserError(ex)
+
+    @arg.project
+    @arg.service_name
+    @arg.ns_name
+    @arg.ns_type
+    @arg.ns_retention_mandatory
+    @arg.ns_resolution
+    @arg.ns_blocksize_dur
+    @arg.ns_block_data_expiry_dur
+    @arg.ns_buffer_future_dur
+    @arg.ns_buffer_past_dur
+    @arg.ns_writes_to_commitlog
+    def service__m3__namespace__add(self):
+        """Add M3 namespaces"""
+        try:
+            self.client.add_m3_namespace(
+                project=self.get_project(),
+                service=self.args.name,
+                ns_name=self.args.ns_name,
+                ns_type=self.args.ns_type,
+                ns_ret=self.args.ns_retention,
+                ns_res=self.args.ns_resolution,
+                ns_blocksize_dur=self.args.ns_blocksize_dur,
+                ns_block_data_expiry_dur=self.args.ns_block_data_expiry_dur,
+                ns_buffer_future_dur=self.args.ns_buffer_future_dur,
+                ns_buffer_past_dur=self.args.ns_buffer_past_dur,
+                ns_writes_to_commitlog=convert_str_to_value(
+                    schema={"type": ["boolean"]}, str_value=self.args.ns_writes_to_commitlog
+                ),
+            )
+        except ValueError as ex:  # namespace argument validations
+            raise argx.UserError(ex)
+
+    @arg.project
+    @arg.service_name
+    @arg.ns_name
+    @arg.ns_retention
+    @arg.ns_resolution
+    @arg.ns_blocksize_dur
+    @arg.ns_block_data_expiry_dur
+    @arg.ns_buffer_future_dur
+    @arg.ns_buffer_past_dur
+    @arg.ns_writes_to_commitlog
+    def service__m3__namespace__update(self):
+        """Add M3 namespaces"""
+        try:
+            self.client.update_m3_namespace(
+                project=self.get_project(),
+                service=self.args.name,
+                ns_name=self.args.ns_name,
+                ns_ret=self.args.ns_retention,
+                ns_res=self.args.ns_resolution,
+                ns_blocksize_dur=self.args.ns_blocksize_dur,
+                ns_block_data_expiry_dur=self.args.ns_block_data_expiry_dur,
+                ns_buffer_future_dur=self.args.ns_buffer_future_dur,
+                ns_buffer_past_dur=self.args.ns_buffer_past_dur,
+                ns_writes_to_commitlog=convert_str_to_value(
+                    schema={"type": ["boolean"]}, str_value=self.args.ns_writes_to_commitlog
+                ),
+            )
+        except (KeyError, ValueError) as ex:  # namespace does not exist, argument validations
+            raise argx.UserError(ex)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output, e.g. '{name} {retention_hours}'")
+    @arg.json
     def service__topic_list(self):
         """List Kafka service topics"""
         topics = self.client.list_service_topics(project=self.get_project(), service=self.args.name)
