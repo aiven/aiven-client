@@ -93,7 +93,21 @@ arg.retention = arg("--retention", type=int, help="Retention period in hours (de
 arg.retention_bytes = arg("--retention-bytes", type=int, help="Retention limit in bytes (default: unlimited)")
 arg.service_name = arg("service_name", help="Service name")
 arg.service_type = arg("-t", "--service-type", help="Type of service (see 'service list-types')")
-arg.team_name = arg("--team-name", help="Team name", required=True)
+arg.ns_name = arg("ns_name", help="Namespace name")
+arg.ns_type = arg("--ns-type", help="Namespace type ('aggregated' or 'unaggregated')", required=True)
+arg.ns_retention_mandatory = arg(
+    "--ns-retention", help="Namespace retention period (written like 30m/25h etc)", required=True
+)
+arg.ns_retention = arg("--ns-retention", help="Namespace retention period (written like 30m/25h etc)", required=False)
+arg.ns_resolution = arg("--ns-resolution", help="Namespace resolution (written like 30m/25h etc)")
+arg.ns_blocksize_dur = arg("--ns-blocksize-dur", help="Namespace block size duration (written like 30m/25h etc)")
+arg.ns_block_data_expiry_dur = arg(
+    "--ns-block-data-expiry-dur", help="Namespace block size duration (written like 30m/25h etc)"
+)
+arg.ns_buffer_future_dur = arg("--ns-buffer-future-dur", help="Namespace block size duration (written like 30m/25h etc)")
+arg.ns_buffer_past_dur = arg("--ns-buffer-past-dur", help="Namespace block size duration (written like 30m/25h etc)")
+arg.ns_writes_to_commitlog = arg("--ns-writes-to-commitlog", help="Namespace writes to commit log")
+arg.team_name = arg("--team-name", help="Team  name", required=True)
 arg.team_id = arg("--team-id", help="Team identifier", required=True)
 arg.timeout = arg("--timeout", type=int, help="Wait for up to N seconds (default: infinite)")
 arg.topic = arg("topic", help="Topic name")

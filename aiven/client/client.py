@@ -6,6 +6,7 @@ from urllib.parse import quote
 
 import json
 import logging
+import re
 import requests
 import time
 import warnings
@@ -399,6 +400,145 @@ class AivenClient(AivenClientBase):
     def get_service_topic(self, project, service, topic):
         path = self.build_path("project", project, "service", service, "topic", topic)
         return self.verify(self.get, path, result_key="topic")
+
+    def _set_namespace_options(
+        self,
+        ns,
+        ns_ret=None,
+        ns_res=None,
+        ns_blocksize_dur=None,
+        ns_block_data_expiry_dur=None,
+        ns_buffer_future_dur=None,
+        ns_buffer_past_dur=None,
+        ns_writes_to_commitlog=None
+    ):
+        re_ns_duration = re.compile(r'\d+[smhd]')
+
+        def _validate_ns_dur(val):
+            if not re_ns_duration.match(val):
+                raise ValueError(f"Invalid namespace duration value '{val}'")
+
+        ns["options"] = ns.get("options", {})
+        ns["options"]["retention_options"] = ns["options"].get("retention_options", {})
+        if ns_ret:
+            _validate_ns_dur(ns_ret)
+            ns["options"]["retention_options"]["retention_period_duration"] = ns_ret
+        if ns_res:
+            _validate_ns_dur(ns_res)
+            ns["resolution"] = ns_res
+        if ns_blocksize_dur:
+            _validate_ns_dur(ns_blocksize_dur)
+            ns["options"]["retention_options"]["blocksize_duration"] = ns_blocksize_dur
+        if ns_block_data_expiry_dur:
+            _validate_ns_dur(ns_block_data_expiry_dur)
+            ns["options"]["retention_options"]["block_data_expiry_duration"] = ns_block_data_expiry_dur
+        if ns_buffer_future_dur:
+            _validate_ns_dur(ns_buffer_future_dur)
+            ns["options"]["retention_options"]["buffer_future_duration"] = ns_buffer_future_dur
+        if ns_buffer_past_dur:
+            _validate_ns_dur(ns_buffer_past_dur)
+            ns["options"]["retention_options"]["buffer_past_duration"] = ns_buffer_past_dur
+        if ns_writes_to_commitlog is not None:
+            ns["options"]["writes_to_commitlog"] = bool(ns_writes_to_commitlog)
+
+    def list_m3_namespaces(self, project, service):
+        service_res = self.get_service(project=project, service=service)
+        return service_res.get("user_config", {}).get("namespaces", [])
+
+    def delete_m3_namespace(self, project, service, ns_name):
+        service_res = self.get_service(project=project, service=service)
+        old_namespaces = service_res.get("user_config", {}).get("namespaces", [])
+        new_namespaces = [ns for ns in old_namespaces if ns["name"] != ns_name]
+        if len(old_namespaces) == len(new_namespaces):
+            raise KeyError(f"Namespace '{ns_name}' does not exist")
+        return self.verify(
+            self.put,
+            self.build_path("project", project, "service", service),
+            body={"user_config": {
+                "namespaces": new_namespaces
+            }},
+        )
+
+    def add_m3_namespace(
+        self,
+        project,
+        service,
+        ns_name,
+        ns_type,
+        ns_ret,
+        ns_res=None,
+        ns_blocksize_dur=None,
+        ns_block_data_expiry_dur=None,
+        ns_buffer_future_dur=None,
+        ns_buffer_past_dur=None,
+        ns_writes_to_commitlog=None
+    ):
+        service_res = self.get_service(project=project, service=service)
+        namespaces = service_res.get("user_config", {}).get("namespaces", [])
+        valid_namespace_types = {'unaggregated', 'aggregated'}
+        if ns_type not in valid_namespace_types:
+            raise ValueError(f"Invalid namespace type {ns_type}, valid types {valid_namespace_types}")
+        new_namespace = {
+            "name": ns_name,
+            "type": ns_type,
+        }
+        self._set_namespace_options(
+            ns=new_namespace,
+            ns_ret=ns_ret,
+            ns_res=ns_res,
+            ns_blocksize_dur=ns_blocksize_dur,
+            ns_block_data_expiry_dur=ns_block_data_expiry_dur,
+            ns_buffer_future_dur=ns_buffer_future_dur,
+            ns_buffer_past_dur=ns_buffer_past_dur,
+            ns_writes_to_commitlog=ns_writes_to_commitlog
+        )
+        namespaces.append(new_namespace)
+        return self.verify(
+            self.put,
+            self.build_path("project", project, "service", service),
+            body={"user_config": {
+                "namespaces": namespaces
+            }},
+        )
+
+    def update_m3_namespace(
+        self,
+        project,
+        service,
+        ns_name,
+        ns_ret=None,
+        ns_res=None,
+        ns_blocksize_dur=None,
+        ns_block_data_expiry_dur=None,
+        ns_buffer_future_dur=None,
+        ns_buffer_past_dur=None,
+        ns_writes_to_commitlog=None
+    ):
+        service_res = self.get_service(project=project, service=service)
+        namespaces = service_res.get("user_config", {}).get("namespaces", [])
+        namespace = None
+        for ns in namespaces:
+            if ns["name"] == ns_name:
+                namespace = ns
+        if not namespace:
+            raise KeyError(f"Namespace '{ns_name}' does not exist")
+        self._set_namespace_options(
+            ns=namespace,
+            ns_ret=ns_ret,
+            ns_res=ns_res,
+            ns_blocksize_dur=ns_blocksize_dur,
+            ns_block_data_expiry_dur=ns_block_data_expiry_dur,
+            ns_buffer_future_dur=ns_buffer_future_dur,
+            ns_buffer_past_dur=ns_buffer_past_dur,
+            ns_writes_to_commitlog=ns_writes_to_commitlog
+        )
+        return self.verify(
+            self.put,
+            self.build_path("project", project, "service", service),
+            body={"user_config": {
+                "namespaces": namespaces
+            }},
+        )
 
     def list_service_topics(self, project, service):
         return self.verify(
