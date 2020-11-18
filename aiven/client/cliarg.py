@@ -91,7 +91,7 @@ arg.project = arg(
 arg.replication = arg("--replication", type=int, required=True, help="Replication factor")
 arg.retention = arg("--retention", type=int, help="Retention period in hours (default: unlimited)")
 arg.retention_bytes = arg("--retention-bytes", type=int, help="Retention limit in bytes (default: unlimited)")
-arg.service_name = arg("service_name", help="Service name")
+arg.service_name = arg("name", help="Service name", metavar="service_name")
 arg.service_type = arg("-t", "--service-type", help="Type of service (see 'service list-types')")
 arg.ns_name = arg("ns_name", help="Namespace name")
 arg.ns_type = arg("--ns-type", help="Namespace type ('aggregated' or 'unaggregated')", required=True)
