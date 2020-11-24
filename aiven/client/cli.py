@@ -129,7 +129,8 @@ class AivenCLI(argx.CommandLineTool):
             if spec["type"] == "object":
                 opts.update(self.collect_user_config_options(spec, prefixes=full_prop))
             else:
-                opts[full_name] = dict(spec, property_parts=full_prop)
+                title = ': '.join([obj_def["title"], spec["title"]]) if "title" in spec else obj_def["title"]
+                opts[full_name] = dict(spec, property_parts=full_prop, title=title)
         return opts
 
     def create_user_config(self, user_config_schema):
@@ -3032,7 +3033,7 @@ ssl.truststore.type=JKS
         self.client.delete_project(project=self.args.service_name)
 
     @classmethod
-    def _project_credit_card(cls, project):
+    def _format_card_info(cls, project):
         card_info = project.get("card_info")
         if not card_info:
             return "N/A"
@@ -3041,7 +3042,7 @@ ssl.truststore.type=JKS
 
     def _show_projects(self, projects, verbose=True):
         for project in projects:
-            project["credit_card"] = self._project_credit_card(project)
+            project["credit_card"] = self._format_card_info(project)
         if verbose:
             layout = [
                 ["project_name", "default_cloud", "billing_currency", "vat_id"],
@@ -3057,6 +3058,7 @@ ssl.truststore.type=JKS
 
     @arg("project_name", help="Project name")
     @arg("--account-id", help="Account ID of the project")
+    @arg("--billing-group-id", help="Billing group ID of the project")
     @arg.card_id
     @arg.cloud
     @arg(
@@ -3084,6 +3086,7 @@ ssl.truststore.type=JKS
                 billing_address=self.args.billing_address,
                 billing_currency=self.args.billing_currency,
                 billing_extra_text=self.args.billing_extra_text,
+                billing_group_id=self.args.billing_group_id,
                 card_id=self.args.card_id,
                 cloud=self.args.cloud,
                 copy_from_project=self.args.copy_from_project,
@@ -3597,6 +3600,214 @@ server_encryption_options:
         result = self.client.claim_project_credit(project=project_name, credit_code=self.args.code)
         if self.args.json:
             self.print_response(result, json=True)
+
+    def _print_billing_groups(self, billing_groups):
+        for billing_group in billing_groups:
+            billing_group["credit_card"] = self._format_card_info(billing_group)
+            billing_group["billing_emails"] = [item["email"] for item in billing_group["billing_emails"]]
+        layout = [[
+            "billing_group_id",
+            "billing_group_name",
+            "account_name",
+        ]]
+        if self.args.verbose:
+            layout.extend([
+                "payment_method",
+                "credit_card",
+                "vat_id",
+                "billing_currency",
+                "estimated_balance_usd",
+                "estimated_balance_local",
+                "billing_extra_text",
+                "billing_emails",
+                "company",
+                "address_lines",
+                "country_code",
+                "city",
+                "state",
+                "zip_code",
+                "billing_address",
+            ])
+        self.print_response(billing_groups, json=self.args.json, table_layout=layout)
+
+    @arg("name", help="Billing group name")
+    @arg("--account-id", required=True, help="Account ID of the project")
+    @arg.card_id
+    @arg.vat_id
+    @arg.billing_currency
+    @arg.billing_extra_text
+    @arg("--billing-email", action="append", help="Billing email address")
+    @arg("--company", help="Company name")
+    @arg("--address-line", action="append", help="Address line")
+    @arg.country_code
+    @arg("--city", help="City")
+    @arg("--state", help="State / Province")
+    @arg("--zip-code", help="ZIP / Postal code")
+    @arg(
+        "--no-fail-if-exists",
+        action="store_true",
+        default=False,
+        help="Do not fail if billing group already exists",
+    )
+    @arg.json
+    @arg.verbose
+    def billing_group__create(self):
+        """Create a billing group"""
+        billing_group = self.client.create_billing_group(
+            billing_group_name=self.args.name,
+            account_id=self.args.account_id,
+            card_id=self.args.card_id,
+            vat_id=self.args.vat_id,
+            billing_currency=self.args.billing_currency,
+            billing_extra_text=self.args.billing_extra_text,
+            billing_emails=self.args.billing_email,
+            company=self.args.company,
+            address_lines=self.args.address_line,
+            country_code=self.args.country_code,
+            city=self.args.city,
+            state=self.args.state,
+            zip_code=self.args.zip_code,
+        )
+        self._print_billing_groups([billing_group])
+
+    @arg.billing_group
+    @arg("--name", help="Billing group name")
+    @arg("--account-id", help="Account ID of the project")
+    @arg.card_id
+    @arg.vat_id
+    @arg.billing_currency
+    @arg.billing_extra_text
+    @arg("--billing-email", action="append", help="Billing email address")
+    @arg("--company", help="Company name")
+    @arg("--address-line", action="append", help="Address line")
+    @arg.country_code
+    @arg("--city", help="City")
+    @arg("--state", help="State / Province")
+    @arg("--zip-code", help="ZIP / Postal code")
+    def billing_group__update(self):
+        """Get a project"""
+        self.client.update_billing_group(
+            billing_group=self.args.id,
+            billing_group_name=self.args.name,
+            account_id=self.args.account_id,
+            card_id=self.args.card_id,
+            vat_id=self.args.vat_id,
+            billing_currency=self.args.billing_currency,
+            billing_extra_text=self.args.billing_extra_text,
+            billing_emails=self.args.billing_email,
+            company=self.args.company,
+            address_lines=self.args.address_line,
+            country_code=self.args.country_code,
+            city=self.args.city,
+            state=self.args.state,
+            zip_code=self.args.zip_code,
+        )
+
+    @arg.json
+    @arg.verbose
+    def billing_group__list(self):
+        """Lists billing groups"""
+        billing_groups = self.client.get_billing_groups()
+        self._print_billing_groups(billing_groups)
+
+    @arg.billing_group
+    @arg.json
+    @arg.verbose
+    def billing_group__get(self):
+        """Get a project"""
+        billing_group = self.client.get_billing_group(billing_group=self.args.id)
+        self._print_billing_groups([billing_group])
+        if self.args.verbose and not self.args.json:
+            print("Billing group projects")
+            projects = self.client.get_billing_group_projects(billing_group=self.args.id)
+            if not projects:
+                print("None")
+                return
+            layout = [[
+                "project_name",
+                "estimated_balance",
+                "available_credits",
+            ]]
+            self.print_response(projects, json=False, table_layout=layout)
+
+    @arg.billing_group
+    def billing_group__delete(self):
+        """Delete a project"""
+        self.client.delete_billing_group(billing_group=self.args.id)
+
+    @arg.billing_group
+    @arg("projects", nargs="+", help="Project names")
+    def billing_group__assign_projects(self):
+        """Assign projects to billing group"""
+        self.client.assign_projects_to_billing_group(
+            billing_group=self.args.id,
+            project_names=self.args.projects,
+        )
+
+    @arg.billing_group
+    @arg.json
+    @arg("-n", "--limit", type=int, default=100, help="Get up to N rows of logs")
+    def billing_group__events(self):
+        """View project event logs"""
+        events = self.client.get_billing_group_events(billing_group=self.args.id, limit=self.args.limit)
+        layout = ["create_time", "actor", "event_desc"]
+        self.print_response(events, json=self.args.json, table_layout=layout)
+
+    @arg.billing_group
+    @arg.json
+    def billing_group__credits_list(self):
+        """List claimed credits"""
+        result = self.client.list_billing_group_credits(billing_group=self.args.id)
+        layout = [["code", "remaining_value"]]
+        self.print_response(result, json=self.args.json, table_layout=layout)
+
+    @arg.billing_group
+    @arg.json
+    @arg("code", help="Credit code")
+    def billing_group__credits_claim(self):
+        """Claim a credit code"""
+        result = self.client.claim_billing_group_credit(billing_group=self.args.id, credit_code=self.args.code)
+        if self.args.json:
+            self.print_response(result, json=True)
+
+    @arg.billing_group
+    @arg(
+        "--sort",
+        choices=["invoice_number", "period_begin", "period_end", "state", "currency", "total_inc_vat", "total_vat_zero"]
+    )
+    @arg.json
+    @arg.verbose
+    def billing_group__invoice_list(self):
+        """List billing group invoices"""
+        result = self.client.list_billing_group_invoices(billing_group=self.args.id, sort=self.args.sort)
+        layout = [[
+            "invoice_number",
+            "period_begin",
+            "period_end",
+            "state",
+            "total_inc_vat",
+            "total_vat_zero",
+        ]]
+        if self.args.verbose:
+            layout.extend(["currency", "download"])
+        self.print_response(result, json=self.args.json, table_layout=layout)
+
+    @arg.billing_group
+    @arg("invoice", help="Invoice number")
+    @arg.json
+    def billing_group__invoice_lines(self):
+        """Get billing group invoice lines"""
+        result = self.client.get_billing_group_invoice_lines(billing_group=self.args.id, invoice_number=self.args.invoice)
+        layout = [[
+            "timestamp_begin",
+            "timestamp_end",
+            "line_type",
+            "description",
+            "line_total_local",
+            "local_currency",
+            "line_total_usd",
+        ]]
+        self.print_response(result, json=self.args.json, table_layout=layout)
 
     @arg.json
     @arg.project

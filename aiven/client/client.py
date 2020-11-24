@@ -1325,6 +1325,7 @@ class AivenClient(AivenClientBase):
         self,
         project,
         account_id=None,
+        billing_group_id=None,
         card_id=None,
         cloud=None,
         copy_from_project=None,
@@ -1341,6 +1342,8 @@ class AivenClient(AivenClientBase):
         }
         if account_id is not None:
             body["account_id"] = account_id
+        if billing_group_id is not None:
+            body["billing_group_id"] = billing_group_id
         if copy_from_project is not None:
             body["copy_from_project"] = copy_from_project
         if country_code is not None:
@@ -1536,6 +1539,157 @@ class AivenClient(AivenClientBase):
             self.build_path("project", project, "credits"),
             body={"code": credit_code},
             result_key="credit",
+        )
+
+    def create_billing_group(
+        self,
+        billing_group_name,
+        *,
+        account_id=None,
+        card_id=None,
+        vat_id=None,
+        billing_currency=None,
+        billing_extra_text=None,
+        billing_emails=None,
+        company=None,
+        address_lines=None,
+        country_code=None,
+        city=None,
+        state=None,
+        zip_code=None,
+    ):
+        body = {"billing_group_name": billing_group_name}
+        if account_id is not None:
+            body["account_id"] = account_id
+        if card_id is not None:
+            body["card_id"] = card_id
+        if vat_id is not None:
+            body["vat_id"] = vat_id
+        if billing_currency is not None:
+            body["billing_currency"] = billing_currency
+        if billing_extra_text is not None:
+            body["billing_extra_text"] = billing_extra_text
+        if billing_emails is not None:
+            body["billing_emails"] = [{"email": email} for email in billing_emails]
+        if company is not None:
+            body["company"] = company
+        if address_lines is not None:
+            body["address_lines"] = address_lines
+        if country_code is not None:
+            body["country_code"] = country_code
+        if city is not None:
+            body["city"] = city
+        if state is not None:
+            body["state"] = state
+        if zip_code is not None:
+            body["zip_code"] = zip_code
+
+        return self.verify(self.post, "/billing-group", body=body, result_key="billing_group")
+
+    def get_billing_groups(self):
+        return self.verify(self.get, "/billing-group", result_key="billing_groups")
+
+    def get_billing_group(self, billing_group):
+        return self.verify(self.get, self.build_path("billing-group", billing_group), result_key="billing_group")
+
+    def get_billing_group_projects(self, billing_group):
+        return self.verify(self.get, self.build_path("billing-group", billing_group, "projects"), result_key="projects")
+
+    def update_billing_group(
+        self,
+        billing_group,
+        *,
+        billing_group_name=None,
+        account_id=None,
+        card_id=None,
+        vat_id=None,
+        billing_currency=None,
+        billing_extra_text=None,
+        billing_emails=None,
+        company=None,
+        address_lines=None,
+        country_code=None,
+        city=None,
+        state=None,
+        zip_code=None,
+    ):
+        body = {}
+        if billing_group_name is not None:
+            body["billing_group_name"] = billing_group_name
+        if account_id is not None:
+            body["account_id"] = account_id
+        if card_id is not None:
+            body["card_id"] = card_id
+        if vat_id is not None:
+            body["vat_id"] = vat_id
+        if billing_currency is not None:
+            body["billing_currency"] = billing_currency
+        if billing_extra_text is not None:
+            body["billing_extra_text"] = billing_extra_text
+        if billing_emails is not None:
+            body["billing_emails"] = [{"email": email} for email in billing_emails]
+        if company is not None:
+            body["company"] = company
+        if address_lines is not None:
+            body["address_lines"] = address_lines
+        if country_code is not None:
+            body["country_code"] = country_code
+        if city is not None:
+            body["city"] = city
+        if state is not None:
+            body["state"] = state
+        if zip_code is not None:
+            body["zip_code"] = zip_code
+
+        return self.verify(self.put, self.build_path("billing-group", billing_group), body=body, result_key="billing_group")
+
+    def delete_billing_group(self, billing_group):
+        return self.verify(self.delete, self.build_path("billing-group", billing_group))
+
+    def assign_projects_to_billing_group(self, billing_group, *, project_names):
+        body = {"projects_names": project_names}
+        self.verify(self.post, self.build_path("billing-group", billing_group, "projects-assign"), body=body)
+
+    def get_billing_group_events(self, billing_group, *, limit=100):
+        return self.verify(
+            self.get,
+            self.build_path("billing-group", billing_group, "events"),
+            params={"limit": limit},
+            result_key="events"
+        )
+
+    def list_billing_group_credits(self, billing_group):
+        return self.verify(
+            self.get,
+            self.build_path("billing-group", billing_group, "credits"),
+            result_key="credits",
+        )
+
+    def claim_billing_group_credit(self, billing_group, *, credit_code):
+        return self.verify(
+            self.post,
+            self.build_path("billing-group", billing_group, "credits"),
+            body={"code": credit_code},
+            result_key="credit",
+        )
+
+    def list_billing_group_invoices(self, billing_group, *, sort=None):
+        params = {"sort": sort} if sort else {}
+        invoices = self.verify(
+            self.get, self.build_path("billing-group", billing_group, "invoice"), params=params, result_key="invoices"
+        )
+        for invoice in invoices:
+            if invoice.get("download_cookie"):
+                invoice["download"] = self.base_url + self.api_prefix + self.build_path(
+                    "billing-group", billing_group, "invoice", invoice["invoice_number"], invoice["download_cookie"]
+                )
+        return invoices
+
+    def get_billing_group_invoice_lines(self, billing_group, invoice_number):
+        return self.verify(
+            self.get,
+            self.build_path("billing-group", billing_group, "invoice", invoice_number, "lines"),
+            result_key="lines"
         )
 
     def start_service_maintenance(self, project, service):

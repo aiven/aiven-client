@@ -3,6 +3,7 @@ long_ver = $(shell git describe --long 2>/dev/null || echo $(short_ver)-0-unknow
 generated = aiven/client/version.py
 PYTHON ?= python3
 PYTHON_DIRS = aiven tests
+RPM=rpms/noarch/aiven-client-$(short_ver)-$(subst -,.,$(subst $(short_ver)-,,$(long_ver))).*.noarch.rpm
 
 all: $(generated)
 
@@ -45,7 +46,10 @@ build-dep-fedora:
 	sudo dnf install -y --best --allowerasing python3-devel python3-flake8 python3-requests \
 		tar rpmdevtools python3-pylint python3-isort
 
-rpm: $(generated)
+.PHONY: rpm
+rpm: $(RPM)
+
+$(RPM): $(generated)
 	git archive --prefix=aiven-client/ HEAD -o rpm-src-aiven-client.tar
 	# add generated files to the tar, they're not in git repository
 	tar -r -f rpm-src-aiven-client.tar --transform=s,aiven/,aiven-client/aiven/, $(generated)
@@ -55,5 +59,9 @@ rpm: $(generated)
 		--define 'major_version $(short_ver)' \
 		--define 'minor_version $(subst -,.,$(subst $(short_ver)-,,$(long_ver)))'
 	$(RM) rpm-src-aiven-client.tar
+
+.PHONY: install-rpm
+install-rpm: $(RPM)
+	sudo dnf install $<
 
 .PHONY: build-dep-fedora clean coverage pytest pylint flake8 reformat test validate-style
