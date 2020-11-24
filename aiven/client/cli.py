@@ -484,7 +484,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg("-n", "--name", required=True, help="Name of the account to create")
     def account__create(self):
         """Create new account"""
-        account = self.client.create_account(self.args.service_name)
+        account = self.client.create_account(self.args.name)
         self.print_response(account, json=self.args.json, single_item=True)
 
     @arg.json
@@ -492,7 +492,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg("-n", "--name", required=True, help="New name for the account")
     def account__update(self):
         """Update an account"""
-        account = self.client.update_account(self.args.account_id, self.args.service_name)
+        account = self.client.update_account(self.args.account_id, self.args.name)
         self.print_response(account, json=self.args.json, single_item=True)
 
     @arg.account_id
@@ -543,7 +543,7 @@ class AivenCLI(argx.CommandLineTool):
         options = self._parse_auth_config_options(self.args.config_cmdline, self.args.config_file)
         method = self.client.create_account_authentication_method(
             self.args.account_id,
-            method_name=self.args.service_name,
+            method_name=self.args.name,
             method_type=self.args.type,
             options=options,
         )
@@ -582,7 +582,7 @@ class AivenCLI(argx.CommandLineTool):
             self.args.account_id,
             self.args.authentication_id,
             method_enable=enable,
-            method_name=self.args.service_name,
+            method_name=self.args.name,
             options=options,
         )
         self.print_response(
