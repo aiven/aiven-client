@@ -2458,7 +2458,7 @@ ssl.truststore.type=JKS
 
     @arg.project
     @arg.force
-    @arg("name", help="Service name", nargs="+")
+    @arg("service_name", help="Service name", nargs="+")
     def service__terminate(self):
         """Terminate service"""
         if not self.args.force and os.environ.get("AIVEN_FORCE") != "true":
@@ -3008,24 +3008,24 @@ ssl.truststore.type=JKS
             print(ex.response.text)
             raise argx.UserError("Service '{}/{}' update failed".format(project, self.args.service_name))
 
-    @arg("name", help="Project name")
+    @arg("project_name", help="Project name")
     @arg.cloud
     def project__switch(self):
         """Switch the default project"""
         projects = self.client.get_projects()
         project_names = [p["project_name"] for p in projects]
-        if self.args.service_name in project_names:
-            self.config["default_project"] = self.args.service_name
+        if self.args.project_name in project_names:
+            self.config["default_project"] = self.args.project_name
             self.config.save()
-            self.log.info("Set project %r as the default project", self.args.service_name)
+            self.log.info("Set project %r as the default project", self.args.project_name)
         else:
             raise argx.UserError(
                 "Project {!r} does not exist, available projects: {}".format(
-                    self.args.service_name, ", ".join(project_names)
+                    self.args.project_name, ", ".join(project_names)
                 )
             )
 
-    @arg("name", help="Project name")
+    @arg("service_name", help="Project name")
     @arg.cloud
     def project__delete(self):
         """Delete a project"""
@@ -3055,7 +3055,7 @@ ssl.truststore.type=JKS
             layout = [["project_name", "default_cloud", "credit_card"]]
         self.print_response(projects, json=getattr(self.args, "json", False), table_layout=layout)
 
-    @arg("name", help="Project name")
+    @arg("project_name", help="Project name")
     @arg("--account-id", help="Account ID of the project")
     @arg.card_id
     @arg.cloud
@@ -3088,17 +3088,17 @@ ssl.truststore.type=JKS
                 cloud=self.args.cloud,
                 copy_from_project=self.args.copy_from_project,
                 country_code=self.args.country_code,
-                project=self.args.service_name,
+                project=self.args.project_name,
                 vat_id=self.args.vat_id,
             )
         except client.Error as ex:
             if not self.args.no_fail_if_exists or ex.response.status_code != 409:
                 raise
 
-            self.log.info("Project '%s' already exists", self.args.service_name)
+            self.log.info("Project '%s' already exists", self.args.project_name)
             return
 
-        self.config["default_project"] = self.args.service_name
+        self.config["default_project"] = self.args.project_name
         self.config.save()
 
         self._show_projects([project])
@@ -3137,7 +3137,7 @@ ssl.truststore.type=JKS
         project_name = self.get_project()
         try:
             project = self.client.update_project(
-                new_project_name=self.args.service_name,
+                new_project_name=self.args.name,
                 account_id=self.args.account_id,
                 billing_address=self.args.billing_address,
                 billing_currency=self.args.billing_currency,
@@ -3151,7 +3151,7 @@ ssl.truststore.type=JKS
         except client.Error as ex:
             print(ex.response.text)
             raise argx.UserError("Project '{}' update failed".format(project_name))
-        if self.args.service_name and self.config["default_project"] == project_name:
+        if self.args.name and self.config["default_project"] == project_name:
             self.config["default_project"] = project["project_name"]
             self.config.save()
         self._show_projects([project])
