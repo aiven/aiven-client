@@ -484,7 +484,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg("-n", "--name", required=True, help="Name of the account to create")
     def account__create(self):
         """Create new account"""
-        account = self.client.create_account(self.args.service_name)
+        account = self.client.create_account(self.args.name)
         self.print_response(account, json=self.args.json, single_item=True)
 
     @arg.json
@@ -3026,11 +3026,11 @@ ssl.truststore.type=JKS
                 )
             )
 
-    @arg("service_name", help="Project name")
+    @arg("project_name", help="Project name")
     @arg.cloud
     def project__delete(self):
         """Delete a project"""
-        self.client.delete_project(project=self.args.service_name)
+        self.client.delete_project(project=self.args.project_name)
 
     @classmethod
     def _format_card_info(cls, project):
