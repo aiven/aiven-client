@@ -816,7 +816,6 @@ class AivenCLI(argx.CommandLineTool):
         "state",
         "cloud_name",
         "plan",
-        "group_list",
         "create_time",
         "update_time",
     ]]
@@ -1002,7 +1001,6 @@ class AivenCLI(argx.CommandLineTool):
             "state",
             "cloud_name",
             "plan",
-            "group_list",
             "create_time",
             "update_time",
         ]]
@@ -2791,7 +2789,7 @@ ssl.truststore.type=JKS
 
     @arg.project
     @arg.service_name
-    @arg("--group-name", help="service group", default="default")
+    @arg("--group-name", help="service group (deprecated)")
     @arg(
         "-t",
         "--service-type",
@@ -2838,6 +2836,8 @@ ssl.truststore.type=JKS
             plan = self.args.plan
         if not plan:
             raise argx.UserError("No subscription plan given")
+        if self.args.group_name:
+            self.log.warning("--group-name parameter is deprecated and has no effect")
 
         project_vpc_id = self._get_service_project_vpc_id()
         project = self.get_project()
@@ -2862,7 +2862,6 @@ ssl.truststore.type=JKS
                 service_type=service_type,
                 plan=plan,
                 cloud=self.args.cloud,
-                group_name=self.args.group_name,
                 user_config=user_config,
                 project_vpc_id=project_vpc_id,
                 termination_protection=self.args.enable_termination_protection,
@@ -2920,7 +2919,7 @@ ssl.truststore.type=JKS
 
     @arg.project
     @arg.service_name
-    @arg("--group-name", help="New service group")
+    @arg("--group-name", help="New service group (deprecated)")
     @arg.cloud
     @arg.user_config
     @arg.user_option_remove
@@ -2992,10 +2991,11 @@ ssl.truststore.type=JKS
             termination_protection = True
         elif self.args.disable_termination_protection:
             termination_protection = False
+        if self.args.group_name:
+            self.log.warning("--group-name parameter is deprecated and has no effect")
         try:
             self.client.update_service(
                 cloud=self.args.cloud,
-                group_name=self.args.group_name,
                 maintenance=maintenance or None,
                 plan=plan,
                 powered=powered,

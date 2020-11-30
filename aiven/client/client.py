@@ -1138,7 +1138,6 @@ class AivenClient(AivenClientBase):
         project,
         service,
         service_type,
-        group_name,
         plan,
         cloud=None,
         user_config=None,
@@ -1148,7 +1147,6 @@ class AivenClient(AivenClientBase):
     ):
         user_config = user_config or {}
         body = {
-            "group_name": group_name,
             "cloud": cloud,
             "plan": plan,
             "service_integrations": service_integrations,
@@ -1170,7 +1168,6 @@ class AivenClient(AivenClientBase):
         self,
         project,
         service,
-        group_name=None,
         cloud=None,
         maintenance=None,
         user_config=None,
@@ -1181,8 +1178,6 @@ class AivenClient(AivenClientBase):
     ):
         user_config = user_config or {}
         body = {}
-        if group_name is not None:
-            body["group_name"] = group_name
         if cloud is not None:
             body["cloud"] = cloud
         if maintenance is not None:
