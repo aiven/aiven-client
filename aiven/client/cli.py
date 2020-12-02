@@ -3026,11 +3026,11 @@ ssl.truststore.type=JKS
                 )
             )
 
-    @arg("service_name", help="Project name")
+    @arg("project_name", help="Project name")
     @arg.cloud
     def project__delete(self):
         """Delete a project"""
-        self.client.delete_project(project=self.args.service_name)
+        self.client.delete_project(project=self.args.project_name)
 
     @classmethod
     def _format_card_info(cls, project):
