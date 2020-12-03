@@ -3542,7 +3542,7 @@ server_encryption_options:
         stripe_key = self.client.get_stripe_key()["stripe_key"]
         stripe_token = self._card_get_stripe_token(
             stripe_key,
-            self.args.service_name,
+            self.args.name,
             self.args.number,
             self.args.exp_month,
             self.args.exp_year,
@@ -3569,7 +3569,7 @@ server_encryption_options:
             card_id=getattr(self.args, "card-id"),
             exp_month=self.args.exp_month,
             exp_year=self.args.exp_year,
-            name=self.args.service_name,
+            name=self.args.name,
         )
         if self.args.json:
             self.print_response(card, json=True)
