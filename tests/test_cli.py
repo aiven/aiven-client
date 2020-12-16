@@ -30,6 +30,10 @@ def test_service_types_v():
     AivenCLI().run(args=["service", "types", "-v"])
 
 
+def test_service_user_create():
+    AivenCLI().run(args=["service", "user-create", "service", "--username", "username"])
+
+
 def test_help():
     AivenCLI().run(args=["help"])
 

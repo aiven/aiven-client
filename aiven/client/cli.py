@@ -1148,7 +1148,7 @@ class AivenCLI(argx.CommandLineTool):
         acl_params = {
             key: arg_vars[key].split()
             for key in {"redis_acl_keys", "redis_acl_commands", "redis_acl_categories"}
-            if key in arg_vars
+            if arg_vars[key]
         }
         if acl_params:
             extra_params = {"access_control": acl_params}
