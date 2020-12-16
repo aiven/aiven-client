@@ -239,6 +239,8 @@ class CommandLineTool:  # pylint: disable=old-style-class
             writer = csvlib.DictWriter(file, extrasaction="ignore", fieldnames=fields)
             if header:
                 writer.writeheader()
+            if single_item:
+                result = [result]
             for item in result:
                 writer.writerow(item)
         else:
