@@ -219,6 +219,8 @@ class CommandLineTool:  # pylint: disable=old-style-class
             file = sys.stdout
 
         if format is not None:
+            if single_item:
+                result = [result]
             for item in result:
                 print(format.format(**item), file=file)
         elif json:
@@ -237,6 +239,8 @@ class CommandLineTool:  # pylint: disable=old-style-class
             writer = csvlib.DictWriter(file, extrasaction="ignore", fieldnames=fields)
             if header:
                 writer.writeheader()
+            if single_item:
+                result = [result]
             for item in result:
                 writer.writerow(item)
         else:
