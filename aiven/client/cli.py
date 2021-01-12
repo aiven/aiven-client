@@ -1343,7 +1343,7 @@ ssl.truststore.type=JKS
     @arg.json
     def service__integration_endpoint_types_list(self):
         """List all available integration endpoint types for given project"""
-        endpoint_types = self.client.get_service_integration_endpoint_types(self.args.project)
+        endpoint_types = self.client.get_service_integration_endpoint_types(self.get_project())
         layout = ["title", "endpoint_type", "service_types"]
         self.print_response(endpoint_types, json=self.args.json, table_layout=layout)
 
@@ -1429,7 +1429,7 @@ ssl.truststore.type=JKS
     @arg.json
     def service__integration_types_list(self):
         """List all available integration types for given project"""
-        endpoint_types = self.client.get_service_integration_types(self.args.project)
+        endpoint_types = self.client.get_service_integration_types(self.get_project())
         layout = [
             "integration_type",
             "dest_description",
