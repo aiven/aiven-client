@@ -854,6 +854,69 @@ class AivenCLI(argx.CommandLineTool):
             print(make_bold(text) if service_notification["level"] == "warning" else text)
             print()
 
+    _aws_privatelink_principal_help = "AWS IAM principals allowed to connect to the Privatelink VPC endpoint service"
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    @arg("--principal", dest="principals", action="append", metavar="PRINCIPAL", help=_aws_privatelink_principal_help)
+    def service__privatelink__aws__create(self):
+        """Create PrivateLink for a service"""
+        resp = self.client.create_service_privatelink_aws(
+            project=self.get_project(), service=self.args.service_name, principals=self.args.principals
+        )
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    @arg("--principal", dest="principals", action="append", metavar="PRINCIPAL", help=_aws_privatelink_principal_help)
+    def service__privatelink__aws__update(self):
+        """Update PrivateLink for a service"""
+        resp = self.client.update_service_privatelink_aws(
+            project=self.get_project(), service=self.args.service_name, principals=self.args.principals
+        )
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def service__privatelink__aws__get(self):
+        """Get PrivateLink information for a service"""
+        resp = self.client.get_service_privatelink_aws(project=self.get_project(), service=self.args.service_name)
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def service__privatelink__aws__delete(self):
+        """Delete PrivateLink for a service"""
+        resp = self.client.delete_service_privatelink_aws(project=self.get_project(), service=self.args.service_name)
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def service__privatelink__aws__connection__list(self):
+        """List PrivateLink connections for a service"""
+        resp = self.client.list_service_privatelink_aws_connections(
+            project=self.get_project(), service=self.args.service_name
+        )
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def service__privatelink__availability(self):
+        """List privatelink cloud availability and prices"""
+        resp = self.client.list_privatelink_cloud_availability(project=self.get_project())
+        self.print_response(resp, format=self.args.format, json=self.args.json)
+
     @arg.project
     @arg.service_name
     @arg("--format", help="Format string for output, e.g. '{service_name} {service_uri}'")

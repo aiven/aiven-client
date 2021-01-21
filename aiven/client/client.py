@@ -1200,6 +1200,33 @@ class AivenClient(AivenClientBase):
         path = self.build_path("project", project, "service", service, "credentials", "reset")
         return self.verify(self.put, path, result_key="service")
 
+    def _privatelink_path(self, project, service, cloud_provider):
+        return self.build_path("project", project, "service", service, "privatelink", cloud_provider)
+
+    def create_service_privatelink_aws(self, project, service, principals):
+        path = self._privatelink_path(project, service, "aws")
+        return self.verify(self.post, path, body={"principals": principals})
+
+    def update_service_privatelink_aws(self, project, service, principals):
+        path = self._privatelink_path(project, service, "aws")
+        return self.verify(self.put, path, body={"principals": principals})
+
+    def delete_service_privatelink_aws(self, project, service):
+        path = self._privatelink_path(project, service, "aws")
+        return self.verify(self.delete, path)
+
+    def get_service_privatelink_aws(self, project, service):
+        path = self._privatelink_path(project, service, "aws")
+        return self.verify(self.get, path)
+
+    def list_service_privatelink_aws_connections(self, project, service):
+        path = self._privatelink_path(project, service, "aws") + "/connections"
+        return self.verify(self.get, path, result_key="connections")
+
+    def list_privatelink_cloud_availability(self, project):
+        path = self.build_path("project", project, "privatelink-availability")
+        return self.verify(self.get, path, result_key="privatelink_availability")
+
     def delete_service(self, project, service):
         return self.verify(self.delete, self.build_path("project", project, "service", service))
 
