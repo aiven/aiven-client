@@ -1197,6 +1197,14 @@ class AivenCLI(argx.CommandLineTool):
             table_layout=layout,
         )
 
+    def _parse_redis_access_control(self):
+        arg_vars = vars(self.args)
+        return {
+            key: arg_vars[key].split()
+            for key in {"redis_acl_keys", "redis_acl_commands", "redis_acl_categories"}
+            if arg_vars[key] is not None
+        }
+
     @arg.project
     @arg.service_name
     @arg("--username", help="Service user username", required=True)
@@ -1206,15 +1214,10 @@ class AivenCLI(argx.CommandLineTool):
     @arg.json
     def service__user_create(self):
         """Create service user"""
-        arg_vars = vars(self.args)
         extra_params = {}
-        acl_params = {
-            key: arg_vars[key].split()
-            for key in {"redis_acl_keys", "redis_acl_commands", "redis_acl_categories"}
-            if arg_vars[key]
-        }
-        if acl_params:
-            extra_params = {"access_control": acl_params}
+        access_control = self._parse_redis_access_control()
+        if access_control:
+            extra_params = {"access_control": access_control}
         self.client.create_service_user(
             project=self.get_project(),
             service=self.args.service_name,
@@ -1419,6 +1422,23 @@ ssl.truststore.type=JKS
             service=self.args.service_name,
             username=self.args.username,
             password=self.args.new_password,
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg("--username", help="Service user username", required=True)
+    @arg("--redis-acl-keys", help="ACL rules for keys")
+    @arg("--redis-acl-commands", help="ACL rules for commands")
+    @arg("--redis-acl-categories", help="ACL rules for command categories")
+    @arg.json
+    def service__user_set_access_control(self):
+        """Set Redis service user access control"""
+        access_control = self._parse_redis_access_control()
+        self.client.set_service_user_access_control(
+            project=self.get_project(),
+            service=self.args.service_name,
+            username=self.args.username,
+            access_control=access_control
         )
 
     @arg.project

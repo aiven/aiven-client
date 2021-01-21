@@ -301,6 +301,11 @@ class AivenClient(AivenClientBase):
             body["new_password"] = password
         return self.verify(self.put, path, body=body)
 
+    def set_service_user_access_control(self, project, service, username, access_control):
+        path = self.build_path("project", project, "service", service, "user", username)
+        body = {"operation": "set-access-control", "access_control": access_control}
+        return self.verify(self.put, path, body=body)
+
     def get_service_integration_endpoints(self, project):
         path = self.build_path("project", project, "integration_endpoint")
         return self.verify(self.get, path, result_key="service_integration_endpoints")
