@@ -290,6 +290,10 @@ class AivenClient(AivenClientBase):
         path = self.build_path("project", project, "service", service, "user", username)
         return self.verify(self.delete, path)
 
+    def get_service_user(self, project, service, username):
+        path = self.build_path("project", project, "service", service, "user", username)
+        return self.verify(self.get, path, result_key="user")
+
     def reset_service_user_password(self, project, service, username, password):
         path = self.build_path("project", project, "service", service, "user", username)
         body = {"operation": "reset-credentials"}

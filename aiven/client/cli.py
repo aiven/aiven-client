@@ -1258,6 +1258,25 @@ class AivenCLI(argx.CommandLineTool):
     @arg.project
     @arg.service_name
     @arg("--username", help="Service user username", required=True)
+    @arg("--format", help="Format string for output, e.g. '{username} {password}'")
+    @arg.json
+    def service__user_get(self):
+        """Get details for a single user"""
+        user = self.client.get_service_user(
+            project=self.get_project(), service=self.args.service_name, username=self.args.username
+        )
+        layout = [["username", "type"]]
+        if "access_control" in user:
+            layout[0].extend([
+                "access_control.redis_acl_keys",
+                "access_control.redis_acl_commands",
+                "access_control.redis_acl_categories",
+            ])
+        self.print_response(user, single_item=True, format=self.args.format, json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg.service_name
+    @arg("--username", help="Service user username", required=True)
     @arg(
         "-d",
         "--target-directory",
