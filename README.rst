@@ -1,5 +1,5 @@
 Aiven Client |BuildStatus|_
-===========================
+###########################
 
 .. |BuildStatus| image:: https://travis-ci.org/aiven/aiven-client.png?branch=master
 .. _BuildStatus: https://travis-ci.org/aiven/aiven-client
@@ -11,88 +11,88 @@ more information about the backend service.
 
 aiven-client (``avn``) is the official command-line client for Aiven.
 
-::
+.. contents::
 
-                        `'+;`         `'+;`
-    The Aiven Crab    '@@@#@@@`     '@@@#@@@`
-    ~~~~~~~~~~~~~~   #@.     #@.   @@.     #@.
-                     @: ,@@   @@   @: ,@@   @@
-                    ,@  @@@@@ :@  :@  @@@@@ .@
-                     @  #@@@. #@   @` #@@@` @@
-                     @@      `@#   @@      `@#
-                      @@#. :@@+     @@#. :@@#
-                       `+@@@'        `#@@@'
-               ,;:`                             ,;;.
-             @@@@@@#     .+@@@@@@@@@@@@@'.    `@@@@@@@
-            @@@@@#    @@@@@@@@@@@@@@@@@@@@@@+    @@@@@@
-             @@@   ;@@@@@@@@@@@@@@@@@@@@@@@@@@@`  `@@;
-              `  `@@@@@@@@@@@        ;@@@@@@@@@@@
-          `@@@  '@@@@@@@@@@@@@       @@@@@@@@@@@@@`  @@@
-         '@@@` .@@@@@@@@@@@@@@@    `@@@@@@@@@@@@@@@  @@@@`
-         @@@@  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  @@@@
-        '@@@@  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  @@@@
-        ,:::;  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  ,:::
-           :@  ,@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  #@
-           @@@  +@#+#@@@@@@@@@@@@@@@@@@@@@@@@@#+#@.  @@@
-           @@@@        '@@@@@@@@@@@@@@@@@@@.        @@@@
-           @@@  @@@@@@+  @@@@@@@@@@@@@@@@@  @@@@@@;  @@@
-           @@  @@@@@@@@@  @@@@@@@@@@@@@@@ `@@@@@@@@@  @+
-              @@@@@@@@@@@ :@@@@@@@@@@@@@  @@@@@@@@@@@ '
-             `@@@@@@@@@@@       ```      ,@@@@@@@@@@@
-             `@@@@@@   '@                :@:   @@@@@@
-              @@@@@:                           @@@@@@
-               @@@@@                           @@@@@
-                @@@@#                         @@@@'
 
-Platform requirements
-=====================
+.. _platform-requirements:
 
-Aiven Client has been tested and developed on Linux and Mac OS X systems.
-It is a Python program that works with Python 3.6 or newer versions.
-The only external dependency is Requests_ (and certifi_ on Windows/OSX).
+Getting Started
+===============
+
+Requirements:
+
+*  Python 3.6 or later
+
+*  Requests_
+
+*  For Windows and OSX, certifi_ is also needed
 
 .. _`Requests`: http://www.python-requests.org/
 .. _`certifi`: https://certifi.io/
 
-Installation
-============
+.. _installation:
 
-From PyPI (Linux/OSX)::
+Install from PyPi
+-----------------
+
+Pypi installation is the recommended route for most users::
 
   $ python3 -m pip install aiven-client
 
-From PyPI (Windows)::
 
-  c:\> python3 -m pip install aiven-client
+Build an RPM Package
+--------------------
 
-Build an RPM package (Linux)::
+It is also possible to build an rpm::
 
   $ make rpm
 
-Basic Usage
-===========
+Check Installation
+------------------
 
-* NOTE: On Windows you may need to use ``python3 -m aiven.client`` instead of ``avn``.
-* All commands will output the raw REST API JSON response with ``--json``
+To check that the tool is installed and working, run it without arguments::
 
-Help command
-------------
+  $ avn
 
-::
+If you see usage output, you're all set.
 
-  $ avn help
+  **Note:** On Windows you may need to use ``python3 -m aiven.client`` instead of ``avn``.
 
-List all commands. You can use the help to also search for matching commands,
-for example
+Log In
+------
 
-::
+The simplest way to use Aiven CLI is to authenticate with the username and
+password you use on Aiven::
 
-  $ avn help kafka topic
+  $ avn user login <you@example.com>
 
-would list all commands that have kafka *and* topic in their description.
+The command will prompt you for your password.
 
-Login and users
----------------
+.. _help-command:
+.. _basic-usage:
+
+Usage
+=====
+
+Some handy hints that work with all commands:
+
+*  The ``avn help`` command shows all commands and can *search* for a command,
+   so for example ``avn help kafka topic`` shows commands with kafka *and*
+   topic in their description.
+
+*  Passing ``-h`` or ``--help`` gives help output for any command. Examples:
+   ``avn --help`` or ``avn service --help``.
+
+*  All commands will output the raw REST API JSON response with ``--json``,
+   we use this extensively ourselves in conjunction with
+   `jq <https://stedolan.github.io/jq/>`__.
+
+
+.. _login-and-users:
+
+Authenticate: Logins and Tokens
+-------------------------------
+
 Login::
 
   $ avn user login <your@email>
@@ -128,57 +128,20 @@ Second create a default config in ``~/.config/aiven/aiven-client.json`` containi
 
   {"default_project": "yourproject-abcd"}
 
-Teams
----------------
-List account teams::
+.. _clouds:
 
-  $ avn account team list <account_id>
+Choose your Cloud
+-----------------
 
-Create a team::
-
-  $ avn account team create --team-name <team_name> <account_id>
-
-Delete a team::
-
-  $ avn account team delete --team-id <team_id> <account_id>
-
-Attach team to a project::
-
-  $ avn account team project-attach --team-id <team_id> --project <project_name> <account_id> --team-type <admin|developer|operator|read_only>
-
-
-Detach team from project::
-
-  $ avn account team project-detach --team-id <team_id> --project <project_name> <account_id>
-
-List projects associated to the team::
-
-  $ avn account team project-list --team-id <team_id> <account_id>
-
-List members of the team::
-
-  $ avn account team user-list --team-id <team_id> <account_id>
-
-Invite a new member to the team::
-
-  $ avn account team user-invite --team-id <team_id> <account_id> <user@email>
-
-See the list of pending invitations::
-
-  $ avn account team user-list-pending --team-id <team_id> <account_id>
-
-Remove user from the team::
-
-  $ avn account team user-delete --team-id <team_id> --user-id <user_id> <account_id>
-
-Clouds
-------
 List available cloud regions::
 
   $ avn cloud list
 
-Projects
---------
+.. _projects:
+
+Working with Projects
+---------------------
+
 List projects you are a member of::
 
   $ avn project list
@@ -217,8 +180,11 @@ View project management event log::
 
   $ avn events
 
-Services
---------
+.. _services:
+
+Explore Existing Services
+-------------------------
+
 List services (of the active project)::
 
   $ avn service list
@@ -247,8 +213,11 @@ View service log entries (most recent entries and keep on following logs, other 
 
   $ avn service logs db1 -f
 
-Launching services
-------------------
+.. _launching-services:
+
+Launch Services
+---------------
+
 View available service plans::
 
   $ avn service plans
@@ -292,6 +261,7 @@ Terminate a service (all data will be gone!)::
 
 Managing service users
 ----------------------
+
 Some service types support multiple users (e.g. PostgreSQL database users).
 
 List, add and delete service users::
@@ -308,11 +278,59 @@ For Redis services running version 6 or above, it's possible to create users wit
 
 Service users are created with strong random passwords.
 
-Updating service configuration
-------------------------------
+.. _teams:
 
-Shell completions
------------------
+Working with Teams
+------------------
+
+List account teams::
+
+  $ avn account team list <account_id>
+
+Create a team::
+
+  $ avn account team create --team-name <team_name> <account_id>
+
+Delete a team::
+
+  $ avn account team delete --team-id <team_id> <account_id>
+
+Attach team to a project::
+
+  $ avn account team project-attach --team-id <team_id> --project <project_name> <account_id> --team-type <admin|developer|operator|read_only>
+
+
+Detach team from project::
+
+  $ avn account team project-detach --team-id <team_id> --project <project_name> <account_id>
+
+List projects associated to the team::
+
+  $ avn account team project-list --team-id <team_id> <account_id>
+
+List members of the team::
+
+  $ avn account team user-list --team-id <team_id> <account_id>
+
+Invite a new member to the team::
+
+  $ avn account team user-invite --team-id <team_id> <account_id> <user@email>
+
+See the list of pending invitations::
+
+  $ avn account team user-list-pending --team-id <team_id> <account_id>
+
+Remove user from the team::
+
+  $ avn account team user-delete --team-id <team_id> --user-id <user_id> <account_id>
+
+Extra Features
+==============
+
+.. _shell-completions:
+
+Autocomplete
+------------
 
 avn supports shell completions. It requires an optional dependency: argcomplete. Install it::
 
@@ -324,27 +342,10 @@ To use completions in bash, add following line to `~/.bashrc`::
 
 For more information (including completions usage in other shells) see https://kislyuk.github.io/argcomplete/.
 
-More help
----------
-::
+Keep Reading
+============
 
-  $ avn help
-  $ avn -h
-  $ avn user -h
-  $ avn service -h
-  $ avn service create -h
-  $ avn project -h
+We maintain some other resources that you may also find useful:
 
-License
-=======
-
-Aiven Client is released under the Apache License, Version 2.0.
-
-For the exact license terms, see `LICENSE` and
-http://opensource.org/licenses/Apache-2.0 .
-
-Contact
-=======
-
-Bug reports and patches are very welcome, please post them as GitHub issues
-and pull requests at https://github.com/aiven/aiven-client
+* `Command Line Magic with avn <https://aiven.io/blog/command-line-magic-with-the-aiven-cli>`__
+* `Managing Billing Groups via CLI <https://help.aiven.io/en/articles/4720981-using-billing-groups-via-cli>`__
