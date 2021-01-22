@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        # only use one version for the lint step
         python-version: [3.8]
 
     steps:
@@ -33,4 +34,28 @@ jobs:
 
       - id: pyLint
         run: make pylint
+
+  test:
+    runs-on: ${{ matrix.os }}
+    needs: lint
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8, pypy3]
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - id: checkout-code
+        uses: actions/checkout@v2
+
+      - id: prepare-python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - id: dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+          pip install -e .
+          pytest -vv tests/
 
