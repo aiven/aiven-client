@@ -3078,6 +3078,8 @@ ssl.truststore.type=JKS
     @arg.billing_extra_text
     @arg.billing_currency
     @arg.vat_id
+    @arg.billing_email
+    @arg.tech_email
     def project__create(self):
         """Create a project"""
         try:
@@ -3093,6 +3095,8 @@ ssl.truststore.type=JKS
                 country_code=self.args.country_code,
                 project=self.args.project_name,
                 vat_id=self.args.vat_id,
+                billing_emails=self.args.billing_email,
+                tech_emails=self.args.tech_email,
             )
         except client.Error as ex:
             if not self.args.no_fail_if_exists or ex.response.status_code != 409:
@@ -3135,6 +3139,8 @@ ssl.truststore.type=JKS
     @arg.billing_extra_text
     @arg.billing_currency
     @arg.vat_id
+    @arg.billing_email
+    @arg.tech_email
     def project__update(self):
         """Update a project"""
         project_name = self.get_project()
@@ -3150,6 +3156,8 @@ ssl.truststore.type=JKS
                 country_code=self.args.country_code,
                 project=project_name,
                 vat_id=self.args.vat_id,
+                billing_emails=self.args.billing_email,
+                tech_emails=self.args.tech_email,
             )
         except client.Error as ex:
             print(ex.response.text)
@@ -3636,7 +3644,7 @@ server_encryption_options:
     @arg.vat_id
     @arg.billing_currency
     @arg.billing_extra_text
-    @arg("--billing-email", action="append", help="Billing email address")
+    @arg.billing_email
     @arg("--company", help="Company name")
     @arg("--address-line", action="append", help="Address line")
     @arg.country_code
@@ -3677,7 +3685,7 @@ server_encryption_options:
     @arg.vat_id
     @arg.billing_currency
     @arg.billing_extra_text
-    @arg("--billing-email", action="append", help="Billing email address")
+    @arg.billing_email
     @arg("--company", help="Company name")
     @arg("--address-line", action="append", help="Address line")
     @arg.country_code

@@ -1329,6 +1329,8 @@ class AivenClient(AivenClientBase):
         billing_currency=None,
         billing_extra_text=None,
         vat_id=None,
+        billing_emails=None,
+        tech_emails=None,
     ):
         body = {
             "card_id": card_id,
@@ -1351,6 +1353,10 @@ class AivenClient(AivenClientBase):
             body["billing_extra_text"] = billing_extra_text
         if vat_id is not None:
             body["vat_id"] = vat_id
+        if billing_emails is not None:
+            body["billing_emails"] = [{"email": email} for email in billing_emails]
+        if tech_emails is not None:
+            body["tech_emails"] = [{"email": email} for email in tech_emails]
 
         return self.verify(self.post, "/project", body=body, result_key="project")
 
@@ -1375,6 +1381,8 @@ class AivenClient(AivenClientBase):
         billing_currency=None,
         billing_extra_text=None,
         vat_id=None,
+        billing_emails=None,
+        tech_emails=None,
     ):
         body = {}
         if new_project_name is not None:
@@ -1395,6 +1403,10 @@ class AivenClient(AivenClientBase):
             body["billing_extra_text"] = billing_extra_text
         if vat_id is not None:
             body["vat_id"] = vat_id
+        if billing_emails is not None:
+            body["billing_emails"] = [{"email": email} for email in billing_emails]
+        if tech_emails is not None:
+            body["tech_emails"] = [{"email": email} for email in tech_emails]
 
         return self.verify(
             self.put,
