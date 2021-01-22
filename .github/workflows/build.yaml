@@ -1,0 +1,36 @@
+name: Build Aiven Client
+
+on: [push, pull_request]
+
+jobs:
+
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+
+    steps:
+
+      - id: checkout-code
+        uses: actions/checkout@v2
+
+      - id: prepare-python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - id: dependencies
+        run: |
+          pip install requests
+          pip install -r requirements.dev.txt
+
+      - id: validate-style
+        run: make validate-style
+
+      - id: flake8
+        run: make flake8
+
+      - id: pyLint
+        run: make pylint
+
