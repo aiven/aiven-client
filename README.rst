@@ -43,7 +43,7 @@ Pypi installation is the recommended route for most users::
 Build an RPM Package
 --------------------
 
-It is also possible to build an rpm::
+It is also possible to build an RPM::
 
   $ make rpm
 
@@ -95,14 +95,14 @@ Authenticate: Logins and Tokens
 
 Login::
 
-  $ avn user login <your@email>
+  $ avn user login <you@example.com>
 
 Logout (revokes current access token, other sessions remain valid)::
 
   $ avn user logout
 
 Expire all authentication tokens for your user, logs out all web console sessions, etc.
-You will need to login again after this.::
+You will need to login again after this::
 
  $ avn user tokens-expire
 
@@ -121,7 +121,7 @@ Alternatively, you can add 2 JSON files, first create a default config in ``~/.c
 
   {
       "auth_token": "ABC1+123...TOKEN==",
-      "user_email": "your.email@aiven.com"
+      "user_email": "you@example.com"
   }
 
 Second create a default config in ``~/.config/aiven/aiven-client.json`` containing the json with the ``default_project``::
@@ -170,11 +170,11 @@ List authorized users in a project::
 
 Invite an existing Aiven user to a project::
 
-  $ avn project user-invite somebody@aiven.io
+  $ avn project user-invite somebody@example.com
 
 Remove a user from the project::
 
-  $ avn project user-remove somebody@aiven.io
+  $ avn project user-remove somebody@example.com
 
 View project management event log::
 
@@ -314,7 +314,7 @@ List members of the team::
 
 Invite a new member to the team::
 
-  $ avn account team user-invite --team-id <team_id> <account_id> <user@email>
+  $ avn account team user-invite --team-id <team_id> <account_id> <somebody@example.com>
 
 See the list of pending invitations::
 
