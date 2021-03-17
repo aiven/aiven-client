@@ -5,6 +5,7 @@
 from . import argx, client
 from aiven.client import envdefault
 from aiven.client.cliarg import arg
+from aiven.client.speller import suggest
 from decimal import Decimal
 from urllib.parse import urlparse
 
@@ -2986,13 +2987,26 @@ ssl.truststore.type=JKS
         else:
             return None
 
+    @staticmethod
+    def _get_unknown_option_error(option_type, options, option):
+        suggestion = suggest(option, options)
+        if suggestion is not None:
+            did_you_mean = ", did you mean: {}".format(suggestion)
+        else:
+            did_you_mean = ""
+        return "Unknown {} {!r}{} (available options: {})".format(option_type, option, did_you_mean, ", ".join(options))
+
     def _get_service_type_user_config_schema(self, project, service_type):
         service_types = self.client.get_service_types(project=project)
         try:
             service_def = service_types[service_type]
         except KeyError as ex:
             raise argx.UserError(
-                "Unknown service type {!r}, available options: {}".format(service_type, ", ".join(service_types))
+                self._get_unknown_option_error(
+                    option_type="service type",
+                    options=service_types,
+                    option=service_type,
+                )
             ) from ex
 
         return service_def["user_config_schema"]
@@ -3004,7 +3018,11 @@ ssl.truststore.type=JKS
             return endpoint_types[endpoint_type_name]["user_config_schema"]
         except KeyError as ex:
             raise argx.UserError(
-                "Unknown endpoint type {!r}, available options: {}".format(endpoint_type_name, ", ".join(endpoint_types))
+                self._get_unknown_option_error(
+                    option_type="endpoint type",
+                    options=endpoint_types,
+                    option=endpoint_type_name,
+                )
             ) from ex
 
     def _get_integration_user_config_schema(self, project, integration_type_name):
@@ -3014,8 +3032,10 @@ ssl.truststore.type=JKS
             return integration_types[integration_type_name]["user_config_schema"]
         except KeyError as ex:
             raise argx.UserError(
-                "Unknown integration type {!r}, available options: {}".format(
-                    integration_type_name, ", ".join(integration_types)
+                self._get_unknown_option_error(
+                    option_type="integration type",
+                    options=integration_types,
+                    option=integration_type_name,
                 )
             ) from ex
 
