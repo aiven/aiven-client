@@ -1,8 +1,8 @@
 Aiven Client |BuildStatus|_
 ###########################
 
-.. |BuildStatus| image:: https://travis-ci.org/aiven/aiven-client.png?branch=master
-.. _BuildStatus: https://travis-ci.org/aiven/aiven-client
+.. |BuildStatus| image:: https://github.com/aiven/aiven-client/workflows/Build%20Aiven%20Client/badge.svg?branch=master
+.. _BuildStatus: https://github.com/aiven/aiven-client/actions
 
 Aiven is a next-generation managed cloud services platform.  Its focus is in
 ease of adoption, high fault resilience, customer's peace of mind and
