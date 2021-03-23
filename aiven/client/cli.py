@@ -6,6 +6,7 @@ from . import argx, client
 from aiven.client import envdefault
 from aiven.client.cliarg import arg
 from aiven.client.speller import suggest
+from collections import Counter
 from decimal import Decimal
 from urllib.parse import urlparse
 
@@ -65,6 +66,31 @@ def convert_str_to_value(schema, str_value):
         return None
     else:
         raise argx.UserError("Support for option value type(s) {!r} not implemented".format(schema["type"]))
+
+
+tag_key_re = re.compile(r"[\w\-]+")
+tag_value_re = re.compile(r"[\w\-,. ]*")
+
+
+def parse_tag_str(kv):
+    k, v = (kv.split(sep='=', maxsplit=1) + [''])[:2]
+
+    if not tag_key_re.fullmatch(k):
+        raise argx.UserError(f"Tag key '{k}' must consist of alpha-numeric characters, underscores or dashes")
+
+    if not tag_value_re.fullmatch(v):
+        raise argx.UserError(
+            f"Tag value '{k}={v}' must consist of alpha-numeric characters, underscores, dashes, commas or dots"
+        )
+
+    return {"key": k, "value": v}
+
+
+def parse_untag_str(k):
+    if not tag_key_re.match(k):
+        raise argx.UserError(f"Tag key {k} must consist of alpha-numeric characters, underscores or dashes")
+
+    return k
 
 
 def no_auth(fun):
@@ -1914,6 +1940,8 @@ ssl.truststore.type=JKS
         for topic in topics:
             if topic["retention_hours"] == -1:
                 topic["retention_hours"] = "unlimited"
+            if not self.args.json:
+                topic["tags"] = [f"{t['key']}={t['value']}" for t in topic["tags"]]
         layout = [[
             "topic_name",
             "partitions",
@@ -1922,6 +1950,7 @@ ssl.truststore.type=JKS
             "retention_bytes",
             "retention_hours",
             "cleanup_policy",
+            "tags",
         ]]
         self.print_response(topics, format=self.args.format, json=self.args.json, table_layout=layout)
 
@@ -2012,6 +2041,7 @@ ssl.truststore.type=JKS
     @arg.min_insync_replicas
     @arg.retention
     @arg.retention_bytes
+    @arg.tag
     @arg(
         "--cleanup-policy",
         help="Topic cleanup policy",
@@ -2020,6 +2050,13 @@ ssl.truststore.type=JKS
     )
     def service__topic_create(self):
         """Create a Kafka topic"""
+
+        tags = list(map(parse_tag_str, self.args.topic_option_tag or []))
+        tag_keys = list(map(lambda d: d.get("key"), tags))
+        repeated_keys = [key for key, count in Counter(tag_keys).items() if count > 1]
+        if len(repeated_keys) > 0:
+            raise argx.UserError(f"Duplicate tags detected: {', '.join(repeated_keys)}")
+
         response = self.client.create_service_topic(
             project=self.get_project(),
             service=self.args.service_name,
@@ -2030,6 +2067,7 @@ ssl.truststore.type=JKS
             retention_bytes=self.args.retention_bytes,
             retention_hours=self.args.retention,
             cleanup_policy=self.args.cleanup_policy,
+            tags=tags,
         )
         print(response)
 
@@ -2040,9 +2078,28 @@ ssl.truststore.type=JKS
     @arg.min_insync_replicas
     @arg.retention
     @arg.retention_bytes
+    @arg.tagupdate
+    @arg.untag
     @arg("--replication", help="Replication factor", type=int, required=False)
     def service__topic_update(self):
         """Update a Kafka topic"""
+
+        new_tags = list(map(parse_tag_str, self.args.topic_option_tag or []))
+        untags = list(map(parse_untag_str, self.args.topic_option_untag or []))
+        tag_keys = list(map(lambda d: d.get("key"), new_tags)) + untags
+        repeated_keys = [key for key, count in Counter(tag_keys).items() if count > 1]
+        if len(repeated_keys) > 0:
+            raise argx.UserError(f"Duplicate tags detected: {', '.join(repeated_keys)}")
+
+        # Merging updated tags set on the client side as API call replaces tags set
+        tags = None
+        if len(new_tags) + len(untags) > 0:
+            topic = self.client.get_service_topic(
+                project=self.get_project(), service=self.args.service_name, topic=self.args.topic
+            )
+            tags = topic.get("tags", [])
+            tags = list(filter(lambda t: t.get("key") not in tag_keys, tags)) + new_tags
+
         response = self.client.update_service_topic(
             project=self.get_project(),
             service=self.args.service_name,
@@ -2052,6 +2109,7 @@ ssl.truststore.type=JKS
             replication=self.args.replication,
             retention_bytes=self.args.retention_bytes,
             retention_hours=self.args.retention,
+            tags=tags,
         )
         print(response["message"])
 

@@ -34,6 +34,28 @@ def test_service_user_create():
     AivenCLI().run(args=["service", "user-create", "service", "--username", "username"])
 
 
+def test_service_topic_create():
+    AivenCLI().run(args=["service", "topic-create", "--partitions", "42", "--replication", "42", "service1", "topic1"])
+
+
+def test_service_topic_create_with_tags():
+    AivenCLI().run(
+        args=[
+            "service", "topic-create", "--partitions", "42", "--replication", "42", "--tag", "key-_1=value1", "--tag",
+            "key2=az,.0-9_", "service1", "topic1"
+        ]
+    )
+
+
+def test_service_topic_update():
+    AivenCLI().run(
+        args=[
+            "service", "topic-update", "--partitions", "42", "--untag", "key-_1", "--untag", "key123", "--tag",
+            "key3=az,.0-9_", "--tag", "key234=foo", "service1", "topic1"
+        ]
+    )
+
+
 def test_help():
     AivenCLI().run(args=["help"])
 
