@@ -567,6 +567,7 @@ class AivenClient(AivenClientBase):
         retention_bytes,
         retention_hours,
         cleanup_policy,
+        tags,
     ):
         return self.verify(
             self.post,
@@ -579,6 +580,7 @@ class AivenClient(AivenClientBase):
                 "replication": replication,
                 "retention_bytes": retention_bytes,
                 "retention_hours": retention_hours,
+                "tags": tags,
             },
         )
 
@@ -592,17 +594,21 @@ class AivenClient(AivenClientBase):
         retention_hours,
         min_insync_replicas,
         replication=None,
+        tags=None,
     ):
+        body = {
+            "partitions": partitions,
+            "min_insync_replicas": min_insync_replicas,
+            "replication": replication,
+            "retention_bytes": retention_bytes,
+            "retention_hours": retention_hours,
+        }
+        if tags is not None:
+            body.update({"tags": tags})
         return self.verify(
             self.put,
             self.build_path("project", project, "service", service, "topic", topic),
-            body={
-                "partitions": partitions,
-                "min_insync_replicas": min_insync_replicas,
-                "replication": replication,
-                "retention_bytes": retention_bytes,
-                "retention_hours": retention_hours,
-            },
+            body=body,
         )
 
     def delete_service_topic(self, project, service, topic):

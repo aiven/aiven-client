@@ -92,6 +92,19 @@ arg.project = arg(
 arg.replication = arg("--replication", type=int, required=True, help="Replication factor")
 arg.retention = arg("--retention", type=int, help="Retention period in hours (default: unlimited)")
 arg.retention_bytes = arg("--retention-bytes", type=int, help="Retention limit in bytes (default: unlimited)")
+arg.tag = arg(
+    "--tag", dest="topic_option_tag", metavar="KEY[=VALUE]", action="append", help="Tag to add into topic metadata"
+)
+arg.tagupdate = arg(
+    "--tag",
+    dest="topic_option_tag",
+    metavar="KEY[=VALUE]",
+    action="append",
+    help="Tag to add or replace into topic metadata"
+)
+arg.untag = arg(
+    "--untag", dest="topic_option_untag", metavar="KEY", action="append", help="Tag to delete from topic metadata"
+)
 arg.service_name = arg("service_name", help="Service name")
 arg.service_type = arg("-t", "--service-type", help="Type of service (see 'service list-types')")
 arg.ns_name = arg("ns_name", help="Namespace name")

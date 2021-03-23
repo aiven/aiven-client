@@ -10,3 +10,4 @@ Pipfile*
 /dist/
 /rpms/
 __pycache__/
+.mypy_cache/
