@@ -567,21 +567,23 @@ class AivenClient(AivenClientBase):
         retention_bytes,
         retention_hours,
         cleanup_policy,
-        tags,
+        tags=None,
     ):
+        body = {
+            "cleanup_policy": cleanup_policy,
+            "min_insync_replicas": min_insync_replicas,
+            "topic_name": topic,
+            "partitions": partitions,
+            "replication": replication,
+            "retention_bytes": retention_bytes,
+            "retention_hours": retention_hours,
+        }
+        if tags is not None:
+            body.update({"tags": tags})
         return self.verify(
             self.post,
             self.build_path("project", project, "service", service, "topic"),
-            body={
-                "cleanup_policy": cleanup_policy,
-                "min_insync_replicas": min_insync_replicas,
-                "topic_name": topic,
-                "partitions": partitions,
-                "replication": replication,
-                "retention_bytes": retention_bytes,
-                "retention_hours": retention_hours,
-                "tags": tags,
-            },
+            body=body,
         )
 
     def update_service_topic(
