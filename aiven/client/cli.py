@@ -2175,12 +2175,18 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.service_name
     @arg("--username", help="Only show rules for user", required=False)
+    @arg.json
     def service__es_acl_list(self):
         """List Elasticsearch ACL configuration"""
         response = self.client.list_service_elasticsearch_acl_config(
             project=self.get_project(), service=self.args.service_name
         )
         acl_config = response.get("elasticsearch_acl_config")
+
+        if self.args.json:
+            self.print_response(acl_config, json=self.args.json)
+            return
+
         print("ACL:         ", "enabled" if acl_config.get("enabled") else "disabled")
         print("ExtendedACL: ", "enabled" if acl_config.get("extendedAcl") else "disabled")
         print("rules:")
