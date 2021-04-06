@@ -13,7 +13,7 @@ BuildRequires:  python3-devel, python3-flake8, python3-pylint, python3-pytest
 %description
 Aiven is a next-generation managed cloud services.  Its focus is in ease of
 adoption, high fault resilience, customer's peace of mind and advanced
-features at competetive price points.
+features at competitive price points.
 
 aiven-client (`avn`) is the official command-line client for Aiven.
 
