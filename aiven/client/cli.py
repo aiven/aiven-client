@@ -1224,17 +1224,23 @@ class AivenCLI(argx.CommandLineTool):
             table_layout=layout,
         )
 
-    def _parse_redis_access_control(self):
+    def _parse_access_control(self):
         arg_vars = vars(self.args)
-        return {
+        result = {
             key: arg_vars[key].split()
             for key in {"redis_acl_keys", "redis_acl_commands", "redis_acl_categories"}
             if arg_vars[key] is not None
         }
+        for key in ["m3_group"]:
+            value = arg_vars[key]
+            if value is not None:
+                result[key] = value
+        return result
 
     @arg.project
     @arg.service_name
     @arg("--username", help="Service user username", required=True)
+    @arg("--m3-group", help="Service user group")
     @arg("--redis-acl-keys", help="ACL rules for keys (Redis only)")
     @arg("--redis-acl-commands", help="ACL rules for commands (Redis only)")
     @arg("--redis-acl-categories", help="ACL rules for command categories (Redis only)")
@@ -1242,7 +1248,7 @@ class AivenCLI(argx.CommandLineTool):
     def service__user_create(self):
         """Create service user"""
         extra_params = {}
-        access_control = self._parse_redis_access_control()
+        access_control = self._parse_access_control()
         if access_control:
             extra_params = {"access_control": access_control}
         self.client.create_service_user(
@@ -1454,13 +1460,14 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.service_name
     @arg("--username", help="Service user username", required=True)
+    @arg("--m3-group", help="Service user group")
     @arg("--redis-acl-keys", help="ACL rules for keys")
     @arg("--redis-acl-commands", help="ACL rules for commands")
     @arg("--redis-acl-categories", help="ACL rules for command categories")
     @arg.json
     def service__user_set_access_control(self):
         """Set Redis service user access control"""
-        access_control = self._parse_redis_access_control()
+        access_control = self._parse_access_control()
         self.client.set_service_user_access_control(
             project=self.get_project(),
             service=self.args.service_name,
