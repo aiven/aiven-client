@@ -336,11 +336,26 @@ avn supports shell completions. It requires an optional dependency: argcomplete.
 
   $ python3 -m pip install argcomplete
 
-To use completions in bash, add following line to `~/.bashrc`::
+To use completions in bash, add following line to ``~/.bashrc``::
 
   eval "$(register-python-argcomplete avn)"
 
 For more information (including completions usage in other shells) see https://kislyuk.github.io/argcomplete/.
+
+Auth Helpers
+------------
+
+When you spin up a new service, you'll want to connect to it. The ``--json`` option combined with the [jq](https://stedolan.github.io/jq/) utility is a good way to grab the fields you need for your specific service. Try this to get the connection string::
+
+  $ avn service get --json <service> | jq ".service_uri"
+
+Each project has its own CA cert, and other services (notably Kafka) use mutualTLS so you will also need the ``service.key`` and ``service.cert`` files too for those. Download all three files to the local directory::
+
+  $ avn service user-creds-download --username avnadmin <service>
+
+For working with [kafkacat](https://github.com/edenhill/kafkacat) (see also our [help article](https://help.aiven.io/en/articles/2607674-using-kafkacat) ) or the command-line tools that ship with Kafka itself, a keystore and trustore are needed. By specifying which user's creds to use, and a secret, you can generate these via ``avn`` too::
+
+  $ avn service user-kafka-java-creds --username avnadmin -p t0pS3cr3t <service>
 
 Keep Reading
 ============
