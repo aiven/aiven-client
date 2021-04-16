@@ -1,6 +1,6 @@
 # Welcome!
 
-Contributions to Karapaceh are very welcome. Please follow our guidelines:
+Contributions to aiven-client are very welcome. Please follow our guidelines:
 
 - It's recommended to open an issue to discuss a feature before putting in a lot of effort.
 
