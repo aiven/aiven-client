@@ -68,6 +68,12 @@ password you use on Aiven::
 
 The command will prompt you for your password.
 
+You can also use an access token generated in the Aiven Console::
+
+  $ avn user login <you@example.com> --token
+
+You will be prompted for your access token as above.
+
 .. _help-command:
 .. _basic-usage:
 
