@@ -307,24 +307,29 @@ class AivenCLI(argx.CommandLineTool):
     @no_auth
     @arg("email", nargs="?", help="User email address")
     @arg("--tenant", help="Login under a different tenant")
+    @arg("--token", action="store_true", help="Provide an access token instead of password")
     def user__login(self):
         """Login as a user"""
         email = self.args.email
         if not email:
             email = input("Username (email): ")
 
-        password = self.enter_password("{}'s Aiven password: ".format(email))
-        try:
-            result = self.client.authenticate_user(email=email, password=password, tenant_id=self.args.tenant)
-        except client.Error as ex:
-            if ex.status == 510:  # NOT_EXTENDED
-                # Two-factor auth OTP required
-                otp = input("Two-factor authentication OTP: ")
-                result = self.client.authenticate_user(email=email, password=password, otp=otp)
-            else:
-                raise
+        if self.args.token:
+            token = self.enter_password(f"{email}'s Aiven access token: ", var="AIVEN_AUTH_TOKEN")
+        else:
+            password = self.enter_password(f"{email}'s Aiven password: ", var="AIVEN_PASSWORD")
+            try:
+                result = self.client.authenticate_user(email=email, password=password, tenant_id=self.args.tenant)
+            except client.Error as ex:
+                if ex.status == 510:  # NOT_EXTENDED
+                    # Two-factor auth OTP required
+                    otp = input("Two-factor authentication OTP: ")
+                    result = self.client.authenticate_user(email=email, password=password, otp=otp)
+                else:
+                    raise
+            token = result["token"]
 
-        self._write_auth_token_file(token=result["token"], email=email)
+        self._write_auth_token_file(token=token, email=email)
 
         # ensure that there is a working default project
         auth_token = self._get_auth_token()
