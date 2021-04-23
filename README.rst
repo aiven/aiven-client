@@ -74,6 +74,10 @@ You can also use an access token generated in the Aiven Console::
 
 You will be prompted for your access token as above.
 
+If you are registered on Aiven through the AWS or GCP marketplace, then you need to specify an additional argument ``--tenant``. Currently the supported value are ``aws`` and ``gcp``, for example::
+
+  $ avn user login <you@example.com> --tenant aws
+
 .. _help-command:
 .. _basic-usage:
 
