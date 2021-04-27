@@ -1530,11 +1530,14 @@ ssl.truststore.type=JKS
     @arg.project
     @arg("-d", "--endpoint-name", help="Integration endpoint name", required=True)
     @arg("-t", "--endpoint-type", help="Integration endpoint type", required=True)
+    @arg.user_config_json()
     @arg.user_config
     @arg.json
     def service__integration_endpoint_create(self):
         """Create a service integration endpoint"""
-        if self.args.user_config:
+        if self.args.user_config_json:
+            user_config = self.args.user_config_json
+        elif self.args.user_config:
             project = self.get_project()
             user_config_schema = self._get_endpoint_user_config_schema(
                 project=project, endpoint_type_name=self.args.endpoint_type
@@ -1553,10 +1556,13 @@ ssl.truststore.type=JKS
     @arg.project
     @arg("endpoint_id", help="Service integration endpoint ID")
     @arg.user_config
+    @arg.user_config_json()
     @arg.json
     def service__integration_endpoint_update(self):
         """Update a service integration endpoint"""
-        if self.args.user_config:
+        if self.args.user_config_json:
+            user_config = self.args.user_config_json
+        elif self.args.user_config:
             project = self.get_project()
             integration_endpoints = self.client.get_service_integration_endpoints(project=self.get_project())
             endpoint_type = None
@@ -1626,10 +1632,13 @@ ssl.truststore.type=JKS
     @arg("-S", "--source-endpoint-id", help="Source integration endpoint id")
     @arg("-D", "--dest-endpoint-id", help="Destination integration endpoint id")
     @arg.user_config
+    @arg.user_config_json()
     @arg.json
     def service__integration_create(self):
         """Create a service integration"""
-        if self.args.user_config:
+        if self.args.user_config_json:
+            user_config = self.args.user_config_json
+        elif self.args.user_config:
             project = self.get_project()
             user_config_schema = self._get_integration_user_config_schema(
                 project=project, integration_type_name=self.args.integration_type
@@ -1651,10 +1660,13 @@ ssl.truststore.type=JKS
     @arg.project
     @arg("integration_id", help="Service integration ID")
     @arg.user_config
+    @arg.user_config_json()
     @arg.json
     def service__integration_update(self):
         """Update a service integration"""
-        if self.args.user_config:
+        if self.args.user_config_json:
+            user_config = self.args.user_config_json
+        elif self.args.user_config:
             project = self.get_project()
             integration = self.client.get_service_integration(
                 project=project,
@@ -3707,6 +3719,7 @@ server_encryption_options:
         self.log.info("Aiven credentials written to: %s", aiven_credentials_filename)
 
     def _open_auth_token_file(self, mode="r"):
+        # pylint: disable=consider-using-with
         auth_token_file_path = self._get_auth_token_file_name()
         try:
             return open(auth_token_file_path, mode)

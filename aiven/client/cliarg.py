@@ -3,7 +3,7 @@
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
 
-from .argx import arg
+from .argx import arg, UserError
 from functools import wraps
 
 import json as jsonlib
@@ -33,6 +33,36 @@ def json_path_or_string(param_name):
                 param_name,
                 get_json_config(getattr(self.args, param_name, "")),
             )
+            return fun(self)
+
+        return wrapped
+
+    return wrapper
+
+
+def user_config_json():
+    """User config that accepts arbitrary JSON"""
+
+    def wrapper(fun):
+        arg(
+            "--user-config-json",
+            default="{}",
+            dest="user_config_json",
+            help="JSON string or path (preceded by '@') to a JSON configuration file",
+        )(fun)
+
+        @wraps(fun)
+        def wrapped(self):
+            if ("user_config" in self.args and (self.args.user_config_json and self.args.user_config)):
+                raise UserError("-c (user config) and --user-config-json parameters can not be used at the same time")
+            try:
+                setattr(
+                    self.args,
+                    "user_config_json",
+                    get_json_config(self.args.user_config_json),
+                )
+            except jsonlib.decoder.JSONDecodeError as err:
+                raise UserError from err
             return fun(self)
 
         return wrapped
@@ -133,6 +163,7 @@ arg.user_config = arg(
     default=[],
     help="Apply a configuration setting. See 'avn service types -v' for available values.",
 )
+arg.user_config_json = user_config_json
 arg.user_id = arg("--user-id", help="User identifier", required=True)
 arg.user_option_remove = arg(
     "--remove-option",
