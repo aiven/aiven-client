@@ -288,6 +288,64 @@ For Redis services running version 6 or above, it's possible to create users wit
 
 Service users are created with strong random passwords.
 
+Service Integrations
+--------------------
+`Service integrations <https://aiven.io/service-integrations>`_ allow to link Aiven services to other Aiven services or to services
+offered by other companies for example for logging. Some examples for various diffenent integrations:
+`Google cloud logging`_, `AWS Cloudwatch logging`_, `Remote syslog integration`_ and `Getting started with Datadog`_.
+
+.. _`Google cloud logging`: https://help.aiven.io/en/articles/4209837-sending-service-logs-to-google-cloud-logging
+.. _`AWS Cloudwatch logging`: https://help.aiven.io/en/articles/4134821-sending-service-logs-to-aws-cloudwatch
+.. _`Remote syslog integration`: https://help.aiven.io/en/articles/2933115-remote-syslog-integration
+.. _`Getting started with Datadog`: https://help.aiven.io/en/articles/1759208-getting-started-with-datadog
+
+List service integration endpoints::
+
+    $ avn service integration-endpoint-list
+
+List all available integration endpoint types for given project::
+
+    $ avn service integration-endpoint-types-list --project <project>
+
+Create a service integration endpoint::
+
+    $ avn service integration-endpoint-create --project <project> --endpoint-type <endpoint type> --endpoint-name <endpoint name> --user-config-json <user configuration as json>
+    $ avn service integration-endpoint-create --project <project> --endpoint-type <endpoint type> --endpoint-name <endpoint name> -c <KEY=VALUE type user configuration>
+
+Update a service integration endpoint::
+
+    $ avn service integration-endpoint-update --project <project> --user-config-json <user configuration as json> <endpoint id>
+    $ avn service integration-endpoint-update --project <project> -c <KEY=VALUE type user configuration> <endpoint id>
+
+Delete a service integration endpoint::
+
+    $ avn service integration-endpoint-delete --project <project>  <endpoint_id>
+
+List service integrations::
+
+    $ avn service integration-list <service name>
+
+List all available integration types for given project::
+
+    $ avn service integration-types-list --project <project>
+
+Create a service integration::
+
+    $ avn service integration-create --project <project> -t <integration type> -s <source service> -d <dest service> -S <source endpoint id> -D <destination endpoint id> --user-config-json <user configuration as json>
+    $ avn service integration-create --project <project> -t <integration type> -s <source service> -d <dest service> -S <source endpoint id> -D <destination endpoint id> -c <KEY=VALUE type user configuration>
+
+Update a service integration::
+
+    $ avn service integration-update --project <project> --user-config-json <user configuration as json> <integration_id>
+    $ avn service integration-update --project <project> -c <KEY=VALUE type user configuration> <integration_id>
+
+Delete a service integration::
+
+    $ avn service integration-delete --project <project> <integration_id>
+
+
+
+
 .. _teams:
 
 Working with Teams
