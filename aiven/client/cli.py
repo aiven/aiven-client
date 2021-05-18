@@ -3943,7 +3943,7 @@ server_encryption_options:
     @arg("--state", help="State / Province")
     @arg("--zip-code", help="ZIP / Postal code")
     def billing_group__update(self):
-        """Get a project"""
+        """Update a billing group"""
         self.client.update_billing_group(
             billing_group=self.args.id,
             billing_group_name=self.args.name,
