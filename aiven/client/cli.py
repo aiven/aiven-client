@@ -129,6 +129,12 @@ class AivenCLI(argx.CommandLineTool):
             help="Server base url default %(default)r",
             default=envdefault.AIVEN_WEB_URL or "https://api.aiven.io",
         )
+        parser.add_argument(
+            "--request-timeout",
+            type=int,
+            default=None,
+            help="Wait for up to N seconds for a response to a request (default: infinite)",
+        )
 
     def collect_user_config_options(self, obj_def, prefixes=None):
         opts = {}
@@ -3755,7 +3761,11 @@ server_encryption_options:
             raise
 
     def pre_run(self, func):
-        self.client = client.AivenClient(base_url=self.args.url, show_http=self.args.show_http)
+        self.client = client.AivenClient(
+            base_url=self.args.url,
+            show_http=self.args.show_http,
+            request_timeout=self.args.request_timeout,
+        )
         # Always set CA if we have anything set at the command line or in the env
         if self.args.auth_ca is not None:
             self.client.set_ca(self.args.auth_ca)

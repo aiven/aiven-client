@@ -2,6 +2,7 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
+from .session import get_requests_session
 from urllib.parse import quote
 
 import json
@@ -32,17 +33,12 @@ UNDEFINED = object()
 class AivenClientBase:  # pylint: disable=old-style-class
     """Aiven Client with low-level HTTP operations"""
 
-    def __init__(self, base_url, show_http=False):
+    def __init__(self, base_url, show_http=False, request_timeout=None):
         self.log = logging.getLogger("AivenClient")
         self.auth_token = None
         self.base_url = base_url
         self.log.debug("using %r", self.base_url)
-        self.session = requests.Session()
-        self.session.verify = True
-        self.session.headers = {
-            "content-type": "application/json",
-            "user-agent": "aiven-client/" + __version__,
-        }
+        self.session = get_requests_session(timeout=request_timeout)
         self.http_log = logging.getLogger("aiven_http")
         self.init_http_logging(show_http)
         self.api_prefix = "/v1"
