@@ -133,7 +133,7 @@ class CommandLineTool:  # pylint: disable=old-style-class
 
     def add_cmd(self, func):
         """Add a parser for a single command method call"""
-        assert func.__doc__, func
+        assert func.__doc__, f"Missing docstring for {func.__qualname__}"
 
         # allow multi-level commands, separating each level with double underscores
         if "__" in func.__name__:
