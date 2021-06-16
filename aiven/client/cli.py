@@ -1278,7 +1278,7 @@ class AivenCLI(argx.CommandLineTool):
         arg_vars = vars(self.args)
         result = {
             key: arg_vars[key].split()
-            for key in {"redis_acl_keys", "redis_acl_commands", "redis_acl_categories"}
+            for key in {"redis_acl_keys", "redis_acl_commands", "redis_acl_categories", "redis_acl_channels"}
             if arg_vars[key] is not None
         }
         for key in ["m3_group"]:
@@ -1294,6 +1294,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg("--redis-acl-keys", help="ACL rules for keys (Redis only)")
     @arg("--redis-acl-commands", help="ACL rules for commands (Redis only)")
     @arg("--redis-acl-categories", help="ACL rules for command categories (Redis only)")
+    @arg("--redis-acl-channels", help="ACL rules for channels (Redis only)")
     @arg.json
     def service__user_create(self):
         """Create service user"""
@@ -1333,6 +1334,7 @@ class AivenCLI(argx.CommandLineTool):
                 "access_control.redis_acl_keys",
                 "access_control.redis_acl_commands",
                 "access_control.redis_acl_categories",
+                "access_control.redis_acl_channels",
             ])
         self.print_response(
             service["users"],
@@ -1357,6 +1359,7 @@ class AivenCLI(argx.CommandLineTool):
                 "access_control.redis_acl_keys",
                 "access_control.redis_acl_commands",
                 "access_control.redis_acl_categories",
+                "access_control.redis_acl_channels",
             ])
         self.print_response(user, single_item=True, format=self.args.format, json=self.args.json, table_layout=layout)
 
@@ -1514,6 +1517,7 @@ ssl.truststore.type=JKS
     @arg("--redis-acl-keys", help="ACL rules for keys")
     @arg("--redis-acl-commands", help="ACL rules for commands")
     @arg("--redis-acl-categories", help="ACL rules for command categories")
+    @arg("--redis-acl-channels", help="ACL rules for channels")
     @arg.json
     def service__user_set_access_control(self):
         """Set Redis service user access control"""

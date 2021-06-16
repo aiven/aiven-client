@@ -282,7 +282,7 @@ List, add and delete service users::
 
 For Redis services running version 6 or above, it's possible to create users with ACLs_::
 
-  $ avn service user-create --username new_user --redis-acl-keys "prefix* another_key" --redis-acl-commands "+set" --redis-acl-categories "-@all +@admin" my-redis-service
+  $ avn service user-create --username new_user --redis-acl-keys="prefix* another_key" --redis-acl-commands="+set" --redis-acl-categories="-@all +@admin" --redis-acl-channels="prefix* some_chan" my-redis-service
 
 .. _`ACLs`: https://redis.io/topics/acl
 
