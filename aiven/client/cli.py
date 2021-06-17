@@ -3332,6 +3332,15 @@ ssl.truststore.type=JKS
         metavar="PROJECT",
         help="Copy project settings from an existing project",
     )
+    @arg(
+        "--use-source-project-billing-group",
+        action="store_true",
+        default=False,
+        help=(
+            "If copying from existing project, use the same billing group "
+            "used by source project instead of creating a new one"
+        )
+    )
     @arg.country_code
     @arg.billing_address
     @arg.billing_extra_text
@@ -3356,6 +3365,7 @@ ssl.truststore.type=JKS
                 vat_id=self.args.vat_id,
                 billing_emails=self.args.billing_email,
                 tech_emails=self.args.tech_email,
+                use_source_project_billing_group=self.args.use_source_project_billing_group,
             )
         except client.Error as ex:
             if not self.args.no_fail_if_exists or ex.response.status_code != 409:

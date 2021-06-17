@@ -1371,6 +1371,7 @@ class AivenClient(AivenClientBase):
         vat_id=None,
         billing_emails=None,
         tech_emails=None,
+        use_source_project_billing_group=None,
     ):
         body = {
             "card_id": card_id,
@@ -1397,6 +1398,8 @@ class AivenClient(AivenClientBase):
             body["billing_emails"] = [{"email": email} for email in billing_emails]
         if tech_emails is not None:
             body["tech_emails"] = [{"email": email} for email in tech_emails]
+        if use_source_project_billing_group is not None:
+            body["use_source_project_billing_group"] = use_source_project_billing_group
 
         return self.verify(self.post, "/project", body=body, result_key="project")
 
