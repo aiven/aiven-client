@@ -2,6 +2,10 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
+try:
+    from functools import cached_property
+except ImportError:
+    cached_property = None
 
 from aiven.client.argx import arg, CommandLineTool
 
@@ -60,3 +64,26 @@ def test_extended_commands_remain_alphabetically_ordered():
 
     action_order = [item.dest for item in cli.subparsers._choices_actions]  # pylint: disable=protected-access
     assert action_order == ["aaa", "bbb", "bbc", "ccc", "ddd", "dde", "xxx", "yyy", "yyz"]
+
+
+class DescriptorCLI(CommandLineTool):
+    @property
+    def raise1(self):
+        raise RuntimeError("evaluated raise1")
+
+    if cached_property is not None:
+
+        @cached_property
+        def raise2(self):
+            raise RuntimeError("evaluated raise2")
+
+    @arg("something")
+    def example_command(self):
+        """Example command."""
+
+
+def test_descriptors_are_not_eagerly_evaluated():
+    cli = DescriptorCLI("DescriptorCLI")
+    calls = []
+    cli.add_cmds(calls.append)
+    assert calls == [cli.example_command]

@@ -8,6 +8,7 @@ import aiven.client.client
 import argparse
 import csv as csvlib
 import errno
+import functools
 import json as jsonlib
 import logging
 import os
@@ -26,6 +27,11 @@ try:
     from .version import __version__  # pylint: disable=no-name-in-module
 except ImportError:
     __version__ = "UNKNOWN"
+
+# cached_property only exists since python 3.8
+SKIP_EVALUATION_TYPES = (property, )
+if hasattr(functools, "cached_property"):
+    SKIP_EVALUATION_TYPES += (functools.cached_property, )
 
 ARG_LIST_PROP = "_arg_list"
 LOG_FORMAT = "%(levelname)s\t%(message)s"
@@ -178,9 +184,9 @@ class CommandLineTool:  # pylint: disable=old-style-class
     def add_cmds(self, add_func):
         """Add every method tagged with @arg as a command"""
         for prop in dir(self):
-            # Skip @properties to avoid evaluating them
+            # Skip @property and @cached_property attributes to delay coercing their evaluation.
             classprop = getattr(self.__class__, prop, None)
-            if isinstance(classprop, property):
+            if isinstance(classprop, SKIP_EVALUATION_TYPES):
                 continue
             func = getattr(self, prop, None)
             if getattr(func, ARG_LIST_PROP, None) is not None:
