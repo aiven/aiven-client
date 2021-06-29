@@ -1,5 +1,6 @@
 flake8
-pylint
+# Lock pylint to the same version used in downstream build environments
+pylint==2.6.0
 pytest
 # Lock isort version since pylint fails with the 5.x series at the moment.
 isort<5.0

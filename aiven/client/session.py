@@ -13,7 +13,7 @@ class AivenClientAdapter(adapters.HTTPAdapter):
         self.timeout = timeout
         super().__init__(*args, **kwargs)
 
-    def send(self, *args, **kwargs):
+    def send(self, *args, **kwargs):  # pylint: disable=signature-differs
         if not kwargs.get("timeout"):
             kwargs["timeout"] = self.timeout
         return super().send(*args, **kwargs)
