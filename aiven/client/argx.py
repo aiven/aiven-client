@@ -301,8 +301,8 @@ class CommandLineTool:  # pylint: disable=old-style-class
         self.pre_run(func)
         return func()  # pylint: disable=not-callable
 
-    def main(self):
+    def main(self, args=None):
         # TODO: configurable log level
         logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
         logging.getLogger("requests").setLevel(logging.WARNING)
-        sys.exit(self.run())
+        sys.exit(self.run(args))
