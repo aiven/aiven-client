@@ -122,12 +122,12 @@ class Config(dict):
 
 
 class CommandLineTool:  # pylint: disable=old-style-class
-    def __init__(self, name):
+    def __init__(self, name, parser: argparse.ArgumentParser = None):
         self.log = logging.getLogger(name)
         self.config = None
         self._cats = {}
         self._extensions = []
-        self.parser = argparse.ArgumentParser(prog=name, formatter_class=CustomFormatter)
+        self.parser = parser or argparse.ArgumentParser(prog=name, formatter_class=CustomFormatter)
         self.parser.add_argument(
             "--config",
             help="config file location %(default)r",
