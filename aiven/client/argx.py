@@ -3,6 +3,7 @@
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
 from aiven.client import envdefault, pretty
+from typing import Optional
 
 import aiven.client.client
 import argparse
@@ -122,7 +123,7 @@ class Config(dict):
 
 
 class CommandLineTool:  # pylint: disable=old-style-class
-    def __init__(self, name, parser: argparse.ArgumentParser = None):
+    def __init__(self, name, parser: Optional[argparse.ArgumentParser] = None):
         self.log = logging.getLogger(name)
         self.config = None
         self._cats = {}
