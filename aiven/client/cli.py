@@ -2084,9 +2084,9 @@ ssl.truststore.type=JKS
         default="upgrade_check",
     )
     @arg(
-        "--target_version",
+        "--target-version",
         help="Upgrade target version",
-        choices=["9.5", "9.6", "10", "11"],
+        choices=["10", "11", "12", "13"],
     )
     @arg("--format", help="Format string for output, e.g. '{name} {retention_hours}'")
     @arg.json
