@@ -2080,31 +2080,84 @@ ssl.truststore.type=JKS
     @arg(
         "--operation",
         help="Task operation",
-        choices=["upgrade_check"],
+        choices=["migration_check", "upgrade_check"],
         default="upgrade_check",
     )
     @arg(
         "--target-version",
         help="Upgrade target version",
         choices=["10", "11", "12", "13"],
+        required=False,
+    )
+    @arg(
+        "--source-service-uri",
+        help="Migration: source URI for migration",
+        required=False,
+    )
+    @arg(
+        "--ignore-dbs",
+        help="Migration: comma-separated list of databases to be ignored (MySQL only)",
+        required=False,
     )
     @arg("--format", help="Format string for output, e.g. '{name} {retention_hours}'")
     @arg.json
     def service__task_create(self):
         """Create a service task"""
+        if self.args.operation == "upgrade_check":
+            if not self.args.target_version:
+                raise argx.UserError("--target-version is required for this operation")
+            body = {
+                "task_type": self.args.operation,
+                "target_version": self.args.target_version,
+            }
+        elif self.args.operation == "migration_check":
+            if not self.args.source_service_uri:
+                raise argx.UserError("--source-service-uri is required for this operation")
+            body = {
+                "task_type": self.args.operation,
+                "migration_check": {
+                    "source_service_uri": self.args.source_service_uri
+                }
+            }
+            if self.args.ignore_dbs:
+                body["migration_check"]["ignore_dbs"] = self.args.ignore_dbs
+        else:
+            raise NotImplementedError(f"Operation {self.args.operation} is not implemented")
+
         response = self.client.create_service_task(
             project=self.get_project(),
             service=self.args.service_name,
-            operation=self.args.operation,
-            target_version=self.args.target_version,
+            body=body,
         )
         self.print_response(
             [response["task"]],
             format=self.args.format,
             json=self.args.json,
-            table_layout=["task_type", "success"],
+            table_layout=["task_type", "success", "task_id"],
         )
         print(response["task"]["result"])
+
+    @arg.project
+    @arg.service_name
+    @arg(
+        "--task-id",
+        help="Task id to check the status",
+    )
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def service__task_get(self):
+        """Create a service task"""
+        response = self.client.get_service_task(
+            project=self.get_project(),
+            service=self.args.service_name,
+            task_id=self.args.task_id,
+        )
+        self.print_response(
+            [response],
+            format=self.args.format,
+            json=self.args.json,
+            table_layout=["task_type", "success", "task_id", "result"],
+        )
 
     @arg.project
     @arg.service_name
