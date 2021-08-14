@@ -1154,6 +1154,7 @@ class AivenClient(AivenClientBase):
         project_vpc_id=UNDEFINED,
         service_integrations=None,
         termination_protection=False,
+        static_ips=(),
     ):
         user_config = user_config or {}
         body = {
@@ -1164,6 +1165,7 @@ class AivenClient(AivenClientBase):
             "service_type": service_type,
             "user_config": user_config,
             "termination_protection": termination_protection,
+            "static_ips": static_ips,
         }
         if project_vpc_id is not UNDEFINED:
             body["project_vpc_id"] = project_vpc_id
@@ -1236,6 +1238,29 @@ class AivenClient(AivenClientBase):
     def list_privatelink_cloud_availability(self, project):
         path = self.build_path("project", project, "privatelink-availability")
         return self.verify(self.get, path, result_key="privatelink_availability")
+
+    def _static_ip_address_path(self, project, *parts):
+        return self.build_path("project", project, "static-ips", *parts)
+
+    def list_static_ip_addresses(self, project):
+        path = self._static_ip_address_path(project)
+        return self.verify(self.get, path, result_key="static_ips")
+
+    def create_static_ip_address(self, project, cloud_name):
+        path = self._static_ip_address_path(project)
+        return self.verify(self.post, path, body={"cloud_name": cloud_name})
+
+    def associate_static_ip_address(self, project, static_ip_id, service_name):
+        path = self._static_ip_address_path(project, static_ip_id, "association")
+        return self.verify(self.post, path, body={"service_name": service_name})
+
+    def dissociate_static_ip_address(self, project, static_ip_id):
+        path = self._static_ip_address_path(project, static_ip_id, "association")
+        return self.verify(self.delete, path)
+
+    def delete_static_ip_address(self, project, static_ip_id):
+        path = self._static_ip_address_path(project, static_ip_id)
+        return self.verify(self.delete, path)
 
     def delete_service(self, project, service):
         return self.verify(self.delete, self.build_path("project", project, "service", service))

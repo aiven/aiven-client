@@ -1007,6 +1007,45 @@ class AivenCLI(argx.CommandLineTool):
         self.print_response(resp, format=self.args.format, json=self.args.json)
 
     @arg.project
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def static_ip__list(self):
+        """List static IP addresses"""
+        resp = self.client.list_static_ip_addresses(project=self.get_project())
+        self.print_response(resp, format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.cloud_mandatory
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def static_ip__create(self):
+        """Create static IP address"""
+        resp = self.client.create_static_ip_address(project=self.get_project(), cloud_name=self.args.cloud)
+        self.print_response(resp, format=self.args.format, json=self.args.json, single_item=True)
+
+    @arg.project
+    @arg.static_ip_id
+    @arg("--service", help="Service name", required=True)
+    def static_ip__associate(self):
+        """Associate a static IP address with a service"""
+        self.client.associate_static_ip_address(
+            project=self.get_project(), static_ip_id=self.args.static_ip_id, service_name=self.args.service
+        )
+
+    @arg.project
+    @arg.static_ip_id
+    def static_ip__dissociate(self):
+        """Dissociate a static IP address from a service"""
+        self.client.dissociate_static_ip_address(project=self.get_project(), static_ip_id=self.args.static_ip_id)
+
+    @arg.project
+    @arg("--format", help="Format string for output")
+    @arg.static_ip_id
+    def static_ip__delete(self):
+        """Delete a static IP address"""
+        self.client.delete_static_ip_address(project=self.get_project(), static_ip_id=self.args.static_ip_id)
+
+    @arg.project
     @arg.service_name
     @arg("--format", help="Format string for output, e.g. '{service_name} {service_uri}'")
     @arg.verbose
@@ -3120,6 +3159,13 @@ ssl.truststore.type=JKS
         help="Do not put the service into a project VPC even if the project has one in the selected cloud",
     )
     @arg(
+        "--static-ip",
+        action="append",
+        help="Associate static IP address with service",
+        metavar="STATIC_IP_ID",
+        dest="static_ips"
+    )
+    @arg(
         "--read-replica-for",
         help="Creates a read replica for given source service. Only applicable for certain service types",
     )
@@ -3171,6 +3217,7 @@ ssl.truststore.type=JKS
                 project_vpc_id=project_vpc_id,
                 termination_protection=self.args.enable_termination_protection,
                 service_integrations=service_integrations,
+                static_ips=self.args.static_ips or (),
             )
         except client.Error as ex:
             print(ex.response)
