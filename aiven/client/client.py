@@ -1212,8 +1212,8 @@ class AivenClient(AivenClientBase):
         path = self.build_path("project", project, "service", service, "credentials", "reset")
         return self.verify(self.put, path, result_key="service")
 
-    def _privatelink_path(self, project, service, cloud_provider):
-        return self.build_path("project", project, "service", service, "privatelink", cloud_provider)
+    def _privatelink_path(self, project, service, cloud_provider, *rest):
+        return self.build_path("project", project, "service", service, "privatelink", cloud_provider, *rest)
 
     def create_service_privatelink_aws(self, project, service, principals):
         path = self._privatelink_path(project, service, "aws")
@@ -1233,6 +1233,34 @@ class AivenClient(AivenClientBase):
 
     def list_service_privatelink_aws_connections(self, project, service):
         path = self._privatelink_path(project, service, "aws") + "/connections"
+        return self.verify(self.get, path, result_key="connections")
+
+    def create_service_privatelink_azure(self, project, service, user_subscription_ids):
+        path = self._privatelink_path(project, service, "azure")
+        return self.verify(self.post, path, body={"user_subscription_ids": user_subscription_ids})
+
+    def update_service_privatelink_azure(self, project, service, user_subscription_ids):
+        path = self._privatelink_path(project, service, "azure")
+        return self.verify(self.put, path, body={"user_subscription_ids": user_subscription_ids})
+
+    def update_service_privatelink_connection_azure(self, project, service, privatelink_connection_id, user_ip_address):
+        path = self._privatelink_path(project, service, "azure", "connections", privatelink_connection_id)
+        return self.verify(self.put, path, body={"user_ip_address": user_ip_address})
+
+    def approve_service_privatelink_connection_azure(self, project, service, privatelink_connection_id):
+        path = self._privatelink_path(project, service, "azure", "connections", privatelink_connection_id, "approve")
+        return self.verify(self.post, path)
+
+    def delete_service_privatelink_azure(self, project, service):
+        path = self._privatelink_path(project, service, "azure")
+        return self.verify(self.delete, path)
+
+    def get_service_privatelink_azure(self, project, service):
+        path = self._privatelink_path(project, service, "azure")
+        return self.verify(self.get, path)
+
+    def list_service_privatelink_azure_connections(self, project, service):
+        path = self._privatelink_path(project, service, "azure") + "/connections"
         return self.verify(self.get, path, result_key="connections")
 
     def list_privatelink_cloud_availability(self, project):

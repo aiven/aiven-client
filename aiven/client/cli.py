@@ -998,6 +998,112 @@ class AivenCLI(argx.CommandLineTool):
         )
         self.print_response([resp], format=self.args.format, json=self.args.json)
 
+    _azure_privatelink_user_subscription_ids_help = "Azure subscription IDs allowed to connect to the Privatelink service"
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    @arg(
+        "--user-subscription-id",
+        dest="user_subscription_ids",
+        action="append",
+        metavar="SUBSCRIPTION_ID",
+        help=_azure_privatelink_user_subscription_ids_help,
+    )
+    def service__privatelink__azure__create(self):
+        """Create Azure PrivateLink for a service"""
+        resp = self.client.create_service_privatelink_azure(
+            project=self.get_project(),
+            service=self.args.service_name,
+            user_subscription_ids=self.args.user_subscription_ids or []
+        )
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    @arg(
+        "--user-subscription-id",
+        dest="user_subscription_ids",
+        action="append",
+        metavar="SUBSCRIPTION_ID",
+        help=_azure_privatelink_user_subscription_ids_help,
+    )
+    def service__privatelink__azure__update(self):
+        """Update Azure PrivateLink for a service"""
+        resp = self.client.update_service_privatelink_azure(
+            project=self.get_project(),
+            service=self.args.service_name,
+            user_subscription_ids=self.args.user_subscription_ids or []
+        )
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def service__privatelink__azure__get(self):
+        """Get Azure PrivateLink information for a service"""
+        resp = self.client.get_service_privatelink_azure(project=self.get_project(), service=self.args.service_name)
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def service__privatelink__azure__delete(self):
+        """Delete Azure PrivateLink for a service"""
+        resp = self.client.delete_service_privatelink_azure(project=self.get_project(), service=self.args.service_name)
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    @arg(
+        "--endpoint-ip-address",
+        metavar="IP_ADDRESS",
+        help="(Private) IP address of Azure endpoint in user subscription",
+    )
+    @arg("privatelink_connection_id", help="Aiven privatelink connection ID")
+    def service__privatelink__azure__connection__update(self):
+        """Update Azure PrivateLink connection"""
+        resp = self.client.update_service_privatelink_connection_azure(
+            project=self.get_project(),
+            service=self.args.service_name,
+            privatelink_connection_id=self.args.privatelink_connection_id,
+            user_ip_address=self.args.endpoint_ip_address,
+        )
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    @arg("privatelink_connection_id", help="Aiven privatelink connection ID")
+    def service__privatelink__azure__connection__approve(self):
+        """Approve an Azure PrivateLink connection in pending-user-approval state"""
+        resp = self.client.approve_service_privatelink_connection_azure(
+            project=self.get_project(),
+            service=self.args.service_name,
+            privatelink_connection_id=self.args.privatelink_connection_id,
+        )
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def service__privatelink__azure__connection__list(self):
+        """List Azure PrivateLink connections for a service"""
+        resp = self.client.list_service_privatelink_azure_connections(
+            project=self.get_project(), service=self.args.service_name
+        )
+        layout = ["privatelink_connection_id", "private_endpoint_id", "state", "user_ip_address"]
+        self.print_response(resp, format=self.args.format, json=self.args.json, table_layout=layout)
+
     @arg.project
     @arg("--format", help="Format string for output")
     @arg.json
