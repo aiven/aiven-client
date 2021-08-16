@@ -8,6 +8,7 @@ from aiven.client.cliarg import arg
 from aiven.client.speller import suggest
 from collections import Counter
 from decimal import Decimal
+from typing import Callable
 from urllib.parse import urlparse
 
 import errno
@@ -103,9 +104,20 @@ def optional_auth(fun):
     return fun
 
 
+if (sys.version_info.major, sys.version_info.minor) >= (3, 8):
+    from typing import Optional, Protocol
+
+    class ClientFactory(Protocol):  # pylint: disable=too-few-public-methods
+        def __call__(self, base_url: str, show_http: bool, request_timeout: Optional[int]):
+            ...
+else:
+    ClientFactory = Callable[..., client.AivenClient]
+
+
 class AivenCLI(argx.CommandLineTool):
-    def __init__(self):
+    def __init__(self, client_factory: ClientFactory = client.AivenClient):
         argx.CommandLineTool.__init__(self, "avn")
+        self.client_factory = client_factory
         self.client = None
         for plugin in PLUGINS:
             plugincli = plugin.ClientPlugin()
@@ -3828,7 +3840,7 @@ server_encryption_options:
             raise
 
     def pre_run(self, func):
-        self.client = client.AivenClient(
+        self.client = self.client_factory(
             base_url=self.args.url,
             show_http=self.args.show_http,
             request_timeout=self.args.request_timeout,
