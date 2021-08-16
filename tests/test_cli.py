@@ -4,8 +4,10 @@
 # See the file `LICENSE` for details.
 
 # pylint: disable=no-member
-from aiven.client.cli import AivenCLI
+from aiven.client import AivenClient
+from aiven.client.cli import AivenCLI, ClientFactory
 from collections import namedtuple
+from unittest import mock
 
 import pytest
 
@@ -107,3 +109,67 @@ def test_create_user_config():
         "foo": None,
         "main": 3,
     }
+
+
+def patched_get_auth_token() -> str:
+    return "token"
+
+
+def build_aiven_cli(client: AivenClient) -> AivenCLI:
+    cli = AivenCLI(client_factory=mock.Mock(spec_set=ClientFactory, return_value=client))
+    cli._get_auth_token = patched_get_auth_token  # pylint: disable=protected-access
+    return cli
+
+
+def test_service_task_create_migration_check():
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.create_service_task.return_value = {
+        "message": "created",
+        "task": {
+            "create_time": "2021-08-13T08:00:45Z",
+            "result": "",
+            "success": None,
+            "task_id": "79803598-d09a-44bf-ae2b-34aad942f4e8",
+            "task_type": "mysql_migration_check"
+        }
+    }
+
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "service", "task-create", "--operation", "migration_check", "--project", "test", "--source-service-uri",
+            "mysql://root:password@source-mysql-server:3306/", "--ignore-dbs", "db1", "target-mysql-service-1"
+        ]
+    )
+    aiven_client.create_service_task.assert_called_with(
+        project='test',
+        service='target-mysql-service-1',
+        body={
+            'task_type': 'migration_check',
+            'migration_check': {
+                'source_service_uri': 'mysql://root:password@source-mysql-server:3306/',
+                'ignore_dbs': 'db1'
+            }
+        }
+    )
+
+
+def test_service_task_get_migration_check():
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.get_service_task.return_value = {
+        "create_time": "2021-08-13T07:10:35Z",
+        "ignore_dbs": "defaultdb",
+        "result": "aiven_mysql_migrate.exceptions.NothingToMigrateException: No databases to migrate",
+        "success": False,
+        "task_id": "f25eac03-25f7-4de2-be6a-eb476fec1730",
+        "task_type": "mysql_migration_check"
+    }
+
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "service", "task-get", "--task-id", "f25eac03-25f7-4de2-be6a-eb476fec1730", "--project", "test",
+            "target-mysql-service-1"
+        ]
+    )
+    aiven_client.get_service_task.assert_called_with(
+        project='test', service='target-mysql-service-1', task_id='f25eac03-25f7-4de2-be6a-eb476fec1730'
+    )

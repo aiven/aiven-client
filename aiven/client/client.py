@@ -388,14 +388,11 @@ class AivenClient(AivenClientBase):
             self.build_path("project", project, "integration", integration_id),
         )
 
-    def create_service_task(self, project, service, operation, target_version):
+    def create_service_task(self, project, service, body):
         return self.verify(
             self.post,
             self.build_path("project", project, "service", service, "task"),
-            body={
-                "task_type": operation,
-                "target_version": target_version,
-            },
+            body=body,
         )
 
     def get_service_task(self, project, service, task_id):
