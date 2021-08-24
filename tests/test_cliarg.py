@@ -67,3 +67,23 @@ def test_user_config_json_success():
     ret = test_class.run(args=valid_json_arg)
     assert ret is None  # Should run() return 0 actually?
     assert test_class.args.user_config_json == {"foo": "bar"}
+
+
+def test_user_config_success():
+    """Test that user config parameter -c works and not cause conflict with
+    --user_config_json
+    """
+
+    class T(CommandLineTool):
+        """Test class"""
+
+        @arg.user_config
+        @arg.user_config_json()
+        @arg()
+        def t(self):
+            """t"""
+
+    user_config_arg = ["t", "-c", "userconfkey=val"]
+    test_class = T("avn")
+    ret = test_class.run(args=user_config_arg)
+    assert ret is None

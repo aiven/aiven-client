@@ -11,6 +11,9 @@ import os
 
 
 def get_json_config(path_or_string):
+    # If parameter is empty, return an empty dict
+    if not path_or_string:
+        return {}
     if path_or_string.startswith("@"):
         filepath = path_or_string[1:]
         with open(filepath, "r") as config_file:
@@ -46,7 +49,7 @@ def user_config_json():
     def wrapper(fun):
         arg(
             "--user-config-json",
-            default="{}",
+            default=None,
             dest="user_config_json",
             help="JSON string or path (preceded by '@') to a JSON configuration file",
         )(fun)
