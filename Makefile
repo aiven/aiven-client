@@ -1,4 +1,4 @@
-short_ver = 2.13.2
+short_ver = 2.13.3
 long_ver = $(shell git describe --long 2>/dev/null || echo $(short_ver)-0-unknown-g`git describe --always`)
 generated = aiven/client/version.py
 PYTHON ?= python3
