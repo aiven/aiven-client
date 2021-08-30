@@ -1022,6 +1022,15 @@ class AivenCLI(argx.CommandLineTool):
 
     @arg.project
     @arg.service_name
+    def service__privatelink__azure__refresh(self):
+        """Refresh Azure PrivateLink to discover new endpoints"""
+        self.client.refresh_service_privatelink_azure(
+            project=self.get_project(),
+            service=self.args.service_name,
+        )
+
+    @arg.project
+    @arg.service_name
     @arg("--format", help="Format string for output")
     @arg.json
     @arg(

@@ -1239,6 +1239,10 @@ class AivenClient(AivenClientBase):
         path = self._privatelink_path(project, service, "azure")
         return self.verify(self.post, path, body={"user_subscription_ids": user_subscription_ids})
 
+    def refresh_service_privatelink_azure(self, project, service):
+        path = self._privatelink_path(project, service, "azure", "refresh")
+        return self.verify(self.post, path)
+
     def update_service_privatelink_azure(self, project, service, user_subscription_ids):
         path = self._privatelink_path(project, service, "azure")
         return self.verify(self.put, path, body={"user_subscription_ids": user_subscription_ids})
