@@ -1154,6 +1154,7 @@ class AivenClient(AivenClientBase):
         project_vpc_id=UNDEFINED,
         service_integrations=None,
         termination_protection=False,
+        static_ips=(),
     ):
         user_config = user_config or {}
         body = {
@@ -1164,6 +1165,7 @@ class AivenClient(AivenClientBase):
             "service_type": service_type,
             "user_config": user_config,
             "termination_protection": termination_protection,
+            "static_ips": static_ips,
         }
         if project_vpc_id is not UNDEFINED:
             body["project_vpc_id"] = project_vpc_id
@@ -1210,8 +1212,8 @@ class AivenClient(AivenClientBase):
         path = self.build_path("project", project, "service", service, "credentials", "reset")
         return self.verify(self.put, path, result_key="service")
 
-    def _privatelink_path(self, project, service, cloud_provider):
-        return self.build_path("project", project, "service", service, "privatelink", cloud_provider)
+    def _privatelink_path(self, project, service, cloud_provider, *rest):
+        return self.build_path("project", project, "service", service, "privatelink", cloud_provider, *rest)
 
     def create_service_privatelink_aws(self, project, service, principals):
         path = self._privatelink_path(project, service, "aws")
@@ -1233,9 +1235,64 @@ class AivenClient(AivenClientBase):
         path = self._privatelink_path(project, service, "aws") + "/connections"
         return self.verify(self.get, path, result_key="connections")
 
+    def create_service_privatelink_azure(self, project, service, user_subscription_ids):
+        path = self._privatelink_path(project, service, "azure")
+        return self.verify(self.post, path, body={"user_subscription_ids": user_subscription_ids})
+
+    def refresh_service_privatelink_azure(self, project, service):
+        path = self._privatelink_path(project, service, "azure", "refresh")
+        return self.verify(self.post, path)
+
+    def update_service_privatelink_azure(self, project, service, user_subscription_ids):
+        path = self._privatelink_path(project, service, "azure")
+        return self.verify(self.put, path, body={"user_subscription_ids": user_subscription_ids})
+
+    def update_service_privatelink_connection_azure(self, project, service, privatelink_connection_id, user_ip_address):
+        path = self._privatelink_path(project, service, "azure", "connections", privatelink_connection_id)
+        return self.verify(self.put, path, body={"user_ip_address": user_ip_address})
+
+    def approve_service_privatelink_connection_azure(self, project, service, privatelink_connection_id):
+        path = self._privatelink_path(project, service, "azure", "connections", privatelink_connection_id, "approve")
+        return self.verify(self.post, path)
+
+    def delete_service_privatelink_azure(self, project, service):
+        path = self._privatelink_path(project, service, "azure")
+        return self.verify(self.delete, path)
+
+    def get_service_privatelink_azure(self, project, service):
+        path = self._privatelink_path(project, service, "azure")
+        return self.verify(self.get, path)
+
+    def list_service_privatelink_azure_connections(self, project, service):
+        path = self._privatelink_path(project, service, "azure") + "/connections"
+        return self.verify(self.get, path, result_key="connections")
+
     def list_privatelink_cloud_availability(self, project):
         path = self.build_path("project", project, "privatelink-availability")
         return self.verify(self.get, path, result_key="privatelink_availability")
+
+    def _static_ip_address_path(self, project, *parts):
+        return self.build_path("project", project, "static-ips", *parts)
+
+    def list_static_ip_addresses(self, project):
+        path = self._static_ip_address_path(project)
+        return self.verify(self.get, path, result_key="static_ips")
+
+    def create_static_ip_address(self, project, cloud_name):
+        path = self._static_ip_address_path(project)
+        return self.verify(self.post, path, body={"cloud_name": cloud_name})
+
+    def associate_static_ip_address(self, project, static_ip_id, service_name):
+        path = self._static_ip_address_path(project, static_ip_id, "association")
+        return self.verify(self.post, path, body={"service_name": service_name})
+
+    def dissociate_static_ip_address(self, project, static_ip_id):
+        path = self._static_ip_address_path(project, static_ip_id, "association")
+        return self.verify(self.delete, path)
+
+    def delete_static_ip_address(self, project, static_ip_id):
+        path = self._static_ip_address_path(project, static_ip_id)
+        return self.verify(self.delete, path)
 
     def delete_service(self, project, service):
         return self.verify(self.delete, self.build_path("project", project, "service", service))

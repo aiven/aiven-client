@@ -998,6 +998,121 @@ class AivenCLI(argx.CommandLineTool):
         )
         self.print_response([resp], format=self.args.format, json=self.args.json)
 
+    _azure_privatelink_user_subscription_ids_help = "Azure subscription IDs allowed to connect to the Privatelink service"
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    @arg(
+        "--user-subscription-id",
+        dest="user_subscription_ids",
+        action="append",
+        metavar="SUBSCRIPTION_ID",
+        help=_azure_privatelink_user_subscription_ids_help,
+    )
+    def service__privatelink__azure__create(self):
+        """Create Azure PrivateLink for a service"""
+        resp = self.client.create_service_privatelink_azure(
+            project=self.get_project(),
+            service=self.args.service_name,
+            user_subscription_ids=self.args.user_subscription_ids or []
+        )
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.service_name
+    def service__privatelink__azure__refresh(self):
+        """Refresh Azure PrivateLink to discover new endpoints"""
+        self.client.refresh_service_privatelink_azure(
+            project=self.get_project(),
+            service=self.args.service_name,
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    @arg(
+        "--user-subscription-id",
+        dest="user_subscription_ids",
+        action="append",
+        metavar="SUBSCRIPTION_ID",
+        help=_azure_privatelink_user_subscription_ids_help,
+    )
+    def service__privatelink__azure__update(self):
+        """Update Azure PrivateLink for a service"""
+        resp = self.client.update_service_privatelink_azure(
+            project=self.get_project(),
+            service=self.args.service_name,
+            user_subscription_ids=self.args.user_subscription_ids or []
+        )
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def service__privatelink__azure__get(self):
+        """Get Azure PrivateLink information for a service"""
+        resp = self.client.get_service_privatelink_azure(project=self.get_project(), service=self.args.service_name)
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def service__privatelink__azure__delete(self):
+        """Delete Azure PrivateLink for a service"""
+        resp = self.client.delete_service_privatelink_azure(project=self.get_project(), service=self.args.service_name)
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    @arg(
+        "--endpoint-ip-address",
+        metavar="IP_ADDRESS",
+        help="(Private) IP address of Azure endpoint in user subscription",
+    )
+    @arg("privatelink_connection_id", help="Aiven privatelink connection ID")
+    def service__privatelink__azure__connection__update(self):
+        """Update Azure PrivateLink connection"""
+        resp = self.client.update_service_privatelink_connection_azure(
+            project=self.get_project(),
+            service=self.args.service_name,
+            privatelink_connection_id=self.args.privatelink_connection_id,
+            user_ip_address=self.args.endpoint_ip_address,
+        )
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    @arg("privatelink_connection_id", help="Aiven privatelink connection ID")
+    def service__privatelink__azure__connection__approve(self):
+        """Approve an Azure PrivateLink connection in pending-user-approval state"""
+        resp = self.client.approve_service_privatelink_connection_azure(
+            project=self.get_project(),
+            service=self.args.service_name,
+            privatelink_connection_id=self.args.privatelink_connection_id,
+        )
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def service__privatelink__azure__connection__list(self):
+        """List Azure PrivateLink connections for a service"""
+        resp = self.client.list_service_privatelink_azure_connections(
+            project=self.get_project(), service=self.args.service_name
+        )
+        layout = ["privatelink_connection_id", "private_endpoint_id", "state", "user_ip_address"]
+        self.print_response(resp, format=self.args.format, json=self.args.json, table_layout=layout)
+
     @arg.project
     @arg("--format", help="Format string for output")
     @arg.json
@@ -1005,6 +1120,45 @@ class AivenCLI(argx.CommandLineTool):
         """List privatelink cloud availability and prices"""
         resp = self.client.list_privatelink_cloud_availability(project=self.get_project())
         self.print_response(resp, format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def static_ip__list(self):
+        """List static IP addresses"""
+        resp = self.client.list_static_ip_addresses(project=self.get_project())
+        self.print_response(resp, format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.cloud_mandatory
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def static_ip__create(self):
+        """Create static IP address"""
+        resp = self.client.create_static_ip_address(project=self.get_project(), cloud_name=self.args.cloud)
+        self.print_response(resp, format=self.args.format, json=self.args.json, single_item=True)
+
+    @arg.project
+    @arg.static_ip_id
+    @arg("--service", help="Service name", required=True)
+    def static_ip__associate(self):
+        """Associate a static IP address with a service"""
+        self.client.associate_static_ip_address(
+            project=self.get_project(), static_ip_id=self.args.static_ip_id, service_name=self.args.service
+        )
+
+    @arg.project
+    @arg.static_ip_id
+    def static_ip__dissociate(self):
+        """Dissociate a static IP address from a service"""
+        self.client.dissociate_static_ip_address(project=self.get_project(), static_ip_id=self.args.static_ip_id)
+
+    @arg.project
+    @arg("--format", help="Format string for output")
+    @arg.static_ip_id
+    def static_ip__delete(self):
+        """Delete a static IP address"""
+        self.client.delete_static_ip_address(project=self.get_project(), static_ip_id=self.args.static_ip_id)
 
     @arg.project
     @arg.service_name
@@ -3120,6 +3274,13 @@ ssl.truststore.type=JKS
         help="Do not put the service into a project VPC even if the project has one in the selected cloud",
     )
     @arg(
+        "--static-ip",
+        action="append",
+        help="Associate static IP address with service",
+        metavar="STATIC_IP_ID",
+        dest="static_ips"
+    )
+    @arg(
         "--read-replica-for",
         help="Creates a read replica for given source service. Only applicable for certain service types",
     )
@@ -3171,6 +3332,7 @@ ssl.truststore.type=JKS
                 project_vpc_id=project_vpc_id,
                 termination_protection=self.args.enable_termination_protection,
                 service_integrations=service_integrations,
+                static_ips=self.args.static_ips or (),
             )
         except client.Error as ex:
             print(ex.response)

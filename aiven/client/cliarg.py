@@ -84,6 +84,7 @@ arg.billing_extra_text = arg(
 arg.billing_group = arg("id", help="Billing group ID")
 arg.card_id = arg("--card-id", help="Card ID")
 arg.cloud = arg("--cloud", help="Cloud to use (see 'cloud list' command)")
+arg.cloud_mandatory = arg("--cloud", help="Cloud to use (see 'cloud list' command)", required=True)
 arg.config_cmdline = arg(
     "-c",
     dest="config_cmdline",
@@ -139,7 +140,9 @@ arg.untag = arg(
     "--untag", dest="topic_option_untag", metavar="KEY", action="append", help="Tag to delete from topic metadata"
 )
 arg.service_name = arg("service_name", help="Service name")
+arg.service_name_mandatory = arg("service_name", help="Service name", required=True)
 arg.service_type = arg("-t", "--service-type", help="Type of service (see 'service list-types')")
+arg.static_ip_id = arg("static_ip_id", help="Static IP address ID")
 arg.ns_name = arg("ns_name", help="Namespace name")
 arg.ns_type = arg("--ns-type", help="Namespace type ('aggregated' or 'unaggregated')", required=True)
 arg.ns_retention_mandatory = arg(
