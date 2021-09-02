@@ -913,7 +913,7 @@ class AivenCLI(argx.CommandLineTool):
         "create_time",
         "update_time",
     ]]
-    EXT_SERVICE_LAYOUT = ["service_uri", "user_config.*", "databases", "users"]
+    EXT_SERVICE_LAYOUT = ["service_uri", "disk_space_mb", "user_config.*", "databases", "users"]
 
     @arg.project
     @arg("service_name", nargs="*", default=[], help="Service name")
