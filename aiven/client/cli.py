@@ -3256,6 +3256,7 @@ ssl.truststore.type=JKS
         required=True,
     )
     @arg("-p", "--plan", help="subscription plan of service", required=False)
+    @arg.disk_space_mb
     @arg.cloud
     @arg(
         "--no-fail-if-exists",
@@ -3327,6 +3328,7 @@ ssl.truststore.type=JKS
                 service=self.args.service_name,
                 service_type=service_type,
                 plan=plan,
+                disk_space_mb=self.args.disk_space_mb,
                 cloud=self.args.cloud,
                 user_config=user_config,
                 project_vpc_id=project_vpc_id,
@@ -3410,6 +3412,7 @@ ssl.truststore.type=JKS
     @arg.user_config
     @arg.user_option_remove
     @arg("-p", "--plan", help="subscription plan of service", required=False)
+    @arg.disk_space_mb
     @arg("--power-on", action="store_true", default=False, help="Power-on the service")
     @arg(
         "--power-off",
@@ -3484,6 +3487,7 @@ ssl.truststore.type=JKS
                 cloud=self.args.cloud,
                 maintenance=maintenance or None,
                 plan=plan,
+                disk_space_mb=self.args.disk_space_mb,
                 powered=powered,
                 project=project,
                 service=self.args.service_name,
