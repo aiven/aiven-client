@@ -550,7 +550,12 @@ class AivenCLI(argx.CommandLineTool):
             ram_amount = "{:.0f} GB".format(plan["node_memory_mb"] / 1024.0)
 
         if plan["disk_space_mb"]:
-            disk_desc = ", {:.0f} GB disk".format(plan["disk_space_mb"] / 1024.0)
+            if plan.get("disk_space_cap_mb"):
+                disk_desc = ", {:.0f}-{:.0f} GB disk".format(
+                    plan["disk_space_mb"] / 1024.0, plan["disk_space_cap_mb"] / 1024.0
+                )
+            else:
+                disk_desc = ", {:.0f} GB disk".format(plan["disk_space_mb"] / 1024.0)
         else:
             disk_desc = ""
 
