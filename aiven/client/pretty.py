@@ -7,6 +7,7 @@
 import datetime
 import decimal
 import fnmatch
+import ipaddress
 import json
 import sys
 
@@ -24,6 +25,13 @@ class CustomJsonEncoder(json.JSONEncoder):
         if isinstance(o, datetime.timedelta):
             return str(o)
         if isinstance(o, decimal.Decimal):
+            return str(o)
+        if isinstance(
+            o, (
+                ipaddress.IPv4Address, ipaddress.IPv6Address, ipaddress.IPv4Network, ipaddress.IPv6Network,
+                ipaddress.IPv4Interface, ipaddress.IPv6Interface
+            )
+        ):
             return str(o)
 
         return json.JSONEncoder.default(self, o)
