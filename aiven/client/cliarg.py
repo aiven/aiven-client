@@ -102,6 +102,9 @@ arg.config_file = arg(
     help="Additional configuration option whose value is loaded from file in the form name=filename",
 )
 arg.country_code = arg("--country-code", help="Billing country code")
+arg.disk_space_mb = arg(
+    "--disk-space-gib", dest="disk_space_mb", type=lambda value: int(value) * 1024, help="Disk space for data storage (GiB)"
+)
 arg.email = arg("email", help="User email address")
 arg.force = arg(
     "-f",

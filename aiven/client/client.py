@@ -1149,6 +1149,7 @@ class AivenClient(AivenClientBase):
         service,
         service_type,
         plan,
+        disk_space_mb=None,
         cloud=None,
         user_config=None,
         project_vpc_id=UNDEFINED,
@@ -1167,6 +1168,8 @@ class AivenClient(AivenClientBase):
             "termination_protection": termination_protection,
             "static_ips": static_ips,
         }
+        if disk_space_mb is not None:
+            body["disk_space_mb"] = disk_space_mb
         if project_vpc_id is not UNDEFINED:
             body["project_vpc_id"] = project_vpc_id
         return self.verify(
@@ -1184,6 +1187,7 @@ class AivenClient(AivenClientBase):
         maintenance=None,
         user_config=None,
         plan=None,
+        disk_space_mb=None,
         powered=None,
         termination_protection=None,
         project_vpc_id=UNDEFINED,
@@ -1196,6 +1200,8 @@ class AivenClient(AivenClientBase):
             body["maintenance"] = maintenance
         if plan is not None:
             body["plan"] = plan
+        if disk_space_mb is not None:
+            body["disk_space_mb"] = disk_space_mb
         if powered is not None:
             body["powered"] = powered
         if user_config is not None:
