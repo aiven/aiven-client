@@ -947,6 +947,7 @@ class AivenCLI(argx.CommandLineTool):
         "plan",
         "create_time",
         "update_time",
+        "notifications",
     ]]
     EXT_SERVICE_LAYOUT = ["service_uri", "disk_space_mb", "user_config.*", "databases", "users"]
 
@@ -967,6 +968,16 @@ class AivenCLI(argx.CommandLineTool):
         layout = self.SERVICE_LAYOUT[:]
         if self.args.verbose:
             layout.extend(self.EXT_SERVICE_LAYOUT)
+
+        # Format service notifications
+        for service in services:
+            for notification in service["service_notifications"]:
+                service.setdefault("notifications", [])
+                if notification["type"] == "service_end_of_life":
+                    # Python can't proper parse Z terminated ISO strings
+                    eol_time = parse_iso8601(notification["metadata"]["service_end_of_life_time"])
+                    eol_date = eol_time.date().isoformat()
+                    service["notifications"].append(f"EOL: {eol_date} Upgrade available")
 
         self.print_response(services, format=self.args.format, json=self.args.json, table_layout=layout)
 
