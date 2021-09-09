@@ -5,8 +5,9 @@
 
 # pylint: disable=no-member
 from aiven.client import AivenClient
-from aiven.client.cli import AivenCLI, ClientFactory
+from aiven.client.cli import AivenCLI, ClientFactory, EOL_ADVANCE_WARNING_TIME
 from collections import namedtuple
+from datetime import datetime, timedelta, timezone
 from unittest import mock
 
 import pytest
@@ -173,3 +174,34 @@ def test_service_task_get_migration_check():
     aiven_client.get_service_task.assert_called_with(
         project='test', service='target-mysql-service-1', task_id='f25eac03-25f7-4de2-be6a-eb476fec1730'
     )
+
+
+def test_version_eol_check():
+    fake_eol_time = datetime(2021, 9, 10, tzinfo=timezone.utc)
+
+    fake_time_safe = fake_eol_time - EOL_ADVANCE_WARNING_TIME - timedelta(days=1)
+    fake_time_soon = fake_eol_time - EOL_ADVANCE_WARNING_TIME + timedelta(days=1)
+
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    service_type = "pg"
+    service_version = "9.6"
+    aiven_client.get_service_versions.return_value = [{
+        "service_type": service_type,
+        "major_version": service_version,
+        "aiven_end_of_life_time": "2021-09-10T00:00:00Z",
+        "availability_end_time": "2021-06-12T00:00:00Z"
+    }]
+
+    cli = AivenCLI(aiven_client)
+    cli.client = aiven_client
+    cli.confirm = mock.Mock()
+
+    # Test current time < EOL_WARNING time
+    with mock.patch("aiven.client.cli.get_current_date", return_value=fake_time_safe):
+        cli._do_version_eol_check(service_type, service_version)  # pylint: disable=protected-access
+        cli.confirm.assert_not_called()  # No confirmation should have been asked
+
+    # Test current time > EOL_WARNING
+    with mock.patch("aiven.client.cli.get_current_date", return_value=fake_time_soon):
+        cli._do_version_eol_check(service_type, service_version)  # pylint: disable=protected-access
+        cli.confirm.assert_called()  # Confirmation should have been asked
