@@ -32,7 +32,7 @@ class CustomJsonEncoder(json.JSONEncoder):
                 ipaddress.IPv4Interface, ipaddress.IPv6Interface
             )
         ):
-            return str(o)
+            return o.compressed
 
         return json.JSONEncoder.default(self, o)
 

@@ -5,6 +5,9 @@
 from . import argx, client
 from aiven.client import envdefault
 from aiven.client.cliarg import arg
+from aiven.client.connection_info.common import Store
+from aiven.client.connection_info.kafka import KafkaCertificateConnectionInfo, KafkaSASLConnectionInfo
+from aiven.client.connection_info.pg import PGConnectionInfo
 from aiven.client.speller import suggest
 from collections import Counter
 from decimal import Decimal
@@ -1239,6 +1242,130 @@ class AivenCLI(argx.CommandLineTool):
                         "unit": progress_update.get("unit") or "",
                     })
             self.print_response(collapsed, format=self.args.format, json=False, table_layout=layout)
+
+    def _get_project_ca(self):
+        return self.client.get_project_ca(project=self.get_project())["certificate"]
+
+    def _get_store_from_args(self):
+        if self.args.overwrite:
+            store = Store.overwrite
+        elif self.args.write:
+            store = Store.skip
+        else:
+            store = Store.skip
+        return store
+
+    @arg.project
+    @arg.service_name
+    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"), default="dynamic")
+    @arg("-a", "--kafka-authentication-method", choices=("certificate", "sasl"), default="certificate")
+    @arg("-u", "--username", default="avnadmin")
+    @arg("--ca", default="ca.pem", dest="ca_path")
+    @arg("--client-cert", default="service.crt", dest="client_cert_path")
+    @arg("--client-key", default="service.key", dest="client_key_path")
+    @arg("-w", "--write", action="store_true", help="Save certificate and key files if they don't not exist")
+    @arg("-W", "--overwrite", action="store_true", help="Save and overwrite certificate and key files")
+    def service__connection_info__kafkacat(self):
+        """kafkacat command string"""
+        service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
+        store = self._get_store_from_args()
+
+        if self.args.kafka_authentication_method == "certificate":
+            ci = KafkaCertificateConnectionInfo.from_service(service, route=self.args.route, username=self.args.username)
+            cmd = ci.kafkacat(
+                store,
+                get_project_ca=self._get_project_ca,
+                ca_path=self.args.ca_path,
+                client_cert_path=self.args.client_cert_path,
+                client_key_path=self.args.client_key_path,
+            )
+        elif self.args.kafka_authentication_method == "sasl":
+            ci = KafkaSASLConnectionInfo.from_service(service, route=self.args.route, username=self.args.username)
+            cmd = ci.kafkacat(
+                store,
+                get_project_ca=self._get_project_ca,
+                ca_path=self.args.ca_path,
+            )
+        else:
+            raise NotImplementedError(self.args.kafka_authentication_method)
+
+        print(" ".join(cmd))
+
+    def _get_usage_from_args(self):
+        if self.args.usage is None:
+            usage = "replica" if self.args.replica else "primary"
+        else:
+            if self.args.replica:
+                raise argx.UserError("--usage and --replica cannot be used simultaneously")
+            usage = self.args.usage
+        return usage
+
+    @arg.project
+    @arg.service_name
+    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"), default="dynamic")
+    @arg("--usage", choices=("primary", "replica"))
+    @arg("--replica", action="store_true")
+    @arg("-u", "--username", default="avnadmin")
+    @arg("-d", "--dbname", default="defaultdb")
+    @arg("--sslmode", default="require", choices=("require", "verify-ca", "verify-full", "disable", "allow", "prefer"))
+    def service__connection_info__psql(self):
+        """psql command string"""
+        service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
+
+        ci = PGConnectionInfo.from_service(
+            service,
+            route=self.args.route,
+            usage=self._get_usage_from_args(),
+            username=self.args.username,
+            dbname=self.args.dbname,
+            sslmode=self.args.sslmode,
+        )
+        cmd = ci.psql()
+        print(" ".join(cmd))
+
+    @arg.project
+    @arg.service_name
+    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"), default="dynamic")
+    @arg("--usage", choices=("primary", "replica"))
+    @arg("--replica", action="store_true")
+    @arg("-u", "--username", default="avnadmin")
+    @arg("-d", "--dbname", default="defaultdb")
+    @arg("--sslmode", default="require", choices=("require", "verify-ca", "verify-full", "disable", "allow", "prefer"))
+    def service__connection_info__pg__uri(self):
+        """PostgreSQL service URI"""
+        service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
+
+        ci = PGConnectionInfo.from_service(
+            service,
+            route=self.args.route,
+            usage=self._get_usage_from_args(),
+            username=self.args.username,
+            dbname=self.args.dbname,
+            sslmode=self.args.sslmode,
+        )
+        print(ci.uri())
+
+    @arg.project
+    @arg.service_name
+    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"), default="dynamic")
+    @arg("--usage", choices=("primary", "replica"))
+    @arg("--replica", action="store_true")
+    @arg("-u", "--username", default="avnadmin")
+    @arg("-d", "--dbname", default="defaultdb")
+    @arg("--sslmode", default="require", choices=("require", "verify-ca", "verify-full", "disable", "allow", "prefer"))
+    def service__connection_info__pg__string(self):
+        """PostgreSQL connection string"""
+        service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
+
+        ci = PGConnectionInfo.from_service(
+            service,
+            route=self.args.route,
+            usage=self._get_usage_from_args(),
+            username=self.args.username,
+            dbname=self.args.dbname,
+            sslmode=self.args.sslmode,
+        )
+        print(ci.connection_string())
 
     @optional_auth
     @arg.project
