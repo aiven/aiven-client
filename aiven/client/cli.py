@@ -10,8 +10,9 @@ from aiven.client.connection_info.kafka import KafkaCertificateConnectionInfo, K
 from aiven.client.connection_info.pg import PGConnectionInfo
 from aiven.client.speller import suggest
 from collections import Counter
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
-from typing import Callable
+from typing import Callable, List, Optional
 from urllib.parse import urlparse
 
 import errno
@@ -35,6 +36,8 @@ AUTHENTICATION_METHOD_COLUMNS = [
     "update_time",
 ]
 PLUGINS = []
+
+EOL_ADVANCE_WARNING_TIME = timedelta(weeks=26)  # Give 6 months advance notice for EOL services
 
 try:
     from aiven.admin import plugin as adminplugin  # pylint: disable=import-error,no-name-in-module
@@ -107,8 +110,25 @@ def optional_auth(fun):
     return fun
 
 
+def is_truthy(value: str) -> bool:
+    return value.lower() in {"y", "yes", "t", "true", "1", "ok"}
+
+
+def parse_iso8601(value: str) -> datetime:
+    # Python 3.6 doesn't support fromisoformat()
+    # or 'Z' as valid for '%z' format string
+    if value[-1] == 'Z':
+        value = value[:-1] + '+0000'
+
+    return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S%z")
+
+
+def get_current_date() -> datetime:
+    return datetime.now(timezone.utc)
+
+
 if (sys.version_info.major, sys.version_info.minor) >= (3, 8):
-    from typing import Optional, Protocol
+    from typing import Protocol
 
     class ClientFactory(Protocol):  # pylint: disable=too-few-public-methods
         def __call__(self, base_url: str, show_http: bool, request_timeout: Optional[int]):
@@ -257,6 +277,21 @@ class AivenCLI(argx.CommandLineTool):
                 raise argx.UserError("Passwords do not match")
 
         return password
+
+    def print_boxed(self, lines: List[str]) -> None:
+        longest = max(len(line) for line in lines)
+
+        print("*" * longest)
+        for line in lines:
+            print(line)
+        print("*" * longest)
+
+    def confirm(self, prompt: str = "confirm (y/N)? "):
+        if self.args.force or is_truthy(os.environ.get("AIVEN_FORCE", "no")):
+            return True
+
+        answer = input(prompt)
+        return is_truthy(answer)
 
     def get_project(self):
         """Return project given as cmdline argument or the default project from config file"""
@@ -915,6 +950,7 @@ class AivenCLI(argx.CommandLineTool):
         "plan",
         "create_time",
         "update_time",
+        "notifications",
     ]]
     EXT_SERVICE_LAYOUT = ["service_uri", "disk_space_mb", "user_config.*", "databases", "users"]
 
@@ -935,6 +971,16 @@ class AivenCLI(argx.CommandLineTool):
         layout = self.SERVICE_LAYOUT[:]
         if self.args.verbose:
             layout.extend(self.EXT_SERVICE_LAYOUT)
+
+        # Format service notifications
+        for service in services:
+            for notification in service["service_notifications"]:
+                service.setdefault("notifications", [])
+                if notification["type"] == "service_end_of_life":
+                    # Python can't proper parse Z terminated ISO strings
+                    eol_time = parse_iso8601(notification["metadata"]["service_end_of_life_time"])
+                    eol_date = eol_time.date().isoformat()
+                    service["notifications"].append(f"EOL: {eol_date} Upgrade available")
 
         self.print_response(services, format=self.args.format, json=self.args.json, table_layout=layout)
 
@@ -3052,16 +3098,11 @@ ssl.truststore.type=JKS
     def service__terminate(self):
         """Terminate service"""
         if not self.args.force and os.environ.get("AIVEN_FORCE") != "true":
-            output = [
+            self.print_boxed([
                 "Please re-enter the service name(s) to confirm the service termination.",
                 "This cannot be undone and all the data in the service will be lost!",
                 "Re-entering service name(s) can be skipped with the --force option.",
-            ]
-            longest = max(len(line) for line in output)
-            print("*" * longest)
-            for line in output:
-                print(line)
-            print("*" * longest)
+            ])
 
             for name in self.args.service_name:
                 user_input = input("Re-enter service name {!r} for immediate termination: ".format(name))
@@ -3423,6 +3464,7 @@ ssl.truststore.type=JKS
         default=False,
         help="Enable termination protection",
     )
+    @arg.force
     def service__create(self):
         """Create a service"""
         service_type_info = self.args.service_type.split(":")
@@ -3442,6 +3484,13 @@ ssl.truststore.type=JKS
         project = self.get_project()
         user_config_schema = self._get_service_type_user_config_schema(project=project, service_type=service_type)
         user_config = self.create_user_config(user_config_schema)
+
+        # If the user requests a specific version, check EOL status
+        requested_version = self._extract_user_config_version(service_type, user_config)
+
+        if requested_version:
+            self._do_version_eol_check(service_type, requested_version)
+
         service_integrations = []
 
         if self.args.read_replica_for:
@@ -3508,6 +3557,62 @@ ssl.truststore.type=JKS
             ) from ex
 
         return service_def["user_config_schema"]
+
+    def _get_service_version_info(self, service_type, version):
+        service_versions = self.client.get_service_versions()
+
+        for service_version in service_versions:
+            if service_version["service_type"] == service_type and service_version["major_version"] == version:
+                return service_version
+
+        # No match was found
+        raise argx.UserError(f"{service_type} v{version} is not available")
+
+    def _extract_user_config_version(self, service_type: str, user_config: dict) -> Optional[str]:
+        """Extracts version specified in the user config.
+
+        This handles the special case for M3 components which also accept
+        an 'm3_version' entry instead of '{service_type}_version'. If the
+        user supplies an 'm3_version' this method modifies the user_config
+        as the server side would.
+        """
+        service_version_key = f'{service_type}_version'
+
+        # M3 components have special cases for m3_version as key
+        if service_type in {"m3db", "m3aggregator", "m3coordinator"}:
+            if "m3_version" in user_config:
+                if service_version_key in user_config:
+                    raise argx.UserError(f"'{service_version_key}' and 'm3_version' cannot be specified together")
+
+                # Replace m3_version with service_type specific key
+                user_config[service_version_key] = user_config.pop("m3_version")
+
+        return user_config.get(service_version_key)
+
+    def _do_version_eol_check(self, service_type: str, requested_version: str) -> None:
+        """Checks the specified service version against EOL times."""
+        service_version = self._get_service_version_info(service_type, requested_version)
+        current_time = get_current_date()
+
+        if not service_version["aiven_end_of_life_time"]:
+            return  # No EOL specified
+
+        end_of_life_time = parse_iso8601(service_version["aiven_end_of_life_time"])
+        eol_status = 'is reaching EOL soon' if current_time < end_of_life_time else 'has reached EOL'
+
+        warning = [
+            "   !!! WARNING !!!",
+            "",
+            f"{service_type} v{requested_version} {eol_status} ({end_of_life_time.date()}).",
+            "",
+            "It is highly recommended to deploy newer, supported versions of the service.",
+        ]
+
+        if current_time > (end_of_life_time - EOL_ADVANCE_WARNING_TIME):
+            self.print_boxed(warning)
+
+            if not self.confirm("continue anyway (y/N)? "):
+                raise argx.UserError("Aborted")
 
     def _get_endpoint_user_config_schema(self, project, endpoint_type_name=None):
         endpoint_types_list = self.client.get_service_integration_endpoint_types(project=project)
@@ -3589,6 +3694,7 @@ ssl.truststore.type=JKS
         action="store_true",
         help="Do not put the service into a project VPC even if the project has one in the selected cloud",
     )
+    @arg.force
     def service__update(self):
         """Update service settings"""
         powered = self._get_powered()
@@ -3597,6 +3703,14 @@ ssl.truststore.type=JKS
         plan = self.args.plan or service["plan"]
         user_config_schema = self._get_service_type_user_config_schema(project=project, service_type=service["service_type"])
         user_config = self.create_user_config(user_config_schema)
+
+        # If the user requests a version change, check EOL status
+        service_type = service['service_type']
+        requested_version = self._extract_user_config_version(service_type, user_config)
+
+        if requested_version:
+            self._do_version_eol_check(service_type, requested_version)
+
         maintenance = {}
         if self.args.maintenance_dow:
             maintenance["dow"] = self.args.maintenance_dow
