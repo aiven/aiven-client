@@ -3062,24 +3062,24 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.service_name
     def service__flink__table__list(self):
-        """List created Flink tables"""
+        """List Flink tables"""
         project_name = self.get_project()
         self.print_response(self.client.list_flink_tables(project_name, self.args.service_name))
 
     @arg.project
     @arg.service_name
     @arg("integration_id", help="Service integration ID")
-    @arg("-n", "--table_name", required=True, help="Table name")
-    @arg("-kt", "--kafka_topic", required=False, help="Topic name, used as a source/sink. (Kafka integration only)")
-    @arg("-dt", "--jdbc_table", required=False, help="Table name in Database, used as a source/sink. (PG integration only)")
-    @arg("-p", "--partitioned_by", required=False, help="A column from a schema, table will be partitioned by")
+    @arg("-n", "--table-name", required=True, help="Table name")
+    @arg("--kafka-topic", required=False, help="Topic name, used as a source/sink. (Kafka integration only)")
+    @arg("--jdbc-table", required=False, help="Table name in Database, used as a source/sink. (PG integration only)")
+    @arg("-p", "--partitioned-by", required=False, help="A column from a schema, table will be partitioned by")
     @arg(
         "-l",
-        "--like_options",
+        "--like-options",
         required=False,
         help="Clause can be used to create a table based on a definition of an existing table"
     )
-    @arg("-s", "--schema_sql", required=True, help="Source/Sink table schema")
+    @arg("-s", "--schema-sql", required=True, help="Source/Sink table schema")
     def service__flink__table__create(self):
         """Create a Flink table"""
         project_name = self.get_project()
@@ -3124,7 +3124,14 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.service_name
     @arg("job_name", help="Job Name")
-    @arg("-t", "--tables", required=False, help="List of tables required in job runtime")
+    @arg(
+        "-t",
+        "--tables",
+        nargs="*",
+        default=[],
+        required=False,
+        help="List of tables required in job runtime, e.g. table1 table2 table3"
+    )
     @arg("-s", "--statement", required=True, help="Job SQL statement")
     def service__flink__job__create(self):
         """Create a Flink job"""
@@ -3135,7 +3142,7 @@ ssl.truststore.type=JKS
                 self.args.service_name,
                 statement=self.args.statement,
                 job_name=self.args.job_name,
-                tables=self.args.tables.split(","),
+                tables=self.args.tables,
             )
         )
 
