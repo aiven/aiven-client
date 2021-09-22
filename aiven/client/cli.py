@@ -3061,10 +3061,18 @@ ssl.truststore.type=JKS
 
     @arg.project
     @arg.service_name
+    @arg.json
     def service__flink__table__list(self):
         """List Flink tables"""
         project_name = self.get_project()
-        self.print_response(self.client.list_flink_tables(project_name, self.args.service_name))
+        layout = [[
+            "integration_id",
+            "table_id",
+            "table_name",
+        ]]
+        self.print_response(
+            self.client.list_flink_tables(project_name, self.args.service_name), json=self.args.json, table_layout=layout
+        )
 
     @arg.project
     @arg.service_name
@@ -3080,34 +3088,46 @@ ssl.truststore.type=JKS
         help="Clause can be used to create a table based on a definition of an existing table"
     )
     @arg("-s", "--schema-sql", required=True, help="Source/Sink table schema")
+    @arg.json
     def service__flink__table__create(self):
         """Create a Flink table"""
         project_name = self.get_project()
-        self.print_response(
-            self.client.create_flink_table(
-                project_name,
-                self.args.service_name,
-                self.args.integration_id,
-                self.args.table_name,
-                self.args.schema_sql,
-                self.args.kafka_topic,
-                self.args.jdbc_table,
-                self.args.partitioned_by,
-                self.args.like_options,
-            )
+        layout = [[
+            "integration_id",
+            "table_id",
+            "table_name",
+        ]]
+        new_table = self.client.create_flink_table(
+            project_name,
+            self.args.service_name,
+            self.args.integration_id,
+            self.args.table_name,
+            self.args.schema_sql,
+            self.args.kafka_topic,
+            self.args.jdbc_table,
+            self.args.partitioned_by,
+            self.args.like_options,
         )
+        self.print_response([new_table], json=self.args.json, table_layout=layout)
 
     @arg.project
     @arg.service_name
+    @arg.json
     @arg("table_id", help="Table ID")
     def service__flink__table__get(self):
         """Get a Flink table"""
         project_name = self.get_project()
-        self.print_response(self.client.get_flink_table(
+        layout = [[
+            "integration_id",
+            "table_id",
+            "table_name",
+        ]]
+        table = self.client.get_flink_table(
             project_name,
             self.args.service_name,
             self.args.table_id,
-        ))
+        )
+        self.print_response([table], json=self.args.json, table_layout=layout)
 
     @arg.project
     @arg.service_name
@@ -3115,11 +3135,15 @@ ssl.truststore.type=JKS
     def service__flink__table__delete(self):
         """Delete a Flink table"""
         project_name = self.get_project()
-        self.print_response(self.client.delete_flink_table(
+        response = self.client.delete_flink_table(
             project_name,
             self.args.service_name,
             self.args.table_id,
-        ))
+        )
+        if response == {}:
+            self.print_response(f"Table with id {self.args.table_id} was deleted")
+        else:
+            self.print_response(response)
 
     @arg.project
     @arg.service_name
@@ -3133,18 +3157,22 @@ ssl.truststore.type=JKS
         help="List of tables required in job runtime, e.g. table1 table2 table3"
     )
     @arg("-s", "--statement", required=True, help="Job SQL statement")
+    @arg.json
     def service__flink__job__create(self):
         """Create a Flink job"""
         project_name = self.get_project()
-        self.print_response(
-            self.client.create_flink_job(
-                project_name,
-                self.args.service_name,
-                statement=self.args.statement,
-                job_name=self.args.job_name,
-                tables=self.args.tables,
-            )
+        layout = [[
+            "job_id",
+            "job_name",
+        ]]
+        new_job = self.client.create_flink_job(
+            project_name,
+            self.args.service_name,
+            statement=self.args.statement,
+            job_name=self.args.job_name,
+            tables=self.args.tables,
         )
+        self.print_response([new_job], json=self.args.json, table_layout=layout)
 
     @arg.project
     @arg("service", nargs="+", help="Service to wait for")

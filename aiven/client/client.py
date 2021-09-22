@@ -1014,6 +1014,7 @@ class AivenClient(AivenClientBase):
         return self.verify(
             self.get,
             path,
+            result_key="tables",
         )
 
     def create_flink_table(
