@@ -23,6 +23,7 @@ SERVICE_TYPES = [
     "pg",
     "redis",
     "sw",
+    "flink",
 ]
 
 

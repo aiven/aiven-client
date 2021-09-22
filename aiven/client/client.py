@@ -1002,6 +1002,92 @@ class AivenClient(AivenClientBase):
         )
         return self.verify(self.delete, path)
 
+    def list_flink_tables(self, project, service):
+        path = self.build_path(
+            "project",
+            project,
+            "service",
+            service,
+            "flink",
+            "table",
+        )
+        return self.verify(
+            self.get,
+            path,
+            result_key="tables",
+        )
+
+    def create_flink_table(
+        self,
+        project,
+        service,
+        integration_id,
+        table_name,
+        schema_sql,
+        kafka_topic=None,
+        jdbc_table=None,
+        partitioned_by=None,
+        like_options=None
+    ):
+        path = self.build_path(
+            "project",
+            project,
+            "service",
+            service,
+            "flink",
+            "table",
+        )
+        body = {
+            "integration_id": integration_id,
+            "name": table_name,
+            "schema_sql": schema_sql,
+        }
+        if kafka_topic:
+            body["kafka_topic"] = kafka_topic
+        if jdbc_table:
+            body["jdbc_table"] = jdbc_table
+        if partitioned_by:
+            body["partitioned_by"] = partitioned_by
+        if like_options:
+            body["like_options"] = like_options
+        return self.verify(self.post, path, body=body)
+
+    def get_flink_table(self, project, service, table_id):
+        path = self.build_path("project", project, "service", service, "flink", "table", table_id)
+        return self.verify(
+            self.get,
+            path,
+        )
+
+    def delete_flink_table(self, project, service, table_id):
+        path = self.build_path("project", project, "service", service, "flink", "table", table_id)
+        return self.verify(self.delete, path)
+
+    def create_flink_job(
+        self,
+        project,
+        service,
+        statement,
+        job_name,
+        tables=None,
+    ):
+        if tables is None:
+            tables = []
+        path = self.build_path(
+            "project",
+            project,
+            "service",
+            service,
+            "flink",
+            "job",
+        )
+        body = {
+            "statement": statement,
+            "tables": tables,
+            "job_name": job_name,
+        }
+        return self.verify(self.post, path, body=body)
+
     def list_project_vpcs(self, project):
         return self.verify(self.get, self.build_path("project", project, "vpcs"))
 
