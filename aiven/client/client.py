@@ -1104,6 +1104,13 @@ class AivenClient(AivenClientBase):
             result_key="jobs",
         )
 
+    def get_flink_job(self, project, service, job_id):
+        path = self.build_path("project", project, "service", service, "flink", "job", job_id)
+        return self.verify(
+            self.get,
+            path,
+        )
+
     def list_project_vpcs(self, project):
         return self.verify(self.get, self.build_path("project", project, "vpcs"))
 
