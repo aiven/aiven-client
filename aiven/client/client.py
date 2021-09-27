@@ -1088,6 +1088,22 @@ class AivenClient(AivenClientBase):
         }
         return self.verify(self.post, path, body=body)
 
+    def list_flink_jobs(self, project, service):
+        path = self.build_path(
+            "project",
+            project,
+            "service",
+            service,
+            "flink",
+            "job",
+        )
+
+        return self.verify(
+            self.get,
+            path,
+            result_key="jobs",
+        )
+
     def list_project_vpcs(self, project):
         return self.verify(self.get, self.build_path("project", project, "vpcs"))
 
