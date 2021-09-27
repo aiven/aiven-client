@@ -3175,6 +3175,44 @@ ssl.truststore.type=JKS
         self.print_response([new_job], json=self.args.json, table_layout=layout)
 
     @arg.project
+    @arg.service_name
+    @arg.json
+    def service__flink__job__list(self):
+        """List Flink jobs"""
+        project_name = self.get_project()
+        layout = [[
+            "id",
+            "status",
+        ]]
+        self.print_response(
+            self.client.list_flink_jobs(project_name, self.args.service_name), json=self.args.json, table_layout=layout
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg.json
+    @arg("job_id", help="Table ID")
+    def service__flink__job__get(self):
+        """Get a Flink job"""
+        project_name = self.get_project()
+        layout = [[
+            "jid",
+            "name",
+            "state",
+            "start-time",
+            "end-time",
+            "duration",
+            "isStoppable",
+            "maxParallelism",
+        ]]
+        job = self.client.get_flink_job(
+            project_name,
+            self.args.service_name,
+            self.args.job_id,
+        )
+        self.print_response([job], json=self.args.json, table_layout=layout)
+
+    @arg.project
     @arg("service", nargs="+", help="Service to wait for")
     @arg.timeout
     def service__wait(self):  # pylint: disable=inconsistent-return-statements
