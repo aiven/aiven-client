@@ -3191,7 +3191,7 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.service_name
     @arg.json
-    @arg("job_id", help="Table ID")
+    @arg("job_id", help="Job ID")
     def service__flink__job__get(self):
         """Get a Flink job"""
         project_name = self.get_project()
