@@ -3213,6 +3213,20 @@ ssl.truststore.type=JKS
         self.print_response([job], json=self.args.json, table_layout=layout)
 
     @arg.project
+    @arg.service_name
+    @arg.json
+    @arg("job_id", help="Job ID")
+    def service__flink__job__cancel(self):
+        """Cancel a Flink job"""
+        project_name = self.get_project()
+        self.client.cancel_flink_job(
+            project_name,
+            self.args.service_name,
+            self.args.job_id,
+        )
+        print(f"Job with ID {self.args.job_id} was cancelled")
+
+    @arg.project
     @arg("service", nargs="+", help="Service to wait for")
     @arg.timeout
     def service__wait(self):  # pylint: disable=inconsistent-return-statements
