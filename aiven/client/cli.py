@@ -1305,6 +1305,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg.project
     @arg.service_name
     @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
+    @arg("-p", "--privatelink-connection-id")
     @arg("-a", "--kafka-authentication-method", choices=("certificate", "sasl"), default="certificate")
     @arg("-u", "--username", default="avnadmin")
     @arg("--ca", default="ca.pem", dest="ca_path")
@@ -1319,7 +1320,10 @@ class AivenCLI(argx.CommandLineTool):
 
         if self.args.kafka_authentication_method == "certificate":
             ci = KafkaCertificateConnectionInfo.from_service(
-                service, route=self._get_route_from_args(), username=self.args.username
+                service,
+                route=self._get_route_from_args(),
+                privatelink_connection_id=self._get_privatelink_connection_id_from_args(),
+                username=self.args.username
             )
             cmd = ci.kafkacat(
                 store,
@@ -1330,7 +1334,10 @@ class AivenCLI(argx.CommandLineTool):
             )
         elif self.args.kafka_authentication_method == "sasl":
             ci = KafkaSASLConnectionInfo.from_service(
-                service, route=self._get_route_from_args(), username=self.args.username
+                service,
+                route=self._get_route_from_args(),
+                privatelink_connection_id=self._get_privatelink_connection_id_from_args(),
+                username=self.args.username
             )
             cmd = ci.kafkacat(
                 store,
@@ -1345,7 +1352,9 @@ class AivenCLI(argx.CommandLineTool):
     def _get_route_from_args(self):
         route = self.args.route
         if route is None:
-            return "dynamic"
+            if self.args.privatelink_connection_id is None:
+                return "dynamic"
+            return "privatelink"
         return route
 
     def _get_usage_from_args(self):
@@ -1357,10 +1366,19 @@ class AivenCLI(argx.CommandLineTool):
             usage = self.args.usage
         return usage
 
+    def _get_privatelink_connection_id_from_args(self):
+        privatelink_connection_id = self.args.privatelink_connection_id
+        if privatelink_connection_id is None:
+            return UNDEFINED
+        if self.args.route not in {None, "privatelink"}:
+            raise argx.UserError(f"-p/--privatelink-connection-id cannot be used with route {self.args.route}")
+        return privatelink_connection_id
+
     @arg.project
     @arg.service_name
     @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
     @arg("--usage", choices=("primary", "replica"))
+    @arg("-p", "--privatelink-connection-id")
     @arg("--replica", action="store_true")
     @arg("-u", "--username", default="avnadmin")
     @arg("-d", "--dbname", default="defaultdb")
@@ -1373,6 +1391,7 @@ class AivenCLI(argx.CommandLineTool):
             service,
             route=self._get_route_from_args(),
             usage=self._get_usage_from_args(),
+            privatelink_connection_id=self._get_privatelink_connection_id_from_args(),
             username=self.args.username,
             dbname=self.args.dbname,
             sslmode=self.args.sslmode,
@@ -1384,6 +1403,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg.service_name
     @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
     @arg("--usage", choices=("primary", "replica"))
+    @arg("-p", "--privatelink-connection-id")
     @arg("--replica", action="store_true")
     @arg("-u", "--username", default="avnadmin")
     @arg("-d", "--dbname", default="defaultdb")
@@ -1396,6 +1416,7 @@ class AivenCLI(argx.CommandLineTool):
             service,
             route=self._get_route_from_args(),
             usage=self._get_usage_from_args(),
+            privatelink_connection_id=self._get_privatelink_connection_id_from_args(),
             username=self.args.username,
             dbname=self.args.dbname,
             sslmode=self.args.sslmode,
@@ -1406,6 +1427,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg.service_name
     @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
     @arg("--usage", choices=("primary", "replica"))
+    @arg("-p", "--privatelink-connection-id")
     @arg("--replica", action="store_true")
     @arg("-u", "--username", default="avnadmin")
     @arg("-d", "--dbname", default="defaultdb")
@@ -1418,6 +1440,7 @@ class AivenCLI(argx.CommandLineTool):
             service,
             route=self._get_route_from_args(),
             usage=self._get_usage_from_args(),
+            privatelink_connection_id=self._get_privatelink_connection_id_from_args(),
             username=self.args.username,
             dbname=self.args.dbname,
             sslmode=self.args.sslmode,

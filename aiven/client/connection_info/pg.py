@@ -13,11 +13,13 @@ class PGConnectionInfo:
         self.sslmode = sslmode
 
     @classmethod
-    def from_service(cls, service, *, route, usage, username, dbname, sslmode):
+    def from_service(cls, service, *, route, usage, privatelink_connection_id, username, dbname, sslmode):
         if service["service_type"] != "pg":
             raise ConnectionInfoError("Cannot format pg connection info for service type {service_type}".format_map(service))
 
-        info = find_component(service["components"], route=route, usage=usage)
+        info = find_component(
+            service["components"], route=route, usage=usage, privatelink_connection_id=privatelink_connection_id
+        )
         host = info["host"]
         port = info["port"]
         user = find_user(service, username)
