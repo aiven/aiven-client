@@ -1303,7 +1303,7 @@ class AivenCLI(argx.CommandLineTool):
 
     @arg.project
     @arg.service_name
-    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"), default="dynamic")
+    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
     @arg("-a", "--kafka-authentication-method", choices=("certificate", "sasl"), default="certificate")
     @arg("-u", "--username", default="avnadmin")
     @arg("--ca", default="ca.pem", dest="ca_path")
@@ -1317,7 +1317,9 @@ class AivenCLI(argx.CommandLineTool):
         store = self._get_store_from_args()
 
         if self.args.kafka_authentication_method == "certificate":
-            ci = KafkaCertificateConnectionInfo.from_service(service, route=self.args.route, username=self.args.username)
+            ci = KafkaCertificateConnectionInfo.from_service(
+                service, route=self._get_route_from_args(), username=self.args.username
+            )
             cmd = ci.kafkacat(
                 store,
                 get_project_ca=self._get_project_ca,
@@ -1326,7 +1328,9 @@ class AivenCLI(argx.CommandLineTool):
                 client_key_path=self.args.client_key_path,
             )
         elif self.args.kafka_authentication_method == "sasl":
-            ci = KafkaSASLConnectionInfo.from_service(service, route=self.args.route, username=self.args.username)
+            ci = KafkaSASLConnectionInfo.from_service(
+                service, route=self._get_route_from_args(), username=self.args.username
+            )
             cmd = ci.kafkacat(
                 store,
                 get_project_ca=self._get_project_ca,
@@ -1336,6 +1340,12 @@ class AivenCLI(argx.CommandLineTool):
             raise NotImplementedError(self.args.kafka_authentication_method)
 
         print(" ".join(cmd))
+
+    def _get_route_from_args(self):
+        route = self.args.route
+        if route is None:
+            return "dynamic"
+        return route
 
     def _get_usage_from_args(self):
         if self.args.usage is None:
@@ -1348,7 +1358,7 @@ class AivenCLI(argx.CommandLineTool):
 
     @arg.project
     @arg.service_name
-    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"), default="dynamic")
+    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
     @arg("--usage", choices=("primary", "replica"))
     @arg("--replica", action="store_true")
     @arg("-u", "--username", default="avnadmin")
@@ -1360,7 +1370,7 @@ class AivenCLI(argx.CommandLineTool):
 
         ci = PGConnectionInfo.from_service(
             service,
-            route=self.args.route,
+            route=self._get_route_from_args(),
             usage=self._get_usage_from_args(),
             username=self.args.username,
             dbname=self.args.dbname,
@@ -1371,7 +1381,7 @@ class AivenCLI(argx.CommandLineTool):
 
     @arg.project
     @arg.service_name
-    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"), default="dynamic")
+    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
     @arg("--usage", choices=("primary", "replica"))
     @arg("--replica", action="store_true")
     @arg("-u", "--username", default="avnadmin")
@@ -1383,7 +1393,7 @@ class AivenCLI(argx.CommandLineTool):
 
         ci = PGConnectionInfo.from_service(
             service,
-            route=self.args.route,
+            route=self._get_route_from_args(),
             usage=self._get_usage_from_args(),
             username=self.args.username,
             dbname=self.args.dbname,
@@ -1393,7 +1403,7 @@ class AivenCLI(argx.CommandLineTool):
 
     @arg.project
     @arg.service_name
-    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"), default="dynamic")
+    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
     @arg("--usage", choices=("primary", "replica"))
     @arg("--replica", action="store_true")
     @arg("-u", "--username", default="avnadmin")
@@ -1405,7 +1415,7 @@ class AivenCLI(argx.CommandLineTool):
 
         ci = PGConnectionInfo.from_service(
             service,
-            route=self.args.route,
+            route=self._get_route_from_args(),
             usage=self._get_usage_from_args(),
             username=self.args.username,
             dbname=self.args.dbname,
