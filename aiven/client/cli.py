@@ -4440,6 +4440,9 @@ server_encryption_options:
             "key": stripe_publishable_key,
         }
         response = requests.post("https://api.stripe.com/v1/tokens", data=data)
+        if not response.ok:
+            print(response.text)
+            response.raise_for_status()
         return response.json()["id"]
 
     @arg.json
