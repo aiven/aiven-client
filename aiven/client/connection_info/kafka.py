@@ -42,6 +42,7 @@ class KafkaCertificateConnectionInfo(KafkaConnectionInfo):
         service,
         *,
         route,
+        privatelink_connection_id,
         username,
     ):
         if service["service_type"] != "kafka":
@@ -49,7 +50,12 @@ class KafkaCertificateConnectionInfo(KafkaConnectionInfo):
                 "Cannot format kafka connection info for service type {service_type}".format_map(service)
             )
 
-        info = find_component(service["components"], route=route, kafka_authentication_method="certificate")
+        info = find_component(
+            service["components"],
+            route=route,
+            privatelink_connection_id=privatelink_connection_id,
+            kafka_authentication_method="certificate"
+        )
         user = find_user(service, username)
         if "access_cert" not in user:
             raise ConnectionInfoError(f"Could not find client certificate for username {username}")
@@ -73,6 +79,7 @@ class KafkaSASLConnectionInfo(KafkaConnectionInfo):
         service,
         *,
         route,
+        privatelink_connection_id,
         username,
     ):
         if service["service_type"] != "kafka":
@@ -80,7 +87,12 @@ class KafkaSASLConnectionInfo(KafkaConnectionInfo):
                 "Cannot format kafka connection info for service type {service_type}".format_map(service)
             )
 
-        info = find_component(service["components"], route=route, kafka_authentication_method="sasl")
+        info = find_component(
+            service["components"],
+            route=route,
+            privatelink_connection_id=privatelink_connection_id,
+            kafka_authentication_method="sasl"
+        )
         user = find_user(service, username)
         if "password" not in user:
             raise ConnectionInfoError(f"Could not find password for username {username}")

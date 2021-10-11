@@ -2,6 +2,7 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
+from .common import UNDEFINED
 from .session import get_requests_session
 from urllib.parse import quote
 
@@ -25,9 +26,6 @@ class Error(Exception):
         Exception.__init__(self, response.text)
         self.response = response
         self.status = status
-
-
-UNDEFINED = object()
 
 
 class AivenClientBase:  # pylint: disable=old-style-class

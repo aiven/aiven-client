@@ -5,6 +5,7 @@
 from . import argx, client
 from aiven.client import envdefault
 from aiven.client.cliarg import arg
+from aiven.client.common import UNDEFINED
 from aiven.client.connection_info.common import Store
 from aiven.client.connection_info.kafka import KafkaCertificateConnectionInfo, KafkaSASLConnectionInfo
 from aiven.client.connection_info.pg import PGConnectionInfo
@@ -1303,7 +1304,8 @@ class AivenCLI(argx.CommandLineTool):
 
     @arg.project
     @arg.service_name
-    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"), default="dynamic")
+    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
+    @arg("-p", "--privatelink-connection-id")
     @arg("-a", "--kafka-authentication-method", choices=("certificate", "sasl"), default="certificate")
     @arg("-u", "--username", default="avnadmin")
     @arg("--ca", default="ca.pem", dest="ca_path")
@@ -1317,7 +1319,12 @@ class AivenCLI(argx.CommandLineTool):
         store = self._get_store_from_args()
 
         if self.args.kafka_authentication_method == "certificate":
-            ci = KafkaCertificateConnectionInfo.from_service(service, route=self.args.route, username=self.args.username)
+            ci = KafkaCertificateConnectionInfo.from_service(
+                service,
+                route=self._get_route_from_args(),
+                privatelink_connection_id=self._get_privatelink_connection_id_from_args(),
+                username=self.args.username
+            )
             cmd = ci.kafkacat(
                 store,
                 get_project_ca=self._get_project_ca,
@@ -1326,7 +1333,12 @@ class AivenCLI(argx.CommandLineTool):
                 client_key_path=self.args.client_key_path,
             )
         elif self.args.kafka_authentication_method == "sasl":
-            ci = KafkaSASLConnectionInfo.from_service(service, route=self.args.route, username=self.args.username)
+            ci = KafkaSASLConnectionInfo.from_service(
+                service,
+                route=self._get_route_from_args(),
+                privatelink_connection_id=self._get_privatelink_connection_id_from_args(),
+                username=self.args.username
+            )
             cmd = ci.kafkacat(
                 store,
                 get_project_ca=self._get_project_ca,
@@ -1337,6 +1349,14 @@ class AivenCLI(argx.CommandLineTool):
 
         print(" ".join(cmd))
 
+    def _get_route_from_args(self):
+        route = self.args.route
+        if route is None:
+            if self.args.privatelink_connection_id is None:
+                return "dynamic"
+            return "privatelink"
+        return route
+
     def _get_usage_from_args(self):
         if self.args.usage is None:
             usage = "replica" if self.args.replica else "primary"
@@ -1346,10 +1366,19 @@ class AivenCLI(argx.CommandLineTool):
             usage = self.args.usage
         return usage
 
+    def _get_privatelink_connection_id_from_args(self):
+        privatelink_connection_id = self.args.privatelink_connection_id
+        if privatelink_connection_id is None:
+            return UNDEFINED
+        if self.args.route not in {None, "privatelink"}:
+            raise argx.UserError(f"-p/--privatelink-connection-id cannot be used with route {self.args.route}")
+        return privatelink_connection_id
+
     @arg.project
     @arg.service_name
-    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"), default="dynamic")
+    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
     @arg("--usage", choices=("primary", "replica"))
+    @arg("-p", "--privatelink-connection-id")
     @arg("--replica", action="store_true")
     @arg("-u", "--username", default="avnadmin")
     @arg("-d", "--dbname", default="defaultdb")
@@ -1360,8 +1389,9 @@ class AivenCLI(argx.CommandLineTool):
 
         ci = PGConnectionInfo.from_service(
             service,
-            route=self.args.route,
+            route=self._get_route_from_args(),
             usage=self._get_usage_from_args(),
+            privatelink_connection_id=self._get_privatelink_connection_id_from_args(),
             username=self.args.username,
             dbname=self.args.dbname,
             sslmode=self.args.sslmode,
@@ -1371,8 +1401,9 @@ class AivenCLI(argx.CommandLineTool):
 
     @arg.project
     @arg.service_name
-    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"), default="dynamic")
+    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
     @arg("--usage", choices=("primary", "replica"))
+    @arg("-p", "--privatelink-connection-id")
     @arg("--replica", action="store_true")
     @arg("-u", "--username", default="avnadmin")
     @arg("-d", "--dbname", default="defaultdb")
@@ -1383,8 +1414,9 @@ class AivenCLI(argx.CommandLineTool):
 
         ci = PGConnectionInfo.from_service(
             service,
-            route=self.args.route,
+            route=self._get_route_from_args(),
             usage=self._get_usage_from_args(),
+            privatelink_connection_id=self._get_privatelink_connection_id_from_args(),
             username=self.args.username,
             dbname=self.args.dbname,
             sslmode=self.args.sslmode,
@@ -1393,8 +1425,9 @@ class AivenCLI(argx.CommandLineTool):
 
     @arg.project
     @arg.service_name
-    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"), default="dynamic")
+    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
     @arg("--usage", choices=("primary", "replica"))
+    @arg("-p", "--privatelink-connection-id")
     @arg("--replica", action="store_true")
     @arg("-u", "--username", default="avnadmin")
     @arg("-d", "--dbname", default="defaultdb")
@@ -1405,8 +1438,9 @@ class AivenCLI(argx.CommandLineTool):
 
         ci = PGConnectionInfo.from_service(
             service,
-            route=self.args.route,
+            route=self._get_route_from_args(),
             usage=self._get_usage_from_args(),
+            privatelink_connection_id=self._get_privatelink_connection_id_from_args(),
             username=self.args.username,
             dbname=self.args.dbname,
             sslmode=self.args.sslmode,
@@ -3401,7 +3435,7 @@ ssl.truststore.type=JKS
     @arg(
         "--peer-resource-group",
         help=_peer_resource_group_help,
-        default=client.UNDEFINED,
+        default=UNDEFINED,
     )
     @arg("--peer-vpc", required=True, help=_peer_vpc_help)
     @arg.json
@@ -3519,7 +3553,7 @@ ssl.truststore.type=JKS
         "--peer-resource-group",
         required=False,
         help=_peer_resource_group_help,
-        default=client.UNDEFINED,
+        default=UNDEFINED,
     )
     @arg("--peer-vpc", required=True, help=_peer_vpc_help)
     @arg("--peer-region", help=_peer_region_help)
@@ -3543,7 +3577,7 @@ ssl.truststore.type=JKS
     def _get_service_project_vpc_id(self):
         """Utility method for service_create and service_update"""
         if self.args.project_vpc_id is None:
-            project_vpc_id = None if self.args.no_project_vpc else client.UNDEFINED
+            project_vpc_id = None if self.args.no_project_vpc else UNDEFINED
         elif self.args.no_project_vpc:
             raise argx.UserError("Only one of --project-vpc-id and --no-project-vpc can be specified")
         else:

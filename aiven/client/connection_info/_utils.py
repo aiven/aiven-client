@@ -1,5 +1,6 @@
 # Copyright (c) 2021 Aiven, Helsinki, Finland. https://aiven.io/
 from .common import ConnectionInfoError
+from aiven.client.common import UNDEFINED
 from typing import Mapping, Optional
 
 import ipaddress
@@ -8,7 +9,7 @@ import urllib.parse
 
 def find_component(items, **filters):
     for item in items:
-        if all(key in item and item[key] == value for key, value in filters.items()):
+        if all(key in item and item[key] == value for key, value in filters.items() if value is not UNDEFINED):
             return item
     msg_filters = ", ".join(f"{field}={value}" for field, value in filters.items())
     raise ConnectionInfoError(f"Could not find connection information with filters {msg_filters}")
