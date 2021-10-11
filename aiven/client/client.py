@@ -1111,6 +1111,13 @@ class AivenClient(AivenClientBase):
             path,
         )
 
+    def cancel_flink_job(self, project, service, job_id):
+        path = self.build_path("project", project, "service", service, "flink", "job", job_id, "cancel")
+        return self.verify(
+            self.post,
+            path,
+        )
+
     def list_project_vpcs(self, project):
         return self.verify(self.get, self.build_path("project", project, "vpcs"))
 
