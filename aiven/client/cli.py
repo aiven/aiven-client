@@ -975,15 +975,23 @@ class AivenCLI(argx.CommandLineTool):
 
         # Format service notifications
         for service in services:
-            for notification in service["service_notifications"]:
-                service.setdefault("notifications", [])
-                if notification["type"] == "service_end_of_life":
-                    # Python can't proper parse Z terminated ISO strings
-                    eol_time = parse_iso8601(notification["metadata"]["service_end_of_life_time"])
-                    eol_date = eol_time.date().isoformat()
-                    service["notifications"].append(f"EOL: {eol_date} Upgrade available")
+            service["notifications"] = self._format_service_notifications(service)
 
         self.print_response(services, format=self.args.format, json=self.args.json, table_layout=layout)
+
+    def _format_service_notifications(self, service):
+        """Format service notifications as list of short text elements suitable for table view."""
+        if "service_notifications" in service:
+            notifications = []
+            for notification in service["service_notifications"]:
+                if notification["type"] == "service_end_of_life":
+                    eol_time = parse_iso8601(notification["metadata"]["service_end_of_life_time"])
+                    eol_date = eol_time.date().isoformat()
+                    notifications.append(f"EOL: {eol_date} Upgrade available")
+
+            return notifications
+        else:
+            return []
 
     def print_service_notifications(self, service_notifications):
         def make_bold(text):
@@ -1223,6 +1231,9 @@ class AivenCLI(argx.CommandLineTool):
     def service__get(self):
         """Show a single service"""
         service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
+
+        # Format service notifications
+        service["notifications"] = self._format_service_notifications(service)
 
         layout = self.SERVICE_LAYOUT[:]
         if self.args.verbose:
