@@ -4400,6 +4400,59 @@ server_encryption_options:
             print(ex.response.text)
             raise argx.UserError("Project user listing for '{}' failed".format(project_name))
 
+    def _print_tags(self, tags):
+        layout = [["key", "value"]]
+        self.print_response(
+            [{
+                "key": key,
+                "value": value
+            } for key, value in tags["tags"].items()],
+            json=self.args.json,
+            table_layout=layout,
+        )
+
+    @staticmethod
+    def _parse_tag_arg(tag):
+        if "=" not in tag:
+            raise argx.UserError(f"Invalid tag key-value pair '{tag}', expected '<KEY>=<VALUE>'")
+        key, value = tag.split("=", maxsplit=1)
+        return key, value
+
+    def _tag_update_body_from_args(self):
+        tag_updates = {key: None for key in self.args.remove_tag}
+        tag_updates.update(dict(self._parse_tag_arg(tag) for tag in self.args.add_tag))
+        return tag_updates
+
+    def _tag_replace_body_from_args(self):
+        return dict(self._parse_tag_arg(tag) for tag in self.args.tag)
+
+    @arg.json
+    @arg.project
+    def project__tags__list(self):
+        """List project tags"""
+        project_name = self.get_project()
+        tags = self.client.list_project_tags(project=project_name)
+        self._print_tags(tags)
+
+    @arg.json
+    @arg.project
+    @arg("--add-tag", help="Add a new tag (key=value)", action="append", default=[])
+    @arg("--remove-tag", help="Remove the named tag", action="append", default=[])
+    def project__tags__update(self):
+        """Add or remove project tags"""
+        project_name = self.get_project()
+        response = self.client.update_project_tags(project=project_name, tag_updates=self._tag_update_body_from_args())
+        print(response["message"])
+
+    @arg.json
+    @arg.project
+    @arg("--tag", help="Tag for project (key=value)", action="append", default=[])
+    def project__tags__replace(self):
+        """Replace project tags, deleting any old ones first"""
+        project_name = self.get_project()
+        response = self.client.replace_project_tags(project=project_name, tags=self._tag_replace_body_from_args())
+        print(response["message"])
+
     @arg.email
     @arg("--real-name", help="User real name", required=True)
     def user__create(self):
@@ -4849,6 +4902,41 @@ server_encryption_options:
             "end_of_life_help_article_url",
         ]
         self.print_response(service_versions, table_layout=layout, json=self.args.json)
+
+    @arg.json
+    @arg.project
+    @arg.service_name
+    def service__tags__list(self):
+        """List service tags"""
+        tags = self.client.list_service_tags(project=self.get_project(), service=self.args.service_name)
+        self._print_tags(tags)
+
+    @arg.json
+    @arg.project
+    @arg.service_name
+    @arg("--add-tag", help="Add a new tag (key=value)", action="append", default=[])
+    @arg("--remove-tag", help="Remove the named tag", action="append", default=[])
+    def service__tags__update(self):
+        """Add or remove service tags"""
+        response = self.client.update_service_tags(
+            project=self.get_project(),
+            service=self.args.service_name,
+            tag_updates=self._tag_update_body_from_args(),
+        )
+        print(response["message"])
+
+    @arg.json
+    @arg.project
+    @arg.service_name
+    @arg("--tag", help="Tag for service (key=value)", action="append", default=[])
+    def service__tags__replace(self):
+        """Replace service tags, deleting any old ones first"""
+        response = self.client.replace_service_tags(
+            project=self.get_project(),
+            service=self.args.service_name,
+            tags=self._tag_replace_body_from_args(),
+        )
+        print(response["message"])
 
 
 if __name__ == "__main__":

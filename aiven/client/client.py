@@ -103,6 +103,10 @@ class AivenClientBase:  # pylint: disable=old-style-class
         """HTTP GET"""
         return self._execute(self.session.get, "GET", path, body=None, params=params)
 
+    def patch(self, path="", body=None, params=None):
+        """HTTP PATCH"""
+        return self._execute(self.session.patch, "PATCH", path, body, params)
+
     def post(self, path="", body=None, params=None):
         """HTTP POST"""
         return self._execute(self.session.post, "POST", path, body, params)
@@ -1257,6 +1261,32 @@ class AivenClient(AivenClientBase):
             body["delete"] = delete
         return self.verify(self.put, path, body=body)
 
+    def list_project_tags(self, project):
+        path = self.build_path(
+            "project",
+            project,
+            "tags",
+        )
+        return self.verify(self.get, path)
+
+    def update_project_tags(self, project, tag_updates):
+        path = self.build_path(
+            "project",
+            project,
+            "tags",
+        )
+        body = {"tags": tag_updates}
+        return self.verify(self.patch, path, body=body)
+
+    def replace_project_tags(self, project, tags):
+        path = self.build_path(
+            "project",
+            project,
+            "tags",
+        )
+        body = {"tags": tags}
+        return self.verify(self.put, path, body=body)
+
     def create_service(
         self,
         project,
@@ -1458,6 +1488,38 @@ class AivenClient(AivenClientBase):
     def reset_service_query_stats(self, project, service):
         path = self.build_path("project", project, "service", service, "query", "stats", "reset")
         return self.verify(self.put, path, result_key="queries")
+
+    def list_service_tags(self, project, service):
+        path = self.build_path(
+            "project",
+            project,
+            "service",
+            service,
+            "tags",
+        )
+        return self.verify(self.get, path)
+
+    def update_service_tags(self, project, service, tag_updates):
+        path = self.build_path(
+            "project",
+            project,
+            "service",
+            service,
+            "tags",
+        )
+        body = {"tags": tag_updates}
+        return self.verify(self.patch, path, body=body)
+
+    def replace_service_tags(self, project, service, tags):
+        path = self.build_path(
+            "project",
+            project,
+            "service",
+            service,
+            "tags",
+        )
+        body = {"tags": tags}
+        return self.verify(self.put, path, body=body)
 
     def get_services(self, project):
         return self.verify(
