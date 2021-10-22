@@ -70,8 +70,32 @@ def format_item(key, value):
     return formatted
 
 
+def flatten_list(complex_list):
+    """Flatten a multi-dimensional list to 1D list"""
+    if not complex_list:
+        return []
+    flattened_list = []
+    for level1 in complex_list:
+        if isinstance(level1, (list, tuple)):
+            flattened_list.extend(flatten_list(level1))
+        else:
+            flattened_list.append(level1)
+    return flattened_list
+
+
 def yield_table(result, drop_fields=None, table_layout=None, header=True):
-    """format a list of dicts in a nicer table format yielding string rows"""
+    """
+    format a list of dicts in a nicer table format yielding string rows
+
+    :param list result: List of dicts to be printed.
+    :param list drop_fields: Fields to be ignored.
+    :param list table_layout: Fields to be printed, could be 1D or 2D list. Examples:
+        ["column1", "column2", "column3"] or
+        [["column1", "column2", "column3"]] or
+        [["column1", "column2", "column3"], "detail1", "detail2"]
+    :param bool header: True to print the fild name
+    """
+
     if not result:
         return
 
@@ -93,14 +117,18 @@ def yield_table(result, drop_fields=None, table_layout=None, header=True):
     # format all fields and collect their widths
     widths = {}
     formatted_values = []
+    flattened_table_layout = flatten_list(table_layout)
     for item in result:
         formatted_row = {}
         formatted_values.append(formatted_row)
         for key, value in item.items():
-            if key not in drop_fields:
-                for subkey, subvalue in iter_values(key, value):
-                    formatted_row[subkey] = format_item(subkey, subvalue)
-                    widths[subkey] = max(len(subkey), len(formatted_row[subkey]), widths.get(subkey, 1))
+            if key in drop_fields:
+                continue  # field will not be printed
+            if table_layout is not None and key not in flattened_table_layout:
+                continue  # table_layout has been specified but this field will not be printed
+            for subkey, subvalue in iter_values(key, value):
+                formatted_row[subkey] = format_item(subkey, subvalue)
+                widths[subkey] = max(len(subkey), len(formatted_row[subkey]), widths.get(subkey, 1))
 
     # default table layout is one row per item with sorted field names
     if table_layout is None:

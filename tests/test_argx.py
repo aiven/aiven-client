@@ -11,6 +11,8 @@ from aiven.client.argx import arg, CommandLineTool
 
 
 class TestCLI(CommandLineTool):
+    __test__ = False  # to avoid PytestCollectionWarning
+
     @arg()
     def xxx(self):
         """7"""

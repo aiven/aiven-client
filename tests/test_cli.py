@@ -12,8 +12,6 @@ from unittest import mock
 
 import pytest
 
-pytestmark = [pytest.mark.unittest, pytest.mark.all]
-
 
 def test_cli():
     with pytest.raises(SystemExit) as excinfo:
