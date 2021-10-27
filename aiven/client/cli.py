@@ -3195,11 +3195,11 @@ ssl.truststore.type=JKS
     @arg("job_name", help="Job Name")
     @arg(
         "-t",
-        "--tables",
+        "--table-ids",
         nargs="*",
         default=[],
         required=False,
-        help="List of tables required in job runtime, e.g. table1 table2 table3"
+        help="List of table IDs required in job runtime, e.g. table_id1 table_id2 table_id3"
     )
     @arg("-s", "--statement", required=True, help="Job SQL statement")
     @arg.json
@@ -3215,7 +3215,7 @@ ssl.truststore.type=JKS
             self.args.service_name,
             statement=self.args.statement,
             job_name=self.args.job_name,
-            tables=self.args.tables,
+            table_ids=self.args.table_ids,
         )
         self.print_response([new_job], json=self.args.json, table_layout=layout)
 

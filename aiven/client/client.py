@@ -1071,10 +1071,10 @@ class AivenClient(AivenClientBase):
         service,
         statement,
         job_name,
-        tables=None,
+        table_ids=None,
     ):
-        if tables is None:
-            tables = []
+        if table_ids is None:
+            table_ids = []
         path = self.build_path(
             "project",
             project,
@@ -1085,7 +1085,7 @@ class AivenClient(AivenClientBase):
         )
         body = {
             "statement": statement,
-            "tables": tables,
+            "table_ids": table_ids,
             "job_name": job_name,
         }
         return self.verify(self.post, path, body=body)
