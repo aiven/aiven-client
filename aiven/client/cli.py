@@ -3199,7 +3199,7 @@ ssl.truststore.type=JKS
         nargs="*",
         default=[],
         required=False,
-        help="List of table IDs required in job runtime, e.g. cac53785-d1b5-4856-90c8-7cbcc3efb2b6 54c2f4e6-a446-4d62-8dc9-2b81179c6f43 54c2f4e6-a446-4d62-8dc9-2b81179c6f44"
+        help="List of table IDs required in job runtime, e.g. table_id1 table_id2 table_id3"
     )
     @arg("-s", "--statement", required=True, help="Job SQL statement")
     @arg.json
