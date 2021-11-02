@@ -4558,7 +4558,7 @@ server_encryption_options:
         return response.json()["id"]
 
     @arg.json
-    @arg("--cvc", help="Credit card security code", type=int, required=True)
+    @arg("--cvc", help="Credit card security code", required=True)
     @arg("--exp-month", help="Card expiration month (1-12)", type=int, required=True)
     @arg("--exp-year", help="Card expiration year", type=int, required=True)
     @arg("--name", help="Name on card", required=True)
