@@ -987,7 +987,9 @@ class AivenCLI(argx.CommandLineTool):
                 if notification["type"] == "service_end_of_life":
                     eol_time = parse_iso8601(notification["metadata"]["service_end_of_life_time"])
                     eol_date = eol_time.date().isoformat()
-                    notifications.append(f"EOL: {eol_date} Upgrade available")
+                    is_urgent = notification["level"] == "warning"
+                    upgrade_urgency = "required" if is_urgent else "available"
+                    notifications.append(f"EOL: {eol_date} Upgrade {upgrade_urgency}")
 
             return notifications
         else:
