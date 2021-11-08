@@ -146,7 +146,8 @@ def test_service_task_create_migration_check():
             'task_type': 'migration_check',
             'migration_check': {
                 'source_service_uri': 'mysql://root:password@source-mysql-server:3306/',
-                'ignore_dbs': 'db1'
+                'ignore_dbs': 'db1',
+                'method': None,
             }
         }
     )

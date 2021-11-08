@@ -2490,6 +2490,12 @@ ssl.truststore.type=JKS
         help="Migration: comma-separated list of databases to be ignored (MySQL only)",
         required=False,
     )
+    @arg(
+        "--migration-method",
+        help="Migration: the desired migration method (dump or replication)",
+        required=False,
+        default=None,
+    )
     @arg("--format", help="Format string for output, e.g. '{name} {retention_hours}'")
     @arg.json
     def service__task_create(self):
@@ -2512,6 +2518,10 @@ ssl.truststore.type=JKS
             }
             if self.args.ignore_dbs:
                 body["migration_check"]["ignore_dbs"] = self.args.ignore_dbs
+            if self.args.migration_method in {None, "dump", "replication"}:
+                body["migration_check"]["method"] = self.args.migration_method
+            else:
+                raise argx.UserError("--migration-method must be either 'dump' or 'replication'")
         else:
             raise NotImplementedError(f"Operation {self.args.operation} is not implemented")
 
