@@ -1332,6 +1332,7 @@ class AivenClient(AivenClientBase):
         user_config=None,
         plan=None,
         disk_space_mb=None,
+        karapace=None,
         powered=None,
         termination_protection=None,
         project_vpc_id=UNDEFINED,
@@ -1348,6 +1349,8 @@ class AivenClient(AivenClientBase):
             body["disk_space_mb"] = disk_space_mb
         if powered is not None:
             body["powered"] = powered
+        if karapace is not None:
+            body["karapace"] = karapace
         if user_config is not None:
             body["user_config"] = user_config
         if project_vpc_id is not UNDEFINED:

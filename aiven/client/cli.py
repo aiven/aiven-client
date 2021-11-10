@@ -3890,6 +3890,12 @@ ssl.truststore.type=JKS
         help="Set automatic maintenance window's start time (HH:MM:SS)",
     )
     @arg(
+        "--use-karapace",
+        action="store_true",
+        default=None,
+        help="Use Karapace for Schema Registry and Kafka REST API",
+    )
+    @arg(
         "--enable-termination-protection",
         action="store_true",
         help="Enable termination protection",
@@ -3912,6 +3918,7 @@ ssl.truststore.type=JKS
     def service__update(self):
         """Update service settings"""
         powered = self._get_powered()
+        karapace = self.args.use_karapace
         project = self.get_project()
         service = self.client.get_service(project=project, service=self.args.service_name)
         plan = self.args.plan or service["plan"]
@@ -3948,6 +3955,7 @@ ssl.truststore.type=JKS
                 maintenance=maintenance or None,
                 plan=plan,
                 disk_space_mb=self.args.disk_space_mb,
+                karapace=karapace,
                 powered=powered,
                 project=project,
                 service=self.args.service_name,
@@ -3956,8 +3964,11 @@ ssl.truststore.type=JKS
                 project_vpc_id=project_vpc_id,
             )
         except client.Error as ex:
-            print(ex.response.text)
-            raise argx.UserError("Service '{}/{}' update failed".format(project, self.args.service_name))
+            try:
+                error_message = ex.response.json()["message"]
+            except ValueError:
+                error_message = ex.response.text
+            raise argx.UserError("Service '{}/{}' update failed: {}".format(project, self.args.service_name, error_message))
 
     @arg("project_name", help="Project name")
     @arg.cloud
