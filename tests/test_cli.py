@@ -203,3 +203,95 @@ def test_version_eol_check():
     with mock.patch("aiven.client.cli.get_current_date", return_value=fake_time_soon):
         cli._do_version_eol_check(service_type, service_version)  # pylint: disable=protected-access
         cli.confirm.assert_called()  # Confirmation should have been asked
+
+
+def test_create_service_connection_pool():
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.update_service_connection_pool.return_value = {"message": "created"}
+
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "service", "connection-pool-create", "--project", "testproject", "--dbname", "defaultdb", "--pool-name", "foo",
+            "--pool-size=23", "--username", "avnadmin", "pg-foo-bar"
+        ]
+    )
+
+    aiven_client.create_service_connection_pool.assert_called_with(
+        project="testproject",
+        service="pg-foo-bar",
+        pool_name="foo",
+        dbname="defaultdb",
+        username="avnadmin",
+        pool_size=23,
+        pool_mode=None
+    )
+
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "service", "connection-pool-create", "--project", "testproject", "--dbname", "defaultdb", "--pool-name", "bar",
+            "pg-foo-bar"
+        ]
+    )
+
+    aiven_client.create_service_connection_pool.assert_called_with(
+        project="testproject",
+        service="pg-foo-bar",
+        pool_name="bar",
+        dbname="defaultdb",
+        username=None,
+        pool_size=None,
+        pool_mode=None
+    )
+
+
+def test_update_service_connection_pool():
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.update_service_connection_pool.return_value = {"message": "updated"}
+
+    # pin
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "service", "connection-pool-update", "--project", "testproject", "--pool-name", "foo", "--username", "avnadmin",
+            "pg-foo-bar"
+        ]
+    )
+
+    aiven_client.update_service_connection_pool.assert_called_with(
+        project="testproject",
+        service="pg-foo-bar",
+        pool_name="foo",
+        dbname=None,
+        username="avnadmin",
+        pool_size=None,
+        pool_mode=None
+    )
+
+    # unpin
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "service", "connection-pool-update", "--project", "testproject", "--pool-name", "foo", "--username", "",
+            "pg-foo-bar"
+        ]
+    )
+
+    aiven_client.update_service_connection_pool.assert_called_with(
+        project="testproject",
+        service="pg-foo-bar",
+        pool_name="foo",
+        dbname=None,
+        username=None,
+        pool_size=None,
+        pool_mode=None
+    )
+
+    # leave username as is, change pool-size instead
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "service", "connection-pool-update", "--project", "testproject", "--pool-name", "foo", "--pool-size", "42",
+            "pg-foo-bar"
+        ]
+    )
+
+    aiven_client.update_service_connection_pool.assert_called_with(
+        project="testproject", service="pg-foo-bar", pool_name="foo", dbname=None, pool_size=42, pool_mode=None
+    )

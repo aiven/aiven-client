@@ -18,6 +18,8 @@ try:
 except ImportError:
     __version__ = "UNKNOWN"
 
+UNCHANGED = object()  # used as a sentinel value
+
 
 class Error(Exception):
     """Request error"""
@@ -221,11 +223,13 @@ class AivenClient(AivenClientBase):
         service,
         pool_name,
         dbname,
-        username,
+        username=None,
         pool_size=None,
         pool_mode=None,
     ):
-        body = {"database": dbname, "username": username, "pool_name": pool_name}
+        body = {"database": dbname, "pool_name": pool_name}
+        if username:
+            body["username"] = username
         if pool_size:
             body["pool_size"] = pool_size
         if pool_mode:
@@ -242,12 +246,12 @@ class AivenClient(AivenClientBase):
         service,
         pool_name,
         dbname=None,
-        username=None,
+        username=UNCHANGED,
         pool_size=None,
         pool_mode=None,
     ):
         body = {}
-        if username is not None:
+        if username is not UNCHANGED:
             body["username"] = username
         if dbname is not None:
             body["database"] = dbname

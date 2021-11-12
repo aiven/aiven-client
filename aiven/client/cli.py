@@ -1558,7 +1558,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg.service_name
     @arg("--pool-name", help="Connection pool name", required=True)
     @arg("--dbname", help="Service database name", required=True)
-    @arg("--username", help="Service username", required=True)
+    @arg("--username", help="Service username")
     @arg("--pool-size", type=int, help="Connection pool size")
     @arg("--pool-mode", help="Connection pool mode")
     @arg.json
@@ -1578,21 +1578,25 @@ class AivenCLI(argx.CommandLineTool):
     @arg.service_name
     @arg("--pool-name", help="Connection pool name", required=True)
     @arg("--dbname", help="Service database name")
-    @arg("--username", help="Service username")
+    @arg("--username", help="Service username (set to empty string to remove the pool username)")
     @arg("--pool-size", type=int, help="Connection pool size")
     @arg("--pool-mode", help="Connection pool mode")
     @arg.json
     def service__connection_pool_update(self):
         """Update a connection pool for a given PostgreSQL service"""
-        self.client.update_service_connection_pool(
+        kwargs = dict(
             project=self.get_project(),
             service=self.args.service_name,
             pool_name=self.args.pool_name,
             dbname=self.args.dbname,
-            username=self.args.username,
             pool_size=self.args.pool_size,
             pool_mode=self.args.pool_mode,
         )
+
+        if self.args.username is not None:
+            kwargs["username"] = self.args.username if self.args.username != "" else None
+
+        self.client.update_service_connection_pool(**kwargs)
 
     @arg.project
     @arg.service_name
