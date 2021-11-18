@@ -3120,6 +3120,7 @@ ssl.truststore.type=JKS
             "integration_id",
             "table_id",
             "table_name",
+            "schema_sql",
         ]]
         self.print_response(
             self.client.list_flink_tables(project_name, self.args.service_name), json=self.args.json, table_layout=layout
@@ -3130,8 +3131,32 @@ ssl.truststore.type=JKS
     @arg("integration_id", help="Service integration ID")
     @arg("-n", "--table-name", required=True, help="Table name")
     @arg("--kafka-topic", required=False, help="Topic name, used as a source/sink. (Kafka integration only)")
+    @arg(
+        "--kafka-connector-type",
+        required=False,
+        help="Kafka connector type (Kafka integration only)",
+        choices=["upsert-kafka", "kafka"]
+    )
+    @arg(
+        "--kafka-key-format",
+        required=False,
+        help="Key format. (Kafka integration only)",
+        choices=["avro", "avro-confluent", "debezium-avro-confluent", "debezium-json", "json"]
+    )
+    @arg("--kafka-key-fields", nargs="*", default=[], required=False, help="Key fields names used in table schema")
+    @arg(
+        "--kafka-value-format",
+        required=False,
+        help="Value format. (Kafka integration only)",
+        choices=["avro", "avro-confluent", "debezium-avro-confluent", "debezium-json", "json"]
+    )
+    @arg(
+        "--kafka-startup-mode",
+        required=False,
+        help="Kafka startup mode (Kafka integration only)",
+        choices=["earliest-offset", "latest-offset"]
+    )
     @arg("--jdbc-table", required=False, help="Table name in Database, used as a source/sink. (PG integration only)")
-    @arg("-p", "--partitioned-by", required=False, help="A column from a schema, table will be partitioned by")
     @arg(
         "-l",
         "--like-options",
@@ -3147,19 +3172,32 @@ ssl.truststore.type=JKS
             "integration_id",
             "table_id",
             "table_name",
+            "schema_sql",
+            "columns",
         ]]
-        new_table = self.client.create_flink_table(
-            project_name,
-            self.args.service_name,
-            self.args.integration_id,
-            self.args.table_name,
-            self.args.schema_sql,
-            self.args.kafka_topic,
-            self.args.jdbc_table,
-            self.args.partitioned_by,
-            self.args.like_options,
-        )
-        self.print_response([new_table], json=self.args.json, table_layout=layout)
+        try:
+            new_table = self.client.create_flink_table(
+                project_name,
+                self.args.service_name,
+                self.args.integration_id,
+                self.args.table_name,
+                self.args.schema_sql,
+                self.args.kafka_topic,
+                self.args.kafka_connector_type,
+                self.args.kafka_key_format,
+                self.args.kafka_key_fields,
+                self.args.kafka_value_format,
+                self.args.kafka_startup_mode,
+                self.args.jdbc_table,
+                self.args.like_options,
+            )
+            self.print_response([new_table], json=self.args.json, table_layout=layout)
+        except client.Error as ex:
+            if "errors" in ex.response.json():
+                error_reason = ex.response.json()["errors"][0]["message"]
+                raise argx.UserError("Table creation failed. Reason: {}".format(error_reason))
+            else:
+                raise argx.UserError("Table creation failed. Reason: {}".format(ex.response.text))
 
     @arg.project
     @arg.service_name
@@ -3172,6 +3210,8 @@ ssl.truststore.type=JKS
             "integration_id",
             "table_id",
             "table_name",
+            "schema_sql",
+            "columns",
         ]]
         table = self.client.get_flink_table(
             project_name,

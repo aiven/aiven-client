@@ -1031,8 +1031,12 @@ class AivenClient(AivenClientBase):
         table_name,
         schema_sql,
         kafka_topic=None,
+        kafka_connector_type=None,
+        kafka_key_format=None,
+        kafka_key_fields=None,
+        kafka_value_format=None,
+        kafka_startup_mode=None,
         jdbc_table=None,
-        partitioned_by=None,
         like_options=None
     ):
         path = self.build_path(
@@ -1050,10 +1054,18 @@ class AivenClient(AivenClientBase):
         }
         if kafka_topic:
             body["kafka_topic"] = kafka_topic
+        if kafka_connector_type:
+            body["kafka_connector_type"] = kafka_connector_type
+        if kafka_key_format:
+            body["kafka_key_format"] = kafka_key_format
+        if kafka_key_fields:
+            body["kafka_key_fields"] = kafka_key_fields
+        if kafka_value_format:
+            body["kafka_value_format"] = kafka_value_format
+        if kafka_startup_mode:
+            body["kafka_startup_mode"] = kafka_startup_mode
         if jdbc_table:
             body["jdbc_table"] = jdbc_table
-        if partitioned_by:
-            body["partitioned_by"] = partitioned_by
         if like_options:
             body["like_options"] = like_options
         return self.verify(self.post, path, body=body)
