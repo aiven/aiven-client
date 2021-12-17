@@ -1894,6 +1894,18 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.service_name
     @arg("--username", help="Service user username", required=True)
+    @arg.json
+    def service__user_creds_acknowledge(self):
+        """Acknowledge that service user certificates have been updated"""
+        self.client.acknowledge_service_user_certificate(
+            project=self.get_project(),
+            service=self.args.service_name,
+            username=self.args.username,
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg("--username", help="Service user username", required=True)
     @arg("--new-password", help="New password for service user")
     @arg.json
     def service__user_password_reset(self):

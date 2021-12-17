@@ -296,6 +296,11 @@ class AivenClient(AivenClientBase):
         path = self.build_path("project", project, "service", service, "user", username)
         return self.verify(self.get, path, result_key="user")
 
+    def acknowledge_service_user_certificate(self, project, service, username):
+        path = self.build_path("project", project, "service", service, "user", username)
+        body = {"operation": "acknowledge-renewal"}
+        return self.verify(self.put, path, body=body)
+
     def reset_service_user_password(self, project, service, username, password):
         path = self.build_path("project", project, "service", service, "user", username)
         body = {"operation": "reset-credentials"}
