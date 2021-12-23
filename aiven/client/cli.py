@@ -298,7 +298,12 @@ class AivenCLI(argx.CommandLineTool):
         """Return project given as cmdline argument or the default project from config file"""
         if getattr(self.args, "project", None) and self.args.project:
             return self.args.project
-        return self.config.get("default_project")
+        default_project = self.config.get("default_project")
+        if not default_project:
+            raise argx.UserError(
+                "Specify project: use --project in the command line or the default_project item in the config file."
+            )
+        return default_project
 
     @no_auth
     @arg("pattern", nargs="*", help="command search pattern")
