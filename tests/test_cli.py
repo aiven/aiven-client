@@ -7,6 +7,7 @@
 from aiven.client import AivenClient
 from aiven.client.cli import AivenCLI, ClientFactory, EOL_ADVANCE_WARNING_TIME
 from collections import namedtuple
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from unittest import mock
 
@@ -295,3 +296,25 @@ def test_update_service_connection_pool():
     aiven_client.update_service_connection_pool.assert_called_with(
         project="testproject", service="pg-foo-bar", pool_name="foo", dbname=None, pool_size=42, pool_mode=None
     )
+
+
+@contextmanager
+def mock_config(return_value):
+    with mock.patch("aiven.client.argx.Config", side_effect=lambda _: return_value):
+        yield
+
+
+def test_get_project(caplog):
+    # https://github.com/aiven/aiven-client/issues/246
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.get_services.side_effect = lambda project: []
+    args = ["service", "list"]
+    with mock_config({}):
+        assert build_aiven_cli(aiven_client).run(args=args) == 1
+    assert "specify project" in caplog.text.lower()
+    caplog.clear()
+    assert build_aiven_cli(aiven_client).run(args=args + ["--project", "project_0"]) is None
+    assert not caplog.text
+    with mock_config({"default_project": "project_1"}):
+        assert build_aiven_cli(aiven_client).run(args=args) is None
+    assert not caplog.text
