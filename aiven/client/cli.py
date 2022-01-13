@@ -2498,7 +2498,7 @@ ssl.truststore.type=JKS
     @arg(
         "--target-version",
         help="Upgrade target version",
-        choices=["10", "11", "12", "13"],
+        type=int,
         required=False,
     )
     @arg(
@@ -2520,7 +2520,7 @@ ssl.truststore.type=JKS
                 raise argx.UserError("--target-version is required for this operation")
             body = {
                 "task_type": self.args.operation,
-                "target_version": self.args.target_version,
+                "target_version": str(self.args.target_version),
             }
         elif self.args.operation == "migration_check":
             if not self.args.source_service_uri:
