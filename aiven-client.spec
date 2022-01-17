@@ -7,7 +7,7 @@ License:        ASL 2.0
 Source0:        rpm-src-aiven-client.tar
 BuildArch:      noarch
 Requires:       python3-requests
-BuildRequires:  python3-devel, python3-flake8, python3-pylint, python3-pytest
+BuildRequires:  python3-devel, python3-flake8, python3-mypy, python3-pylint, python3-pytest
 
 
 %description

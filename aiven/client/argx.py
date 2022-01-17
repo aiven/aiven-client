@@ -3,7 +3,7 @@
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
 from aiven.client import envdefault, pretty
-from typing import Optional
+from typing import NoReturn, Optional
 
 import aiven.client.client
 import argparse
@@ -302,7 +302,7 @@ class CommandLineTool:  # pylint: disable=old-style-class
         self.pre_run(func)
         return func()  # pylint: disable=not-callable
 
-    def main(self, args=None):
+    def main(self, args=None) -> NoReturn:
         # TODO: configurable log level
         logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
         logging.getLogger("requests").setLevel(logging.WARNING)

@@ -10,7 +10,7 @@ all: $(generated)
 aiven/client/version.py: .git/index
 	$(PYTHON) version.py $@
 
-test: flake8 pylint pytest
+test: flake8 mypy pylint pytest
 
 reformat:
 	$(PYTHON) -m isort --recursive $(PYTHON_DIRS)
@@ -29,6 +29,9 @@ validate-style:
 flake8:
 	$(PYTHON) -m flake8 $(PYTHON_DIRS)
 
+mypy:
+	$(PYTHON) -m mypy $(PYTHON_DIRS)
+
 pylint:
 	$(PYTHON) -m pylint $(PYTHON_DIRS)
 
@@ -44,7 +47,7 @@ clean:
 
 build-dep-fedora:
 	sudo dnf install -y --best --allowerasing python3-devel python3-flake8 python3-requests \
-		tar rpmdevtools python3-pylint python3-isort python3-pytest
+		tar rpmdevtools python3-mypy python3-pylint python3-isort python3-pytest
 
 .PHONY: rpm
 rpm: $(RPM)
@@ -64,4 +67,4 @@ $(RPM): $(generated)
 install-rpm: $(RPM)
 	sudo dnf install $<
 
-.PHONY: build-dep-fedora clean coverage pytest pylint flake8 reformat test validate-style
+.PHONY: build-dep-fedora clean coverage pytest mypy pylint flake8 reformat test validate-style

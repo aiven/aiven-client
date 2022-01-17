@@ -1,4 +1,6 @@
 flake8
+# Lock mypy to the same version used in downstream build environments
+mypy==0.910
 # Lock pylint to the same version used in downstream build environments
 pylint==2.6.0
 pytest
