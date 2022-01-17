@@ -28,7 +28,7 @@ Requirements:
 *  For Windows and OSX, certifi_ is also needed
 
 .. _`Requests`: http://www.python-requests.org/
-.. _`certifi`: https://certifi.io/
+.. _`certifi`: https://github.com/certifi/python-certifi
 
 .. _installation:
 
