@@ -294,12 +294,12 @@ class AivenCLI(argx.CommandLineTool):
         answer = input(prompt)
         return is_truthy(answer)
 
-    def get_project(self):
+    def get_project(self, raise_if_none=True):
         """Return project given as cmdline argument or the default project from config file"""
         if getattr(self.args, "project", None) and self.args.project:
             return self.args.project
         default_project = self.config.get("default_project")
-        if not default_project:
+        if raise_if_none and not default_project:
             raise argx.UserError(
                 "Specify project: use --project in the command line or the default_project item in the config file."
             )
@@ -398,7 +398,7 @@ class AivenCLI(argx.CommandLineTool):
         if auth_token:
             self.client.set_auth_token(auth_token)
 
-        project = self.get_project()
+        project = self.get_project(raise_if_none=False)
         projects = self.client.get_projects()
         if project and any(p["project_name"] == project for p in projects):
             # default project exists
@@ -575,7 +575,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg.json
     def cloud__list(self):
         """List cloud types"""
-        project = self.get_project()
+        project = self.get_project(raise_if_none=False)
         if project and not self.client.auth_token:
             raise argx.UserError("authentication is required to list clouds for a specific project")
         self.print_response(self.client.get_clouds(project=project), json=self.args.json)
