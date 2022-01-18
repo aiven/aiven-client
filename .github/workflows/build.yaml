@@ -38,6 +38,9 @@ jobs:
       - id: flake8
         run: make flake8
 
+      - id: mypy
+        run: make mypy
+
       - id: pyLint
         run: make pylint
 

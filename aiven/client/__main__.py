@@ -1,7 +1,8 @@
 from .cli import AivenCLI
+from typing import NoReturn
 
 
-def main():
+def main() -> NoReturn:
     AivenCLI().main()
 
 
