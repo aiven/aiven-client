@@ -425,6 +425,11 @@ For working with `kafkacat <https://github.com/edenhill/kafkacat>`_ (see also ou
 
   $ avn service user-kafka-java-creds --username avnadmin -p t0pS3cr3t <service>
 
+Contributing
+============
+
+Check the `CONTRIBUTING <https://github.com/aiven/aiven-client/blob/master/.github/CONTRIBUTING.md>`_ guide for details on how to contribute to this repository.
+
 Keep Reading
 ============
 
