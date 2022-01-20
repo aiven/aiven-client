@@ -1042,6 +1042,7 @@ class AivenClient(AivenClientBase):
         kafka_value_format=None,
         kafka_startup_mode=None,
         jdbc_table=None,
+        opensearch_index=None,
         like_options=None
     ):
         path = self.build_path(
@@ -1071,6 +1072,8 @@ class AivenClient(AivenClientBase):
             body["kafka_startup_mode"] = kafka_startup_mode
         if jdbc_table:
             body["jdbc_table"] = jdbc_table
+        if opensearch_index:
+            body["opensearch_index"] = opensearch_index
         if like_options:
             body["like_options"] = like_options
         return self.verify(self.post, path, body=body)

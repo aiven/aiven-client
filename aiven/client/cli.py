@@ -3174,6 +3174,7 @@ ssl.truststore.type=JKS
         choices=["earliest-offset", "latest-offset"]
     )
     @arg("--jdbc-table", required=False, help="Table name in Database, used as a source/sink. (PG integration only)")
+    @arg("--opensearch-index", required=False, help="OpenSearch index name. (OpenSearch integration only)")
     @arg(
         "-l",
         "--like-options",
@@ -3206,6 +3207,7 @@ ssl.truststore.type=JKS
                 self.args.kafka_value_format,
                 self.args.kafka_startup_mode,
                 self.args.jdbc_table,
+                self.args.opensearch_index,
                 self.args.like_options,
             )
             self.print_response([new_table], json=self.args.json, table_layout=layout)
