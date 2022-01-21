@@ -124,9 +124,9 @@ def yield_table(result, drop_fields=None, table_layout=None, header=True):
         for key, value in item.items():
             if key in drop_fields:
                 continue  # field will not be printed
-            if table_layout is not None and key not in flattened_table_layout:
-                continue  # table_layout has been specified but this field will not be printed
             for subkey, subvalue in iter_values(key, value):
+                if table_layout is not None and subkey not in flattened_table_layout:
+                    continue  # table_layout has been specified but this field will not be printed
                 formatted_row[subkey] = format_item(subkey, subvalue)
                 widths[subkey] = max(len(subkey), len(formatted_row[subkey]), widths.get(subkey, 1))
 

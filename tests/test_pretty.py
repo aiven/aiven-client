@@ -2,7 +2,7 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
-from aiven.client.pretty import flatten_list, format_item, print_table
+from aiven.client.pretty import flatten_list, format_item, print_table, yield_table
 
 import datetime
 import decimal
@@ -109,3 +109,54 @@ IP            NETWORK          METRIC
 
     with pytest.raises(TypeError):
         get_output(rows)
+
+
+def test_yield_table():
+    rows = [{
+        "access_control": {
+            "pg_allow_replication": True
+        },
+        "password": "asdfghjkl",
+        "type": "primary",
+        "username": "avnadmin",
+    }, {
+        "access_control": {
+            "redis_acl_categories": ["+@all"],
+            "redis_acl_channels": ["*"],
+            "redis_acl_commands": ["+get", "-set"],
+            "redis_acl_keys": ["key1", "key2"],
+        },
+        "password": "qwertyuiop",
+        "type": "regular",
+        "username": "myuser",
+    }]
+
+    one_row_layout_pg = [["username", "type", "access_control.pg_allow_replication"]]
+    result = yield_table(rows, table_layout=one_row_layout_pg)
+    assert list(result) == [
+        "USERNAME  TYPE     ACCESS_CONTROL.PG_ALLOW_REPLICATION",
+        "========  =======  ===================================",
+        "avnadmin  primary  true",
+        "myuser    regular",
+    ]
+
+    one_row_layout_redis = [["username", "type", "access_control.redis_acl_keys"]]
+    result = yield_table(rows, table_layout=one_row_layout_redis)
+    assert list(result) == [
+        "USERNAME  TYPE     ACCESS_CONTROL.REDIS_ACL_KEYS",
+        "========  =======  =============================",
+        "avnadmin  primary",
+        "myuser    regular  key1, key2",
+    ]
+
+    vertical_layout_both = [["username", "type"], "access_control.redis_acl_keys", "access_control.pg_allow_replication"]
+    result = yield_table(rows, table_layout=vertical_layout_both)
+    assert list(result) == [
+        "USERNAME  TYPE   ",
+        "========  =======",
+        "avnadmin  primary",
+        "    access_control.pg_allow_replication = true",
+        "",
+        "myuser    regular",
+        "    access_control.redis_acl_keys = key1, key2",
+    ]
