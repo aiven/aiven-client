@@ -83,7 +83,7 @@ def flatten_list(complex_list):
     return flattened_list
 
 
-def yield_table(result, drop_fields=None, table_layout=None, header=True):
+def yield_table(result, drop_fields=None, table_layout=None, header=True):  # noqa
     """
     format a list of dicts in a nicer table format yielding string rows
 
