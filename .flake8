@@ -2,3 +2,4 @@
 max-line-length = 125
 # These codes tend to disagree with yapf
 ignore = E129,W503
+max-complexity = 15
