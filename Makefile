@@ -10,7 +10,8 @@ all: $(generated)
 aiven/client/version.py: .git/index
 	$(PYTHON) version.py $@
 
-test: flake8 mypy pylint pytest
+test: pytest
+lint: flake8 mypy pylint
 
 reformat:
 	$(PYTHON) -m isort --recursive $(PYTHON_DIRS)
