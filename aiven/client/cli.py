@@ -1308,6 +1308,15 @@ class AivenCLI(argx.CommandLineTool):
                     })
             self.print_response(collapsed, format=self.args.format, json=False, table_layout=layout)
 
+    @arg.project
+    @arg.service_name
+    @arg.json
+    def service__backup_list(self):
+        """List backups for service."""
+        backups = self.client.get_service_backups(project=self.get_project(), service=self.args.service_name)
+        layout = ["backup_name", "backup_time", "data_size", "storage_location"]
+        self.print_response(backups, json=self.args.json, table_layout=layout)
+
     def _get_project_ca(self):
         return self.client.get_project_ca(project=self.get_project())["certificate"]
 

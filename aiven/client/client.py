@@ -347,6 +347,10 @@ class AivenClient(AivenClientBase):
             self.build_path("project", project, "integration_endpoint", endpoint_id),
         )
 
+    def get_service_backups(self, project, service):
+        path = self.build_path("project", project, "service", service, "backups")
+        return self.verify(self.get, path, result_key="backups")
+
     def get_service_integrations(self, project, service):
         path = self.build_path("project", project, "service", service, "integration")
         return self.verify(self.get, path, result_key="service_integrations")
