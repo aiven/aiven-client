@@ -48,7 +48,7 @@ clean:
 
 build-dep-fedora:
 	sudo dnf install -y --best --allowerasing python3-devel python3-flake8 python3-requests \
-		tar rpmdevtools python3-mypy python3-pylint python3-isort python3-pytest
+		tar rpmdevtools python3-mypy python3-types-requests python3-pylint python3-isort python3-pytest
 
 .PHONY: rpm
 rpm: $(RPM)

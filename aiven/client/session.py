@@ -1,19 +1,19 @@
-from requests import adapters, Session
+from requests import adapters, models, Session
 from requests.structures import CaseInsensitiveDict
-from typing import Optional
+from typing import Any, Optional
 
 try:
-    from .version import __version__  # pylint: disable=no-name-in-module
+    from .version import __version__
 except ImportError:
     __version__ = "UNKNOWN"
 
 
 class AivenClientAdapter(adapters.HTTPAdapter):
-    def __init__(self, *args, timeout: Optional[int] = None, **kwargs):
+    def __init__(self, *args: Any, timeout: Optional[int] = None, **kwargs: Any) -> None:
         self.timeout = timeout
         super().__init__(*args, **kwargs)
 
-    def send(self, *args, **kwargs):  # pylint: disable=signature-differs
+    def send(self, *args: Any, **kwargs: Any) -> models.Response:  # pylint: disable=signature-differs
         if not kwargs.get("timeout"):
             kwargs["timeout"] = self.timeout
         return super().send(*args, **kwargs)
