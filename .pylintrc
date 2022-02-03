@@ -2,6 +2,7 @@
 disable=
     bad-continuation,
     bad-option-value,
+    consider-using-f-string,
     duplicate-code,
     fixme,
     invalid-name,
@@ -18,6 +19,7 @@ disable=
     too-many-nested-blocks,
     too-many-public-methods,
     ungrouped-imports,
+    use-sequence-for-iteration,
     wrong-import-order,
     wrong-import-position
 

@@ -99,7 +99,7 @@ class Config(dict):
     def load(self):
         self.clear()
         try:
-            with open(self.file_path) as fp:
+            with open(self.file_path, encoding="utf-8") as fp:
                 self.update(jsonlib.load(fp))
         except IOError as ex:
             if ex.errno == errno.ENOENT:
@@ -117,7 +117,7 @@ class Config(dict):
             os.makedirs(config_dir)
             os.chmod(config_dir, 0o700)
 
-        with open(self.file_path, "w") as fp:
+        with open(self.file_path, "w", encoding="utf-8") as fp:
             os.chmod(fp.name, 0o600)
             jsonlib.dump(self, fp, sort_keys=True, indent=4)
 
