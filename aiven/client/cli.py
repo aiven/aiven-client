@@ -1763,13 +1763,14 @@ class AivenCLI(argx.CommandLineTool):
             project=self.get_project(), service=self.args.service_name, username=self.args.username
         )
         layout = [["username", "type"]]
-        if "access_control" in user:
-            layout[0].extend([
-                "access_control.redis_acl_keys",
-                "access_control.redis_acl_commands",
-                "access_control.redis_acl_categories",
-                "access_control.redis_acl_channels",
-            ])
+        for field in (
+            "redis_acl_keys",
+            "redis_acl_commands",
+            "redis_acl_categories",
+            "redis_acl_channels",
+        ):
+            if field in user.get("access_control", {}):
+                layout[0].append(f"access_control.{field}")
         self.print_response(user, single_item=True, format=self.args.format, json=self.args.json, table_layout=layout)
 
     @arg.project
