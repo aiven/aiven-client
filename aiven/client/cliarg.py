@@ -16,7 +16,7 @@ def get_json_config(path_or_string):
         return {}
     if path_or_string.startswith("@"):
         filepath = path_or_string[1:]
-        with open(filepath, "r") as config_file:
+        with open(filepath, "r", encoding="utf-8") as config_file:
             return jsonlib.load(config_file)
 
     return jsonlib.loads(path_or_string)

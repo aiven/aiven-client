@@ -659,7 +659,7 @@ class AivenCLI(argx.CommandLineTool):
             name, filename = name_and_value.split("=", 1)
             if not os.path.isfile(filename):
                 raise argx.UserError("No such file {!r}".format(filename))
-            with open(filename, "rt") as fob:
+            with open(filename, "rt", encoding="utf-8") as fob:
                 value = fob.read()
             options[name] = value
         return options
@@ -1818,7 +1818,7 @@ class AivenCLI(argx.CommandLineTool):
             "pass:{}".format(self.args.password),
         ])
         service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
-        with open(os.path.join(self.args.target_directory, "client.properties"), "w") as fp:
+        with open(os.path.join(self.args.target_directory, "client.properties"), "w", encoding="utf-8") as fp:
             properties = """\
 bootstrap.servers={service_uri}
 security.protocol=SSL
@@ -1859,7 +1859,7 @@ ssl.truststore.type=JKS
 
         try:
             result = self.client.get_project_ca(project=project_name)
-            with open(os.path.join(self.args.target_directory, "ca.pem"), "w") as fp:
+            with open(os.path.join(self.args.target_directory, "ca.pem"), "w", encoding="utf-8") as fp:
                 fp.write(result["certificate"])
             downloaded_items.append("CA certificate")
         except client.Error as ex:
@@ -1873,7 +1873,7 @@ ssl.truststore.type=JKS
                 if cert is None:
                     missing_user_items.append("certificate")
                 else:
-                    with open(os.path.join(self.args.target_directory, "service.cert"), "w") as fp:
+                    with open(os.path.join(self.args.target_directory, "service.cert"), "w", encoding="utf-8") as fp:
                         fp.write(cert)
                     downloaded_items.append("certificate")
 
@@ -1881,7 +1881,7 @@ ssl.truststore.type=JKS
                 if key is None:
                     missing_user_items.append("key")
                 else:
-                    with open(os.path.join(self.args.target_directory, "service.key"), "w") as fp:
+                    with open(os.path.join(self.args.target_directory, "service.key"), "w", encoding="utf-8") as fp:
                         fp.write(key)
                     downloaded_items.append("key")
 
@@ -4222,7 +4222,7 @@ ssl.truststore.type=JKS
         except client.Error as ex:
             print(ex.response.text)
             raise argx.UserError("Project '{}' CA get failed".format(project_name))
-        with open(self.args.target_filepath, "w") as fp:
+        with open(self.args.target_filepath, "w", encoding="utf-8") as fp:
             fp.write(result["certificate"])
 
     @arg.project
@@ -4234,7 +4234,7 @@ ssl.truststore.type=JKS
         project_name = self.get_project()
         result = self.client.get_service_ca(project=project_name, service=self.args.service_name, ca=self.args.ca)
 
-        with open(self.args.target_filepath, "w") as fp:
+        with open(self.args.target_filepath, "w", encoding="utf-8") as fp:
             fp.write(result["certificate"])
 
     @arg.project
@@ -4249,9 +4249,9 @@ ssl.truststore.type=JKS
             project=project_name, service=self.args.service_name, keypair=self.args.keypair
         )
 
-        with open(self.args.key_filepath, "w") as fp:
+        with open(self.args.key_filepath, "w", encoding="utf-8") as fp:
             fp.write(result["key"])
-        with open(self.args.cert_filepath, "w") as fp:
+        with open(self.args.cert_filepath, "w", encoding="utf-8") as fp:
             fp.write(result["certificate"])
 
     def _validate_service_cassandra_sstableloader(self):
@@ -4310,13 +4310,13 @@ ssl.truststore.type=JKS
         project_ca_path = os.path.join(self.args.target_directory, "project-ca.cert")
 
         try:
-            with open(client_key_path, "w") as fp:
+            with open(client_key_path, "w", encoding="utf-8") as fp:
                 fp.write(client_keypair["key"])
-            with open(client_cert_path, "w") as fp:
+            with open(client_cert_path, "w", encoding="utf-8") as fp:
                 fp.write(client_keypair["certificate"])
-            with open(internode_ca_path, "w") as fp:
+            with open(internode_ca_path, "w", encoding="utf-8") as fp:
                 fp.write(internode_ca["certificate"])
-            with open(project_ca_path, "w") as fp:
+            with open(project_ca_path, "w", encoding="utf-8") as fp:
                 fp.write(project_ca["certificate"])
 
             # Sstableloader accepts a regular cassandra.yaml and reads encryption settings for connecting to the native
@@ -4324,7 +4324,7 @@ ssl.truststore.type=JKS
             # Some options are boilerplate just used to avoid Cassandra/Java libraries to attempt to look up
             # keystore/truststore files from default locations, and failing when they do not exist, even if the actual
             # certificates/keys in them would not be used
-            with open(os.path.join(self.args.target_directory, "cassandra.yaml"), "w") as fp:
+            with open(os.path.join(self.args.target_directory, "cassandra.yaml"), "w", encoding="utf-8") as fp:
                 fp.write(
                     """\
 client_encryption_options:
@@ -4570,13 +4570,13 @@ server_encryption_options:
         # pylint: disable=consider-using-with
         auth_token_file_path = self._get_auth_token_file_name()
         try:
-            return open(auth_token_file_path, mode)
+            return open(auth_token_file_path, mode, encoding="utf-8")
         except IOError as ex:
             if ex.errno == errno.ENOENT and mode == "w":
                 aiven_dir = os.path.dirname(auth_token_file_path)
                 os.makedirs(aiven_dir)
                 os.chmod(aiven_dir, 0o700)
-                return open(auth_token_file_path, mode)
+                return open(auth_token_file_path, mode, encoding="utf-8")
             raise
 
     def _remove_auth_token_file(self):
