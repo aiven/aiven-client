@@ -318,3 +318,13 @@ def test_get_project(caplog):
     with mock_config({"default_project": "project_1"}):
         assert build_aiven_cli(aiven_client).run(args=args) is None
     assert not caplog.text
+
+
+def test_user_logout():
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    assert build_aiven_cli(aiven_client).run(["user", "logout"]) is None
+    aiven_client.access_token_revoke.assert_called()
+
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    assert build_aiven_cli(aiven_client).run(["user", "logout", "--no-token-revoke"]) is None
+    aiven_client.access_token_revoke.assert_not_called()
