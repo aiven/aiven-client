@@ -415,10 +415,11 @@ class AivenCLI(argx.CommandLineTool):
         else:
             self.log.info("No projects exists. You should probably create one with 'avn project create <name>'")
 
-    @arg()
+    @arg("--no-token-revoke", action="store_true", help="Do not revoke token")
     def user__logout(self):
         """Logout from current session"""
-        self.client.access_token_revoke(token_prefix=self._get_auth_token())
+        if not self.args.no_token_revoke:
+            self.client.access_token_revoke(token_prefix=self._get_auth_token())
         self._remove_auth_token_file()
 
     @arg.verbose
