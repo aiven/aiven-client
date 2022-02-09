@@ -1,6 +1,8 @@
 flake8
 # Lock mypy to the same major version used in downstream build environments
 mypy>=0.931,<1.0
+# Lock types-requests to the same major version used in downstream build environments
+types-requests>=2.26.1,<3.0
 # Lock pylint to the same major version used in downstream build environments
 pylint>=2.12.2,<3.0
 pytest
