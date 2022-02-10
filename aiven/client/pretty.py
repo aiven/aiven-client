@@ -4,6 +4,8 @@
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
 """Pretty-print JSON objects and lists as tables"""
+from typing import Collection, List, Optional, Tuple, Union
+
 import datetime
 import decimal
 import fnmatch
@@ -16,6 +18,8 @@ try:
     basestring
 except NameError:
     basestring = str  # pylint: disable=redefined-builtin
+
+TableLayout = Collection[Union[List[str], Tuple[str], str]]
 
 
 class CustomJsonEncoder(json.JSONEncoder):
@@ -83,7 +87,12 @@ def flatten_list(complex_list):
     return flattened_list
 
 
-def yield_table(result, drop_fields=None, table_layout=None, header=True):  # noqa
+def yield_table(  # noqa
+    result,
+    drop_fields: Optional[Collection[str]] = None,
+    table_layout: Optional[TableLayout] = None,
+    header=True,
+):
     """
     format a list of dicts in a nicer table format yielding string rows
 
@@ -163,7 +172,13 @@ def yield_table(result, drop_fields=None, table_layout=None, header=True):  # no
                 yield "    {:{}} = {}".format(key, max_key_width, value)
 
 
-def print_table(result, drop_fields=None, table_layout=None, header=True, file=None):  # pylint: disable=redefined-builtin
+def print_table(
+    result,
+    drop_fields: Optional[Collection[str]] = None,
+    table_layout: Optional[TableLayout] = None,
+    header=True,
+    file=None
+):  # pylint: disable=redefined-builtin
     """print a list of dicts in a nicer table format"""
     for row in yield_table(result, drop_fields=drop_fields, table_layout=table_layout, header=header):
         print(row, file=file or sys.stdout)
