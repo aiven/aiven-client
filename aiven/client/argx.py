@@ -2,8 +2,15 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
+from __future__ import annotations
+
+from .pretty import TableLayout
 from aiven.client import envdefault, pretty
-from typing import NoReturn, Optional
+from argparse import Action
+from os import PathLike
+from typing import (
+    Any, Callable, cast, Collection, Dict, List, Mapping, NoReturn, Optional, Sequence, TextIO, Tuple, Type, Union
+)
 
 import aiven.client.client
 import argparse
@@ -18,7 +25,7 @@ import sys
 
 # Optional shell completions
 try:
-    import argcomplete  # pylint: disable=import-error
+    import argcomplete  # type: ignore # pylint: disable=import-error
 
     ARGCOMPLETE_INSTALLED = True
 except ImportError:
@@ -31,7 +38,7 @@ except ImportError:
 
 # cached_property only exists since python 3.8
 SKIP_EVALUATION_TYPES = (property, )
-if hasattr(functools, "cached_property"):
+if (sys.version_info[:2] >= (3, 8)) and hasattr(functools, "cached_property"):
     SKIP_EVALUATION_TYPES += (functools.cached_property, )
 
 ARG_LIST_PROP = "_arg_list"
@@ -41,9 +48,9 @@ LOG_FORMAT = "%(levelname)s\t%(message)s"
 class CustomFormatter(argparse.RawDescriptionHelpFormatter):
     """Help formatter to display the default value only for integers and non-empty strings"""
 
-    def _get_help_string(self, action):
-        help_text = action.help
-        if "%(default)" not in action.help and action.default is not argparse.SUPPRESS:
+    def _get_help_string(self, action: Action) -> str:
+        help_text = action.help or ""
+        if "%(default)" not in help_text and action.default is not argparse.SUPPRESS:
             if action.option_strings or action.nargs in [
                 argparse.OPTIONAL,
                 argparse.ZERO_OR_MORE,
@@ -58,7 +65,7 @@ class UserError(Exception):
     """User error"""
 
 
-def arg(*args, **kwargs):
+def arg(*args: Any, **kwargs: Any) -> Callable:
     """ Declares an argument of an CLI command.
 
     This decorator accepts the same arguments as `argparse.Parser::add_argument`.
@@ -76,7 +83,7 @@ def arg(*args, **kwargs):
                 print(self.args.n)
     """
 
-    def wrap(func):
+    def wrap(func: Callable) -> Callable:
         arg_list = getattr(func, ARG_LIST_PROP, None)
         if arg_list is None:
             arg_list = []
@@ -91,12 +98,12 @@ def arg(*args, **kwargs):
 
 
 class Config(dict):
-    def __init__(self, file_path):
+    def __init__(self, file_path: PathLike):
         dict.__init__(self)
         self.file_path = file_path
         self.load()
 
-    def load(self):
+    def load(self) -> None:
         self.clear()
         try:
             with open(self.file_path, encoding="utf-8") as fp:
@@ -111,7 +118,7 @@ class Config(dict):
         except ValueError as ex:
             raise UserError("Invalid JSON in configuration file {!r}".format(self.file_path)) from ex
 
-    def save(self):
+    def save(self) -> None:
         config_dir = os.path.dirname(self.file_path)
         if not os.path.isdir(config_dir):
             os.makedirs(config_dir)
@@ -123,11 +130,11 @@ class Config(dict):
 
 
 class CommandLineTool:  # pylint: disable=old-style-class
-    def __init__(self, name, parser: Optional[argparse.ArgumentParser] = None):
+    def __init__(self, name: str, parser: Optional[argparse.ArgumentParser] = None):
         self.log = logging.getLogger(name)
-        self.config = None
-        self._cats = {}
-        self._extensions = []
+        self.config: Optional[Config] = None
+        self._cats: Dict[Tuple[str, ...], argparse._SubParsersAction] = {}
+        self._extensions: List[CommandLineTool] = []
         self.parser = parser or argparse.ArgumentParser(prog=name, formatter_class=CustomFormatter)
         self.parser.add_argument(
             "--config",
@@ -136,9 +143,9 @@ class CommandLineTool:  # pylint: disable=old-style-class
         )
         self.parser.add_argument("--version", action="version", version="aiven-client {}".format(__version__))
         self.subparsers = self.parser.add_subparsers(title="command categories", dest="command", help="", metavar="")
-        self.args = None
+        self.args: Optional[argparse.Namespace] = None
 
-    def add_cmd(self, func):
+    def add_cmd(self, func: Callable) -> None:
         """Add a parser for a single command method call"""
         assert func.__doc__, f"Missing docstring for {func.__qualname__}"
 
@@ -173,16 +180,16 @@ class CommandLineTool:  # pylint: disable=old-style-class
         # Ensure the list of actions remains sorted as we append to to it.
         self.subparsers._choices_actions.sort(key=lambda item: item.dest)  # pylint: disable=protected-access
 
-    def add_args(self, parser):
+    def add_args(self, parser: argparse.ArgumentParser) -> None:
         pass  # override in sub-class
 
-    def extend_commands(self, sub_client):
+    def extend_commands(self, sub_client: CommandLineTool) -> None:
         """Add top-level args and all commands from a CommandLineTool instance"""
         sub_client.add_args(self.parser)  # top-level args
         sub_client.add_cmds(self.add_cmd)  # sub-commands
         self._extensions.append(sub_client)
 
-    def add_cmds(self, add_func):
+    def add_cmds(self, add_func: Callable[[Callable], None]) -> None:
         """Add every method tagged with @arg as a command"""
         for prop in dir(self):
             # Skip @property and @cached_property attributes to delay coercing their evaluation.
@@ -191,52 +198,63 @@ class CommandLineTool:  # pylint: disable=old-style-class
                 continue
             func = getattr(self, prop, None)
             if getattr(func, ARG_LIST_PROP, None) is not None:
+                assert callable(func)
                 add_func(func)
 
-    def parse_args(self, args=None):
+    def parse_args(self, args: Optional[Sequence[str]] = None) -> None:
         self.extend_commands(self)
 
         if ARGCOMPLETE_INSTALLED:
             argcomplete.autocomplete(self.parser)
 
-        args = self.parser.parse_args(args=args)
+        ext_args = self.parser.parse_args(args=args)
         for ext in self._extensions:
-            ext.args = args
+            ext.args = ext_args
 
-    def pre_run(self, func):
+    def pre_run(self, func: Callable) -> None:
         """Override in sub-class"""
 
-    def expected_errors(self):
+    def expected_errors(self) -> Sequence[Type[BaseException]]:
         return []
+
+    def _to_mapping_collection(
+        self, obj: Union[Mapping[str, Any], Collection[Mapping[str, Any]]], single_item: bool = False
+    ) -> Collection[Mapping[str, Any]]:
+        if single_item:
+            assert isinstance(obj, Mapping)
+            return [obj]
+        else:
+            assert isinstance(obj, Collection)
+            return cast(Collection[Mapping[str, Any]], obj)
 
     def print_response(
         self,
-        result,
-        json=True,
-        format=None,  # pylint: disable=redefined-builtin
-        drop_fields=None,
-        table_layout=None,
-        single_item=False,
-        header=True,
-        csv=False,
-        file=None,
-    ):  # pylint: disable=redefined-builtin
+        result: Union[Mapping[str, Any], Collection[Mapping[str, Any]]],
+        json: bool = True,
+        format: Optional[str] = None,  # pylint: disable=redefined-builtin
+        drop_fields: Optional[Collection[str]] = None,
+        table_layout: Optional[TableLayout] = None,
+        single_item: bool = False,
+        header: bool = True,
+        csv: bool = False,
+        file: Optional[TextIO] = None,
+    ) -> None:  # pylint: disable=redefined-builtin
         """print request response in chosen format"""
         if file is None:
             file = sys.stdout
 
         if format is not None:
-            if single_item:
-                result = [result]
-            for item in result:
+            for item in self._to_mapping_collection(result, single_item=single_item):
                 print(format.format(**item), file=file)
         elif json:
+            assert isinstance(result, (Collection, Mapping))
             print(
                 jsonlib.dumps(result, indent=4, sort_keys=True, cls=pretty.CustomJsonEncoder),
                 file=file,
             )
         elif csv:
             fields = []
+            assert table_layout is not None
             for field in table_layout:
                 if isinstance(field, str):
                     fields.append(field)
@@ -246,30 +264,26 @@ class CommandLineTool:  # pylint: disable=old-style-class
             writer = csvlib.DictWriter(file, extrasaction="ignore", fieldnames=fields)
             if header:
                 writer.writeheader()
-            if single_item:
-                result = [result]
-            for item in result:
+            for item in self._to_mapping_collection(result, single_item=single_item):
                 writer.writerow(item)
         else:
-            if single_item:
-                result = [result]
-
             pretty.print_table(
-                result,
+                self._to_mapping_collection(result, single_item=single_item),
                 drop_fields=drop_fields,
                 table_layout=table_layout,
                 header=header,
                 file=file,
             )
 
-    def run(self, args=None):
+    def run(self, args: Optional[Sequence[str]] = None) -> Optional[int]:
         args = args or sys.argv[1:]
         if not args:
             args = ["--help"]
 
         self.parse_args(args=args)
+        assert self.args is not None and hasattr(self.args, "config")
         self.config = Config(self.args.config)
-        expected_errors = [
+        expected_errors: List[Type[BaseException]] = [
             requests.exceptions.ConnectionError,
             UserError,
             aiven.client.client.Error,
@@ -293,16 +307,16 @@ class CommandLineTool:  # pylint: disable=old-style-class
             self.log.error("*** terminated by keyboard ***")
             return 2  # SIGINT
 
-    def run_actual(self, args_for_help):
+    def run_actual(self, args_for_help: Sequence[str]) -> Optional[int]:
         func = getattr(self.args, "func", None)
         if not func:
-            self.parser.parse_args(args_for_help + ["--help"])
+            self.parser.parse_args(list(args_for_help) + ["--help"])
             return 1
 
         self.pre_run(func)
         return func()  # pylint: disable=not-callable
 
-    def main(self, args=None) -> NoReturn:
+    def main(self, args: Optional[Sequence[str]] = None) -> NoReturn:
         # TODO: configurable log level
         logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
         logging.getLogger("requests").setLevel(logging.WARNING)
