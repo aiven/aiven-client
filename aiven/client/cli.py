@@ -36,16 +36,7 @@ AUTHENTICATION_METHOD_COLUMNS = [
     "create_time",
     "update_time",
 ]
-PLUGINS = []
-
 EOL_ADVANCE_WARNING_TIME = timedelta(weeks=26)  # Give 6 months advance notice for EOL services
-
-try:
-    from aiven.admin import plugin as adminplugin  # pylint: disable=import-error,no-name-in-module
-
-    PLUGINS.append(adminplugin)
-except ImportError:
-    pass
 
 
 def convert_str_to_value(schema, str_value):
@@ -143,9 +134,6 @@ class AivenCLI(argx.CommandLineTool):
         argx.CommandLineTool.__init__(self, "avn")
         self.client_factory = client_factory
         self.client = None
-        for plugin in PLUGINS:
-            plugincli = plugin.ClientPlugin()
-            self.extend_commands(plugincli)
 
     def add_args(self, parser):
         parser.add_argument(
