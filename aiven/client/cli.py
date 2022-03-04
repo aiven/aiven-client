@@ -3220,43 +3220,54 @@ ssl.truststore.type=JKS
 
     @arg.project
     @arg.service_name
-    @arg("integration_id", help="Service integration ID")
-    @arg("-n", "--table-name", required=True, help="Table name")
-    @arg("--kafka-topic", required=False, help="Topic name, used as a source/sink. (Kafka integration only)")
+    @arg("integration_id", default=None, nargs="?", help="Service integration ID (deprecated)")
+    @arg("-n", "--table-name", required=False, help="Table name (deprecated)")
+    @arg("--kafka-topic", required=False, help="Topic name, used as a source/sink. (Kafka integration only) (deprecated)")
     @arg(
         "--kafka-connector-type",
         required=False,
-        help="Kafka connector type (Kafka integration only)",
+        help="Kafka connector type (Kafka integration only) (deprecated)",
         choices=["upsert-kafka", "kafka"],
     )
     @arg(
         "--kafka-key-format",
         required=False,
-        help="Key format. (Kafka integration only)",
+        help="Key format. (Kafka integration only) (deprecated)",
         choices=["avro", "avro-confluent", "debezium-avro-confluent", "debezium-json", "json"],
     )
-    @arg("--kafka-key-fields", nargs="*", default=[], required=False, help="Key fields names used in table schema")
+    @arg(
+        "--kafka-key-fields",
+        nargs="*",
+        default=[],
+        required=False,
+        help="Key fields names used in table schema (Kafka integration only) (deprecated)"
+    )
     @arg(
         "--kafka-value-format",
         required=False,
-        help="Value format. (Kafka integration only)",
+        help="Value format. (Kafka integration only) (deprecated)",
         choices=["avro", "avro-confluent", "debezium-avro-confluent", "debezium-json", "json"],
     )
     @arg(
         "--kafka-startup-mode",
         required=False,
-        help="Kafka startup mode (Kafka integration only)",
+        help="Kafka startup mode (Kafka integration only) (deprecated)",
         choices=["earliest-offset", "latest-offset"],
     )
-    @arg("--jdbc-table", required=False, help="Table name in Database, used as a source/sink. (PG integration only)")
-    @arg("--opensearch-index", required=False, help="OpenSearch index name. (OpenSearch integration only)")
+    @arg(
+        "--jdbc-table",
+        required=False,
+        help="Table name in Database, used as a source/sink. (PG integration only) (deprecated)"
+    )
+    @arg("--opensearch-index", required=False, help="OpenSearch index name. (OpenSearch integration only) (deprecated)")
     @arg(
         "-l",
         "--like-options",
         required=False,
-        help="Clause can be used to create a table based on a definition of an existing table",
+        help="Clause can be used to create a table based on a definition of an existing table (deprecated)",
     )
-    @arg("-s", "--schema-sql", required=True, help="Source/Sink table schema")
+    @arg("-s", "--schema-sql", required=False, help="Source/Sink table schema (deprecated)")
+    @arg.json_path_or_string_parameter("--table-properties")
     @arg.json
     def service__flink__table__create(self):
         """Create a Flink table"""
@@ -3272,20 +3283,21 @@ ssl.truststore.type=JKS
         ]
         try:
             new_table = self.client.create_flink_table(
-                project_name,
-                self.args.service_name,
-                self.args.integration_id,
-                self.args.table_name,
-                self.args.schema_sql,
-                self.args.kafka_topic,
-                self.args.kafka_connector_type,
-                self.args.kafka_key_format,
-                self.args.kafka_key_fields,
-                self.args.kafka_value_format,
-                self.args.kafka_startup_mode,
-                self.args.jdbc_table,
-                self.args.opensearch_index,
-                self.args.like_options,
+                project=project_name,
+                service=self.args.service_name,
+                integration_id=self.args.integration_id,
+                table_name=self.args.table_name,
+                schema_sql=self.args.schema_sql,
+                kafka_topic=self.args.kafka_topic,
+                kafka_connector_type=self.args.kafka_connector_type,
+                kafka_key_format=self.args.kafka_key_format,
+                kafka_key_fields=self.args.kafka_key_fields,
+                kafka_value_format=self.args.kafka_value_format,
+                kafka_startup_mode=self.args.kafka_startup_mode,
+                jdbc_table=self.args.jdbc_table,
+                opensearch_index=self.args.opensearch_index,
+                like_options=self.args.like_options,
+                table_properties=self.args.table_properties,
             )
             self.print_response([new_table], json=self.args.json, table_layout=layout)
         except client.Error as ex:
