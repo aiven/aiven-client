@@ -11,3 +11,4 @@ Pipfile*
 /rpms/
 __pycache__/
 .mypy_cache/
+.vscode
