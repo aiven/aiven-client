@@ -1,19 +1,26 @@
 # Copyright (c) 2021 Aiven, Helsinki, Finland. https://aiven.io/
+from __future__ import annotations
+
 from ._utils import find_component, find_user, format_uri
 from .common import ConnectionInfoError
+from dataclasses import dataclass
+from typing import Any, Mapping, Sequence
 
 
+@dataclass
 class PGConnectionInfo:
-    def __init__(self, host, port, username, dbname, password, sslmode):
-        self.host = host
-        self.port = port
-        self.username = username
-        self.dbname = dbname
-        self.password = password
-        self.sslmode = sslmode
+    host: str
+    port: int
+    username: str
+    dbname: str
+    password: str
+    sslmode: str
 
     @classmethod
-    def from_service(cls, service, *, route, usage, privatelink_connection_id, username, dbname, sslmode):
+    def from_service(
+        cls, service: Mapping[str, Any], *, route: str, usage: str, privatelink_connection_id: str, username: str,
+        dbname: str, sslmode: str
+    ) -> PGConnectionInfo:
         if service["service_type"] != "pg":
             raise ConnectionInfoError("Cannot format pg connection info for service type {service_type}".format_map(service))
 
@@ -28,7 +35,7 @@ class PGConnectionInfo:
             raise ConnectionInfoError(f"Could not find password for username {username}")
         return cls(host=host, port=port, username=username, dbname=dbname, password=password, sslmode=sslmode)
 
-    def params(self):
+    def params(self) -> Mapping[str, Any]:
         return {
             "host": self.host,
             "port": self.port,
@@ -38,7 +45,7 @@ class PGConnectionInfo:
             "sslmode": self.sslmode,
         }
 
-    def uri(self):
+    def uri(self) -> str:
         return format_uri(
             scheme="postgres",
             username=self.username,
@@ -49,8 +56,8 @@ class PGConnectionInfo:
             query={"sslmode": self.sslmode},
         )
 
-    def connection_string(self):
+    def connection_string(self) -> str:
         return f"host='{self.host}' port='{self.port}' user={self.username} dbname='{self.dbname}'"
 
-    def psql(self):
+    def psql(self) -> Sequence[str]:
         return ["psql", self.uri()]

@@ -1,16 +1,17 @@
 # Copyright (c) 2021 Aiven, Helsinki, Finland. https://aiven.io/
 from aiven.client.argx import UserError
 from enum import Enum
+from typing import Callable
 
 import os
 
 
 class ConnectionInfoError(UserError):
-    def __init__(self, message):
+    def __init__(self, message: str) -> None:
         super().__init__()
         self.message = message
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -19,7 +20,7 @@ class Store(Enum):
     write = object()
     skip = object()
 
-    def handle(self, getter, path):
+    def handle(self, getter: Callable[[], str], path: str) -> None:
         if self is Store.overwrite:
             write = True
         elif self is Store.write:
