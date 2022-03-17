@@ -1064,19 +1064,7 @@ class AivenClient(AivenClientBase):
         self,
         project: str,
         service: str,
-        integration_id: str,
-        table_name: str,
-        schema_sql: str,
-        kafka_topic: Optional[str] = None,
-        kafka_connector_type: Optional[str] = None,
-        kafka_key_format: Optional[str] = None,
-        kafka_key_fields: Optional[str] = None,
-        kafka_value_format: Optional[str] = None,
-        kafka_startup_mode: Optional[str] = None,
-        jdbc_table: Optional[str] = None,
-        opensearch_index: Optional[str] = None,
-        like_options: Optional[str] = None,
-        table_properties: Optional[Dict[str, str]] = None,
+        table_properties: Dict[str, str],
     ) -> Mapping:
         path = self.build_path(
             "project",
@@ -1086,33 +1074,7 @@ class AivenClient(AivenClientBase):
             "flink",
             "table",
         )
-        if not table_properties:
-            body = {
-                "integration_id": integration_id,
-                "name": table_name,
-                "schema_sql": schema_sql,
-            }
-            if kafka_topic:
-                body["kafka_topic"] = kafka_topic
-            if kafka_connector_type:
-                body["kafka_connector_type"] = kafka_connector_type
-            if kafka_key_format:
-                body["kafka_key_format"] = kafka_key_format
-            if kafka_key_fields:
-                body["kafka_key_fields"] = kafka_key_fields
-            if kafka_value_format:
-                body["kafka_value_format"] = kafka_value_format
-            if kafka_startup_mode:
-                body["kafka_startup_mode"] = kafka_startup_mode
-            if jdbc_table:
-                body["jdbc_table"] = jdbc_table
-            if opensearch_index:
-                body["opensearch_index"] = opensearch_index
-            if like_options:
-                body["like_options"] = like_options
-        else:
-            body = table_properties
-        return self.verify(self.post, path, body=body)
+        return self.verify(self.post, path, body=table_properties)
 
     def get_flink_table(self, project: str, service: str, table_id: str) -> Mapping:
         path = self.build_path("project", project, "service", service, "flink", "table", table_id)
