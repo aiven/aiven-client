@@ -1,3 +1,5 @@
+# Lock black to the same major version used in downstream build environments
+black==21.6b0
 flake8
 # Lock mypy to the same major version used in downstream build environments
 mypy>=0.931,<1.0
@@ -8,5 +10,3 @@ pylint>=2.12.2,<3.0
 pytest
 # Lock isort to the same major version used in downstream build environments
 isort>=5.10.1,<6.0
-# Lock yapf version for consistent formatting behavior.
-yapf==0.27.0

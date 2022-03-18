@@ -11,8 +11,7 @@ import pytest
 
 
 def test_valid_requests_session():
-    """Test that get_requests_session returns a valid Session that has the expected parameters set.
-    """
+    """Test that get_requests_session returns a valid Session that has the expected parameters set."""
 
     session = get_requests_session()
 
@@ -25,10 +24,13 @@ def test_valid_requests_session():
     assert adapter.timeout is None
 
 
-@pytest.mark.parametrize("argument,value", [
-    ("timeout", 30),
-    ("timeout", 0),
-])
+@pytest.mark.parametrize(
+    "argument,value",
+    [
+        ("timeout", 30),
+        ("timeout", 0),
+    ],
+)
 def test_adapter_parameters_are_passed_along(argument, value):
     session = get_requests_session(**{argument: value})
     adapter = session.adapters["https://"]

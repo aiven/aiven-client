@@ -14,8 +14,8 @@ test: pytest
 lint: flake8 mypy pylint
 
 reformat:
-	$(PYTHON) -m isort --recursive $(PYTHON_DIRS)
-	yapf --parallel --recursive --in-place .
+	$(PYTHON) -m isort $(PYTHON_DIRS)
+	$(PYTHON) -m black $(PYTHON_DIRS)
 
 validate-style:
 	$(eval CHANGES_BEFORE := $(shell mktemp))
@@ -47,8 +47,18 @@ clean:
 	$(RM) -r rpms
 
 build-dep-fedora:
-	sudo dnf install -y --best --allowerasing python3-devel python3-flake8 python3-requests \
-		tar rpmdevtools python3-mypy python3-types-requests python3-pylint python3-isort python3-pytest
+	sudo dnf install -y --best --allowerasing \
+		black \
+		python3-devel \
+		python3-flake8 \
+		python3-isort \
+		python3-mypy \
+		python3-pylint \
+		python3-pytest \
+		python3-requests \
+		python3-types-requests \
+		rpmdevtools \
+		tar
 
 .PHONY: rpm
 rpm: $(RPM)

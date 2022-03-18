@@ -43,8 +43,18 @@ def test_service_topic_create():
 def test_service_topic_create_with_tags():
     AivenCLI().run(
         args=[
-            "service", "topic-create", "--partitions", "42", "--replication", "42", "--tag", "key-_1=value1", "--tag",
-            "key2=az,.0-9_", "service1", "topic1"
+            "service",
+            "topic-create",
+            "--partitions",
+            "42",
+            "--replication",
+            "42",
+            "--tag",
+            "key-_1=value1",
+            "--tag",
+            "key2=az,.0-9_",
+            "service1",
+            "topic1",
         ]
     )
 
@@ -52,8 +62,20 @@ def test_service_topic_create_with_tags():
 def test_service_topic_update():
     AivenCLI().run(
         args=[
-            "service", "topic-update", "--partitions", "42", "--untag", "key-_1", "--untag", "key123", "--tag",
-            "key3=az,.0-9_", "--tag", "key234=foo", "service1", "topic1"
+            "service",
+            "topic-update",
+            "--partitions",
+            "42",
+            "--untag",
+            "key-_1",
+            "--untag",
+            "key123",
+            "--tag",
+            "key3=az,.0-9_",
+            "--tag",
+            "key234=foo",
+            "service1",
+            "topic1",
         ]
     )
 
@@ -130,26 +152,35 @@ def test_service_task_create_migration_check():
             "result": "",
             "success": None,
             "task_id": "79803598-d09a-44bf-ae2b-34aad942f4e8",
-            "task_type": "mysql_migration_check"
-        }
+            "task_type": "mysql_migration_check",
+        },
     }
 
     build_aiven_cli(aiven_client).run(
         args=[
-            "service", "task-create", "--operation", "migration_check", "--project", "test", "--source-service-uri",
-            "mysql://root:password@source-mysql-server:3306/", "--ignore-dbs", "db1", "target-mysql-service-1"
+            "service",
+            "task-create",
+            "--operation",
+            "migration_check",
+            "--project",
+            "test",
+            "--source-service-uri",
+            "mysql://root:password@source-mysql-server:3306/",
+            "--ignore-dbs",
+            "db1",
+            "target-mysql-service-1",
         ]
     )
     aiven_client.create_service_task.assert_called_with(
-        project='test',
-        service='target-mysql-service-1',
+        project="test",
+        service="target-mysql-service-1",
         body={
-            'task_type': 'migration_check',
-            'migration_check': {
-                'source_service_uri': 'mysql://root:password@source-mysql-server:3306/',
-                'ignore_dbs': 'db1'
-            }
-        }
+            "task_type": "migration_check",
+            "migration_check": {
+                "source_service_uri": "mysql://root:password@source-mysql-server:3306/",
+                "ignore_dbs": "db1",
+            },
+        },
     )
 
 
@@ -161,17 +192,22 @@ def test_service_task_get_migration_check():
         "result": "aiven_mysql_migrate.exceptions.NothingToMigrateException: No databases to migrate",
         "success": False,
         "task_id": "f25eac03-25f7-4de2-be6a-eb476fec1730",
-        "task_type": "mysql_migration_check"
+        "task_type": "mysql_migration_check",
     }
 
     build_aiven_cli(aiven_client).run(
         args=[
-            "service", "task-get", "--task-id", "f25eac03-25f7-4de2-be6a-eb476fec1730", "--project", "test",
-            "target-mysql-service-1"
+            "service",
+            "task-get",
+            "--task-id",
+            "f25eac03-25f7-4de2-be6a-eb476fec1730",
+            "--project",
+            "test",
+            "target-mysql-service-1",
         ]
     )
     aiven_client.get_service_task.assert_called_with(
-        project='test', service='target-mysql-service-1', task_id='f25eac03-25f7-4de2-be6a-eb476fec1730'
+        project="test", service="target-mysql-service-1", task_id="f25eac03-25f7-4de2-be6a-eb476fec1730"
     )
 
 
@@ -184,12 +220,14 @@ def test_version_eol_check():
     aiven_client = mock.Mock(spec_set=AivenClient)
     service_type = "pg"
     service_version = "9.6"
-    aiven_client.get_service_versions.return_value = [{
-        "service_type": service_type,
-        "major_version": service_version,
-        "aiven_end_of_life_time": "2021-09-10T00:00:00Z",
-        "availability_end_time": "2021-06-12T00:00:00Z"
-    }]
+    aiven_client.get_service_versions.return_value = [
+        {
+            "service_type": service_type,
+            "major_version": service_version,
+            "aiven_end_of_life_time": "2021-09-10T00:00:00Z",
+            "availability_end_time": "2021-06-12T00:00:00Z",
+        }
+    ]
 
     cli = AivenCLI(aiven_client)
     cli.client = aiven_client
@@ -212,8 +250,18 @@ def test_create_service_connection_pool():
 
     build_aiven_cli(aiven_client).run(
         args=[
-            "service", "connection-pool-create", "--project", "testproject", "--dbname", "defaultdb", "--pool-name", "foo",
-            "--pool-size=23", "--username", "avnadmin", "pg-foo-bar"
+            "service",
+            "connection-pool-create",
+            "--project",
+            "testproject",
+            "--dbname",
+            "defaultdb",
+            "--pool-name",
+            "foo",
+            "--pool-size=23",
+            "--username",
+            "avnadmin",
+            "pg-foo-bar",
         ]
     )
 
@@ -224,13 +272,20 @@ def test_create_service_connection_pool():
         dbname="defaultdb",
         username="avnadmin",
         pool_size=23,
-        pool_mode=None
+        pool_mode=None,
     )
 
     build_aiven_cli(aiven_client).run(
         args=[
-            "service", "connection-pool-create", "--project", "testproject", "--dbname", "defaultdb", "--pool-name", "bar",
-            "pg-foo-bar"
+            "service",
+            "connection-pool-create",
+            "--project",
+            "testproject",
+            "--dbname",
+            "defaultdb",
+            "--pool-name",
+            "bar",
+            "pg-foo-bar",
         ]
     )
 
@@ -241,7 +296,7 @@ def test_create_service_connection_pool():
         dbname="defaultdb",
         username=None,
         pool_size=None,
-        pool_mode=None
+        pool_mode=None,
     )
 
 
@@ -252,8 +307,15 @@ def test_update_service_connection_pool():
     # pin
     build_aiven_cli(aiven_client).run(
         args=[
-            "service", "connection-pool-update", "--project", "testproject", "--pool-name", "foo", "--username", "avnadmin",
-            "pg-foo-bar"
+            "service",
+            "connection-pool-update",
+            "--project",
+            "testproject",
+            "--pool-name",
+            "foo",
+            "--username",
+            "avnadmin",
+            "pg-foo-bar",
         ]
     )
 
@@ -264,14 +326,21 @@ def test_update_service_connection_pool():
         dbname=None,
         username="avnadmin",
         pool_size=None,
-        pool_mode=None
+        pool_mode=None,
     )
 
     # unpin
     build_aiven_cli(aiven_client).run(
         args=[
-            "service", "connection-pool-update", "--project", "testproject", "--pool-name", "foo", "--username", "",
-            "pg-foo-bar"
+            "service",
+            "connection-pool-update",
+            "--project",
+            "testproject",
+            "--pool-name",
+            "foo",
+            "--username",
+            "",
+            "pg-foo-bar",
         ]
     )
 
@@ -282,14 +351,21 @@ def test_update_service_connection_pool():
         dbname=None,
         username=None,
         pool_size=None,
-        pool_mode=None
+        pool_mode=None,
     )
 
     # leave username as is, change pool-size instead
     build_aiven_cli(aiven_client).run(
         args=[
-            "service", "connection-pool-update", "--project", "testproject", "--pool-name", "foo", "--pool-size", "42",
-            "pg-foo-bar"
+            "service",
+            "connection-pool-update",
+            "--project",
+            "testproject",
+            "--pool-name",
+            "foo",
+            "--pool-size",
+            "42",
+            "pg-foo-bar",
         ]
     )
 

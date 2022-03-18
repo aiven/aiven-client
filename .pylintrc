@@ -2,6 +2,7 @@
 disable=
     bad-continuation,
     bad-option-value,
+    bad-whitespace,  # Black deals with whitespace around operators and brackets
     consider-using-f-string,
     duplicate-code,
     fixme,

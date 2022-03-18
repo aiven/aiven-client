@@ -9,7 +9,20 @@ from aiven.client import envdefault, pretty
 from argparse import Action
 from os import PathLike
 from typing import (
-    Any, Callable, cast, Collection, Dict, List, Mapping, NoReturn, Optional, Sequence, TextIO, Tuple, Type, Union
+    Any,
+    Callable,
+    cast,
+    Collection,
+    Dict,
+    List,
+    Mapping,
+    NoReturn,
+    Optional,
+    Sequence,
+    TextIO,
+    Tuple,
+    Type,
+    Union,
 )
 
 import aiven.client.client
@@ -37,9 +50,9 @@ except ImportError:
     __version__ = "UNKNOWN"
 
 # cached_property only exists since python 3.8
-SKIP_EVALUATION_TYPES = (property, )
+SKIP_EVALUATION_TYPES = (property,)
 if (sys.version_info[:2] >= (3, 8)) and hasattr(functools, "cached_property"):
-    SKIP_EVALUATION_TYPES += (functools.cached_property, )
+    SKIP_EVALUATION_TYPES += (functools.cached_property,)
 
 ARG_LIST_PROP = "_arg_list"
 LOG_FORMAT = "%(levelname)s\t%(message)s"
@@ -55,8 +68,9 @@ class CustomFormatter(argparse.RawDescriptionHelpFormatter):
                 argparse.OPTIONAL,
                 argparse.ZERO_OR_MORE,
             ]:
-                if (not isinstance(action.default, bool)
-                    and isinstance(action.default, int)) or (isinstance(action.default, str) and action.default):
+                if (not isinstance(action.default, bool) and isinstance(action.default, int)) or (
+                    isinstance(action.default, str) and action.default
+                ):
                     help_text += " (default: %(default)s)"
         return help_text
 
@@ -66,7 +80,7 @@ class UserError(Exception):
 
 
 def arg(*args: Any, **kwargs: Any) -> Callable:
-    """ Declares an argument of an CLI command.
+    """Declares an argument of an CLI command.
 
     This decorator accepts the same arguments as `argparse.Parser::add_argument`.
 
@@ -161,7 +175,7 @@ class CommandLineTool:  # pylint: disable=old-style-class
 
         subparsers = self.subparsers
         for level in range(len(cats)):
-            cat = tuple(cats[:level + 1])
+            cat = tuple(cats[: level + 1])
             if cat not in self._cats:
                 parser = subparsers.add_parser(
                     cat[-1],

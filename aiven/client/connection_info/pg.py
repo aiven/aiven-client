@@ -18,8 +18,15 @@ class PGConnectionInfo:
 
     @classmethod
     def from_service(
-        cls, service: Mapping[str, Any], *, route: str, usage: str, privatelink_connection_id: str, username: str,
-        dbname: str, sslmode: str
+        cls,
+        service: Mapping[str, Any],
+        *,
+        route: str,
+        usage: str,
+        privatelink_connection_id: str,
+        username: str,
+        dbname: str,
+        sslmode: str,
     ) -> PGConnectionInfo:
         if service["service_type"] != "pg":
             raise ConnectionInfoError("Cannot format pg connection info for service type {service_type}".format_map(service))

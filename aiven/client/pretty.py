@@ -31,10 +31,15 @@ class CustomJsonEncoder(json.JSONEncoder):
         if isinstance(o, decimal.Decimal):
             return str(o)
         if isinstance(
-            o, (
-                ipaddress.IPv4Address, ipaddress.IPv6Address, ipaddress.IPv4Network, ipaddress.IPv6Network,
-                ipaddress.IPv4Interface, ipaddress.IPv6Interface
-            )
+            o,
+            (
+                ipaddress.IPv4Address,
+                ipaddress.IPv6Address,
+                ipaddress.IPv4Network,
+                ipaddress.IPv6Network,
+                ipaddress.IPv4Interface,
+                ipaddress.IPv6Interface,
+            ),
         ):
             return o.compressed
 
@@ -54,7 +59,7 @@ def format_item(key, value):
         # as the output without quotes we'll go with the original
         json_v = json.dumps(value)
         quoted_v = '"{}"'.format(value)
-        if (json_v == quoted_v or json_v.replace("\\u00a3", "£").replace("\\u20ac", "€") == quoted_v):
+        if json_v == quoted_v or json_v.replace("\\u00a3", "£").replace("\\u20ac", "€") == quoted_v:
             formatted = value
         else:
             formatted = json_v
@@ -173,11 +178,7 @@ def yield_table(  # noqa
 
 
 def print_table(
-    result,
-    drop_fields: Optional[Collection[str]] = None,
-    table_layout: Optional[TableLayout] = None,
-    header=True,
-    file=None
+    result, drop_fields: Optional[Collection[str]] = None, table_layout: Optional[TableLayout] = None, header=True, file=None
 ):  # pylint: disable=redefined-builtin
     """print a list of dicts in a nicer table format"""
     for row in yield_table(result, drop_fields=drop_fields, table_layout=table_layout, header=header):
