@@ -142,7 +142,7 @@ arg.tagupdate = arg(
     dest="topic_option_tag",
     metavar="KEY[=VALUE]",
     action="append",
-    help="Tag to add or replace into topic metadata"
+    help="Tag to add or replace into topic metadata",
 )
 arg.untag = arg(
     "--untag", dest="topic_option_untag", metavar="KEY", action="append", help="Tag to delete from topic metadata"

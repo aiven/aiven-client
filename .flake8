@@ -1,5 +1,5 @@
 [flake8]
 max-line-length = 125
-# These codes tend to disagree with yapf
-ignore = E129,W503
+# Whitespace before ':' (in accordance with Black)
+extend-ignore = E203
 max-complexity = 15

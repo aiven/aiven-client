@@ -72,7 +72,7 @@ tag_value_re = re.compile(r"[\w\-,. ]*")
 
 
 def parse_tag_str(kv):
-    k, v = (kv.split(sep='=', maxsplit=1) + [''])[:2]
+    k, v = (kv.split(sep="=", maxsplit=1) + [""])[:2]
 
     if not tag_key_re.fullmatch(k):
         raise argx.UserError(f"Tag key '{k}' must consist of alpha-numeric characters, underscores or dashes")
@@ -109,8 +109,8 @@ def is_truthy(value: str) -> bool:
 def parse_iso8601(value: str) -> datetime:
     # Python 3.6 doesn't support fromisoformat()
     # or 'Z' as valid for '%z' format string
-    if value[-1] == 'Z':
-        value = value[:-1] + '+0000'
+    if value[-1] == "Z":
+        value = value[:-1] + "+0000"
 
     return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S%z")
 
@@ -125,6 +125,8 @@ if (sys.version_info.major, sys.version_info.minor) >= (3, 8):
     class ClientFactory(Protocol):  # pylint: disable=too-few-public-methods
         def __call__(self, base_url: str, show_http: bool, request_timeout: Optional[int]):
             ...
+
+
 else:
     ClientFactory = Callable[..., client.AivenClient]
 
@@ -186,7 +188,7 @@ class AivenCLI(argx.CommandLineTool):
             if spec["type"] == "object":
                 opts.update(self.collect_user_config_options(spec, prefixes=full_prop))
             else:
-                title = ': '.join([obj_def["title"], spec["title"]]) if "title" in spec else obj_def["title"]
+                title = ": ".join([obj_def["title"], spec["title"]]) if "title" in spec else obj_def["title"]
                 opts[full_name] = dict(spec, property_parts=full_prop, title=title)
         return opts
 
@@ -249,7 +251,7 @@ class AivenCLI(argx.CommandLineTool):
             prefix = "{}.".format(part)
             if not key_suffix.startswith(prefix):
                 raise argx.UserError("Expected {} to start with {} (full key {})".format(key_suffix, prefix, key))
-            key_suffix = key_suffix[len(prefix):]
+            key_suffix = key_suffix[len(prefix) :]
             config = config.setdefault(part, {})
         return config, key_suffix
 
@@ -910,8 +912,8 @@ class AivenCLI(argx.CommandLineTool):
                 else:
                     for name, spec in sorted(options.items()):
                         default = spec.get("default")
-                        default_desc = ("(default={!r})".format(default) if default is not None else "")
-                        description = (": {}".format(spec["description"]) if "description" in spec else "")
+                        default_desc = "(default={!r})".format(default) if default is not None else ""
+                        description = ": {}".format(spec["description"]) if "description" in spec else ""
                         types = spec["type"]
                         if isinstance(types, str) and types == "null":
                             print(
@@ -937,16 +939,18 @@ class AivenCLI(argx.CommandLineTool):
                                 )
                             )
 
-    SERVICE_LAYOUT = [[
-        "service_name",
-        "service_type",
-        "state",
-        "cloud_name",
-        "plan",
-        "create_time",
-        "update_time",
-        "notifications",
-    ]]
+    SERVICE_LAYOUT = [
+        [
+            "service_name",
+            "service_type",
+            "state",
+            "cloud_name",
+            "plan",
+            "create_time",
+            "update_time",
+            "notifications",
+        ]
+    ]
     EXT_SERVICE_LAYOUT = ["service_uri", "disk_space_mb", "user_config.*", "databases", "users"]
 
     @arg.project
@@ -998,7 +1002,7 @@ class AivenCLI(argx.CommandLineTool):
         for service_notification in service_notifications:
             text = service_notification["message"]
             if service_notification["type"] == "service_end_of_life":
-                text += "\nRead more: " + service_notification['metadata']['end_of_life_help_article_url']
+                text += "\nRead more: " + service_notification["metadata"]["end_of_life_help_article_url"]
             print(make_bold(text) if service_notification["level"] == "warning" else text)
             print()
 
@@ -1075,7 +1079,7 @@ class AivenCLI(argx.CommandLineTool):
         resp = self.client.create_service_privatelink_azure(
             project=self.get_project(),
             service=self.args.service_name,
-            user_subscription_ids=self.args.user_subscription_ids or []
+            user_subscription_ids=self.args.user_subscription_ids or [],
         )
         self.print_response([resp], format=self.args.format, json=self.args.json)
 
@@ -1104,7 +1108,7 @@ class AivenCLI(argx.CommandLineTool):
         resp = self.client.update_service_privatelink_azure(
             project=self.get_project(),
             service=self.args.service_name,
-            user_subscription_ids=self.args.user_subscription_ids or []
+            user_subscription_ids=self.args.user_subscription_ids or [],
         )
         self.print_response([resp], format=self.args.format, json=self.args.json)
 
@@ -1268,16 +1272,18 @@ class AivenCLI(argx.CommandLineTool):
                 "progress",
             ]
             for node_state in sorted(service["node_states"], key=lambda ns: ns["name"]):
-                collapsed.append({
-                    "current": "",
-                    "max": "",
-                    "min": "",
-                    "name": node_state["name"],
-                    "phase": "",
-                    "progress": "",
-                    "state": node_state["state"],
-                    "unit": "",
-                })
+                collapsed.append(
+                    {
+                        "current": "",
+                        "max": "",
+                        "min": "",
+                        "name": node_state["name"],
+                        "phase": "",
+                        "progress": "",
+                        "state": node_state["state"],
+                        "unit": "",
+                    }
+                )
                 for progress_update in node_state["progress_updates"]:
                     progress = ""
                     maxv = progress_update["max"]
@@ -1285,16 +1291,18 @@ class AivenCLI(argx.CommandLineTool):
                     currentv = progress_update["current"]
                     if minv is not None and maxv is not None and currentv is not None:
                         progress = "{} %".format(int(1000 * (currentv - minv) / (maxv - minv)) / 10)
-                    collapsed.append({
-                        "current": str(currentv) if currentv is not None else "",
-                        "max": str(maxv) if maxv is not None else "",
-                        "min": str(minv) if minv is not None else "",
-                        "name": node_state["name"],
-                        "phase": progress_update["phase"],
-                        "progress": progress,
-                        "state": "",
-                        "unit": progress_update.get("unit") or "",
-                    })
+                    collapsed.append(
+                        {
+                            "current": str(currentv) if currentv is not None else "",
+                            "max": str(maxv) if maxv is not None else "",
+                            "min": str(minv) if minv is not None else "",
+                            "name": node_state["name"],
+                            "phase": progress_update["phase"],
+                            "progress": progress,
+                            "state": "",
+                            "unit": progress_update.get("unit") or "",
+                        }
+                    )
             self.print_response(collapsed, format=self.args.format, json=False, table_layout=layout)
 
     @arg.project
@@ -1339,7 +1347,7 @@ class AivenCLI(argx.CommandLineTool):
                 service,
                 route=self._get_route_from_args(),
                 privatelink_connection_id=self._get_privatelink_connection_id_from_args(),
-                username=self.args.username
+                username=self.args.username,
             )
             cmd = ci.kafkacat(
                 store,
@@ -1353,7 +1361,7 @@ class AivenCLI(argx.CommandLineTool):
                 service,
                 route=self._get_route_from_args(),
                 privatelink_connection_id=self._get_privatelink_connection_id_from_args(),
-                username=self.args.username
+                username=self.args.username,
             )
             cmd = ci.kafkacat(
                 store,
@@ -1529,15 +1537,17 @@ class AivenCLI(argx.CommandLineTool):
     def service__credentials_reset(self):
         """Reset service credentials"""
         service = self.client.reset_service_credentials(project=self.get_project(), service=self.args.service_name)
-        layout = [[
-            "service_name",
-            "service_type",
-            "state",
-            "cloud_name",
-            "plan",
-            "create_time",
-            "update_time",
-        ]]
+        layout = [
+            [
+                "service_name",
+                "service_type",
+                "state",
+                "cloud_name",
+                "plan",
+                "create_time",
+                "update_time",
+            ]
+        ]
         if self.args.verbose:
             layout.extend(["service_uri", "user_config.*"])
         self.print_response([service], format=self.args.format, json=self.args.json, table_layout=layout)
@@ -1619,7 +1629,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg("--format", help="Format string for output, e.g. '{username} {password}'")
     @arg.json
     def service__connection_pool_list(self):
-        """List PGBouncer pools for a service """
+        """List PGBouncer pools for a service"""
         service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
         layout = ["pool_name", "database", "username", "pool_mode", "pool_size"]
         if self.args.verbose:
@@ -1724,16 +1734,18 @@ class AivenCLI(argx.CommandLineTool):
     @arg("--format", help="Format string for output, e.g. '{username} {password}'")
     @arg.json
     def service__user_list(self):
-        """List service users """
+        """List service users"""
         service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
         layout = [["username", "type"]]
         if service["service_type"] == "redis":
-            layout[0].extend([
-                "access_control.redis_acl_keys",
-                "access_control.redis_acl_commands",
-                "access_control.redis_acl_categories",
-                "access_control.redis_acl_channels",
-            ])
+            layout[0].extend(
+                [
+                    "access_control.redis_acl_keys",
+                    "access_control.redis_acl_commands",
+                    "access_control.redis_acl_categories",
+                    "access_control.redis_acl_channels",
+                ]
+            )
         self.print_response(
             service["users"],
             format=self.args.format,
@@ -1777,35 +1789,39 @@ class AivenCLI(argx.CommandLineTool):
         """Download user certificate/key/CA certificate and create a Java keystore/truststore/properties from them"""
         self.service__user_creds_download()
         # First create the truststore
-        subprocess.check_call([
-            "keytool",
-            "-importcert",
-            "-alias",
-            "Aiven CA",
-            "-keystore",
-            os.path.join(self.args.target_directory, "client.truststore.jks"),
-            "-storepass",
-            self.args.password,
-            "-file",
-            os.path.join(self.args.target_directory, "ca.pem"),
-            "-noprompt",
-        ])
+        subprocess.check_call(
+            [
+                "keytool",
+                "-importcert",
+                "-alias",
+                "Aiven CA",
+                "-keystore",
+                os.path.join(self.args.target_directory, "client.truststore.jks"),
+                "-storepass",
+                self.args.password,
+                "-file",
+                os.path.join(self.args.target_directory, "ca.pem"),
+                "-noprompt",
+            ]
+        )
         # Then create the keystore
-        subprocess.check_call([
-            "openssl",
-            "pkcs12",
-            "-export",
-            "-out",
-            os.path.join(self.args.target_directory, "client.keystore.p12"),
-            "-inkey",
-            os.path.join(self.args.target_directory, "service.key"),
-            "-in",
-            os.path.join(self.args.target_directory, "service.cert"),
-            "-certfile",
-            os.path.join(self.args.target_directory, "ca.pem"),
-            "-passout",
-            "pass:{}".format(self.args.password),
-        ])
+        subprocess.check_call(
+            [
+                "openssl",
+                "pkcs12",
+                "-export",
+                "-out",
+                os.path.join(self.args.target_directory, "client.keystore.p12"),
+                "-inkey",
+                os.path.join(self.args.target_directory, "service.key"),
+                "-in",
+                os.path.join(self.args.target_directory, "service.cert"),
+                "-certfile",
+                os.path.join(self.args.target_directory, "ca.pem"),
+                "-passout",
+                "pass:{}".format(self.args.password),
+            ]
+        )
         service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
         with open(os.path.join(self.args.target_directory, "client.properties"), "w", encoding="utf-8") as fp:
             properties = """\
@@ -1937,7 +1953,7 @@ ssl.truststore.type=JKS
             project=self.get_project(),
             service=self.args.service_name,
             username=self.args.username,
-            access_control=access_control
+            access_control=access_control,
         )
 
     @arg.project
@@ -2130,19 +2146,21 @@ ssl.truststore.type=JKS
             project=self.get_project(), service=self.args.service_name
         )
         for item in service_integrations:
-            item["service_integration_id"] = (item["service_integration_id"] or "(integration not enabled)")
+            item["service_integration_id"] = item["service_integration_id"] or "(integration not enabled)"
             item["source"] = item["source_service"] or item["source_endpoint_id"]
             item["dest"] = item["dest_service"] or item["dest_endpoint_id"]
 
-        layout = [[
-            "service_integration_id",
-            "source",
-            "dest",
-            "integration_type",
-            "enabled",
-            "active",
-            "description",
-        ]]
+        layout = [
+            [
+                "service_integration_id",
+                "source",
+                "dest",
+                "integration_type",
+                "enabled",
+                "active",
+                "description",
+            ]
+        ]
         if self.args.verbose:
             layout.extend(["source_project", "dest_project"])
         self.print_response(
@@ -2181,27 +2199,29 @@ ssl.truststore.type=JKS
         queries = self.client.get_service_current_queries(project=self.get_project(), service=self.args.service_name)
         layout = [["pid", "query", "query_duration", "client_addr", "application_name"]]
         if self.args.verbose:
-            layout.extend([
-                "datid",
-                "datname",
-                "pid",
-                "usesysid",
-                "usename",
-                "application_name",
-                "client_addr",
-                "client_hostname",
-                "client_port",
-                "backend_start",
-                "xact_start",
-                "query_start",
-                "state_change",
-                "waiting",
-                "state",
-                "backend_xid",
-                "backend_xmin",
-                "query",
-                "query_duration",
-            ])
+            layout.extend(
+                [
+                    "datid",
+                    "datname",
+                    "pid",
+                    "usesysid",
+                    "usename",
+                    "application_name",
+                    "client_addr",
+                    "client_hostname",
+                    "client_port",
+                    "backend_start",
+                    "xact_start",
+                    "query_start",
+                    "state_change",
+                    "waiting",
+                    "state",
+                    "backend_xid",
+                    "backend_xmin",
+                    "query",
+                    "query_duration",
+                ]
+            )
         self.print_response(queries, format=self.args.format, json=self.args.json, table_layout=layout)
 
     @arg.project
@@ -2215,70 +2235,82 @@ ssl.truststore.type=JKS
         service = self.args.service_name
         service_type = self.client.get_service(project, service)["service_type"]
         queries = self.client.get_service_query_stats(project=project, service=service, service_type=service_type)
-        layout = ([[
-            "query",
-            "max_time",
-            "stddev_time",
-            "min_time",
-            "mean_time",
-            "rows",
-            "calls",
-            "total_time",
-        ]] if service_type == "pg" else [[
-            "digest_text",
-            "max_timer_wait",
-            "min_timer_wait",
-            "avg_timer_wait",
-            "sum_rows_affected",
-            "sum_rows_sent",
-            "count_star",
-            "sum_timer_wait",
-        ]])
+        layout = (
+            [
+                [
+                    "query",
+                    "max_time",
+                    "stddev_time",
+                    "min_time",
+                    "mean_time",
+                    "rows",
+                    "calls",
+                    "total_time",
+                ]
+            ]
+            if service_type == "pg"
+            else [
+                [
+                    "digest_text",
+                    "max_timer_wait",
+                    "min_timer_wait",
+                    "avg_timer_wait",
+                    "sum_rows_affected",
+                    "sum_rows_sent",
+                    "count_star",
+                    "sum_timer_wait",
+                ]
+            ]
+        )
         if self.args.verbose:
-            layout.extend([
-                "database_name",
-                "user_name",
-                "blk_read_time",
-                "blk_write_time",
-                "local_blks_dirtied",
-                "local_blks_hit",
-                "local_blks_read",
-                "local_blks_written",
-                "shared_blks_dirtied",
-                "shared_blks_hit",
-                "shared_blks_read",
-                "shared_blks_written",
-                "temp_blks_read",
-                "temp_blks_written",
-            ] if service_type == "pg" else [
-                "digest",
-                "first_seen",
-                "last_seen",
-                "quantile_95",
-                "quantile_99",
-                "quantile_999",
-                "query_sample_seen",
-                "query_sample_text",
-                "query_sample_timer_wait",
-                "schema_name",
-                "sum_created_tmp_disk_tables",
-                "sum_created_tmp_tables",
-                "sum_errors",
-                "sum_lock_time",
-                "sum_no_good_index_used",
-                "sum_no_index_used",
-                "sum_rows_examined",
-                "sum_select_full_join",
-                "sum_select_full_range_join",
-                "sum_select_range",
-                "sum_select_range_check",
-                "sum_select_scan",
-                "sum_sort_merge_passes",
-                "sum_sort_range",
-                "sum_sort_rows",
-                "sum_sort_scan",
-                "sum_warnings",
-            ])
+            layout.extend(
+                [
+                    "database_name",
+                    "user_name",
+                    "blk_read_time",
+                    "blk_write_time",
+                    "local_blks_dirtied",
+                    "local_blks_hit",
+                    "local_blks_read",
+                    "local_blks_written",
+                    "shared_blks_dirtied",
+                    "shared_blks_hit",
+                    "shared_blks_read",
+                    "shared_blks_written",
+                    "temp_blks_read",
+                    "temp_blks_written",
+                ]
+                if service_type == "pg"
+                else [
+                    "digest",
+                    "first_seen",
+                    "last_seen",
+                    "quantile_95",
+                    "quantile_99",
+                    "quantile_999",
+                    "query_sample_seen",
+                    "query_sample_text",
+                    "query_sample_timer_wait",
+                    "schema_name",
+                    "sum_created_tmp_disk_tables",
+                    "sum_created_tmp_tables",
+                    "sum_errors",
+                    "sum_lock_time",
+                    "sum_no_good_index_used",
+                    "sum_no_index_used",
+                    "sum_rows_examined",
+                    "sum_select_full_join",
+                    "sum_select_full_range_join",
+                    "sum_select_range",
+                    "sum_select_range_check",
+                    "sum_select_scan",
+                    "sum_sort_merge_passes",
+                    "sum_sort_range",
+                    "sum_sort_rows",
+                    "sum_sort_scan",
+                    "sum_warnings",
+                ]
+            )
         self.print_response(queries, format=self.args.format, json=self.args.json, table_layout=layout)
 
     @arg.project
@@ -2309,32 +2341,34 @@ ssl.truststore.type=JKS
     def service__m3__namespace__list(self):
         """List M3 namespaces"""
         namespaces = self.client.list_m3_namespaces(project=self.get_project(), service=self.args.service_name)
-        layout = [[
-            "name",
-            "type",
-            "resolution",
-            "retention_period_duration",
-            "blocksize_duration",
-            "block_data_expiry_duration",
-            "buffer_future_duration",
-            "buffer_past_duration",
-            "writes_to_commitlog",
-        ]]
+        layout = [
+            [
+                "name",
+                "type",
+                "resolution",
+                "retention_period_duration",
+                "blocksize_duration",
+                "block_data_expiry_duration",
+                "buffer_future_duration",
+                "buffer_past_duration",
+                "writes_to_commitlog",
+            ]
+        ]
         if not self.args.json:
             # Fix optional fields, flatten for output
             def _f(ns):
-                o = ns.get('options', {})
-                ro = o.get('retention_options', {})
+                o = ns.get("options", {})
+                ro = o.get("retention_options", {})
                 return {
                     "name": ns["name"],
                     "type": ns["type"],
-                    "resolution": ns.get('resolution', ''),
-                    "retention_period_duration": ro.get('retention_period_duration', ''),
-                    "blocksize_duration": ro.get('blocksize_duration', ''),
-                    "block_data_expiry_duration": ro.get('block_data_expiry_duration', ''),
-                    "buffer_future_duration": ro.get('buffer_future_duration', ''),
-                    "buffer_past_duration": ro.get('buffer_past_duration', ''),
-                    "writes_to_commitlog": o.get('writes_to_commitlog', ''),
+                    "resolution": ns.get("resolution", ""),
+                    "retention_period_duration": ro.get("retention_period_duration", ""),
+                    "blocksize_duration": ro.get("blocksize_duration", ""),
+                    "block_data_expiry_duration": ro.get("block_data_expiry_duration", ""),
+                    "buffer_future_duration": ro.get("buffer_future_duration", ""),
+                    "buffer_past_duration": ro.get("buffer_past_duration", ""),
+                    "writes_to_commitlog": o.get("writes_to_commitlog", ""),
                 }
 
             namespaces = [_f(ns) for ns in namespaces]
@@ -2426,16 +2460,18 @@ ssl.truststore.type=JKS
                 topic["retention_hours"] = "unlimited"
             if not self.args.json:
                 topic["tags"] = [f"{t['key']}={t['value']}" for t in topic["tags"]]
-        layout = [[
-            "topic_name",
-            "partitions",
-            "replication",
-            "min_insync_replicas",
-            "retention_bytes",
-            "retention_hours",
-            "cleanup_policy",
-            "tags",
-        ]]
+        layout = [
+            [
+                "topic_name",
+                "partitions",
+                "replication",
+                "min_insync_replicas",
+                "retention_bytes",
+                "retention_hours",
+                "cleanup_policy",
+                "tags",
+            ]
+        ]
         self.print_response(topics, format=self.args.format, json=self.args.json, table_layout=layout)
 
     @arg.project
@@ -2469,12 +2505,14 @@ ssl.truststore.type=JKS
                     lag = p["latest_offset"] - cg["offset"]
                 else:
                     lag = "UNDEFINED"
-                cgroups.append({
-                    "partition": p["partition"],
-                    "consumer_group": cg["group_name"],
-                    "offset": cg["offset"],
-                    "lag": lag,
-                })
+                cgroups.append(
+                    {
+                        "partition": p["partition"],
+                        "consumer_group": cg["group_name"],
+                        "offset": cg["offset"],
+                        "lag": lag,
+                    }
+                )
 
         if not cgroups:
             print("(No consumer groups)")
@@ -2526,9 +2564,7 @@ ssl.truststore.type=JKS
                 raise argx.UserError("--source-service-uri is required for this operation")
             body = {
                 "task_type": self.args.operation,
-                "migration_check": {
-                    "source_service_uri": self.args.source_service_uri
-                }
+                "migration_check": {"source_service_uri": self.args.source_service_uri},
             }
             if self.args.ignore_dbs:
                 body["migration_check"]["ignore_dbs"] = self.args.ignore_dbs
@@ -3132,12 +3168,14 @@ ssl.truststore.type=JKS
     def service__flink__table__list(self):
         """List Flink tables"""
         project_name = self.get_project()
-        layout = [[
-            "integration_id",
-            "table_id",
-            "table_name",
-            "schema_sql",
-        ]]
+        layout = [
+            [
+                "integration_id",
+                "table_id",
+                "table_name",
+                "schema_sql",
+            ]
+        ]
         self.print_response(
             self.client.list_flink_tables(project_name, self.args.service_name), json=self.args.json, table_layout=layout
         )
@@ -3151,26 +3189,26 @@ ssl.truststore.type=JKS
         "--kafka-connector-type",
         required=False,
         help="Kafka connector type (Kafka integration only)",
-        choices=["upsert-kafka", "kafka"]
+        choices=["upsert-kafka", "kafka"],
     )
     @arg(
         "--kafka-key-format",
         required=False,
         help="Key format. (Kafka integration only)",
-        choices=["avro", "avro-confluent", "debezium-avro-confluent", "debezium-json", "json"]
+        choices=["avro", "avro-confluent", "debezium-avro-confluent", "debezium-json", "json"],
     )
     @arg("--kafka-key-fields", nargs="*", default=[], required=False, help="Key fields names used in table schema")
     @arg(
         "--kafka-value-format",
         required=False,
         help="Value format. (Kafka integration only)",
-        choices=["avro", "avro-confluent", "debezium-avro-confluent", "debezium-json", "json"]
+        choices=["avro", "avro-confluent", "debezium-avro-confluent", "debezium-json", "json"],
     )
     @arg(
         "--kafka-startup-mode",
         required=False,
         help="Kafka startup mode (Kafka integration only)",
-        choices=["earliest-offset", "latest-offset"]
+        choices=["earliest-offset", "latest-offset"],
     )
     @arg("--jdbc-table", required=False, help="Table name in Database, used as a source/sink. (PG integration only)")
     @arg("--opensearch-index", required=False, help="OpenSearch index name. (OpenSearch integration only)")
@@ -3178,20 +3216,22 @@ ssl.truststore.type=JKS
         "-l",
         "--like-options",
         required=False,
-        help="Clause can be used to create a table based on a definition of an existing table"
+        help="Clause can be used to create a table based on a definition of an existing table",
     )
     @arg("-s", "--schema-sql", required=True, help="Source/Sink table schema")
     @arg.json
     def service__flink__table__create(self):
         """Create a Flink table"""
         project_name = self.get_project()
-        layout = [[
-            "integration_id",
-            "table_id",
-            "table_name",
-            "schema_sql",
-            "columns",
-        ]]
+        layout = [
+            [
+                "integration_id",
+                "table_id",
+                "table_name",
+                "schema_sql",
+                "columns",
+            ]
+        ]
         try:
             new_table = self.client.create_flink_table(
                 project_name,
@@ -3224,13 +3264,15 @@ ssl.truststore.type=JKS
     def service__flink__table__get(self):
         """Get a Flink table"""
         project_name = self.get_project()
-        layout = [[
-            "integration_id",
-            "table_id",
-            "table_name",
-            "schema_sql",
-            "columns",
-        ]]
+        layout = [
+            [
+                "integration_id",
+                "table_id",
+                "table_name",
+                "schema_sql",
+                "columns",
+            ]
+        ]
         table = self.client.get_flink_table(
             project_name,
             self.args.service_name,
@@ -3263,17 +3305,19 @@ ssl.truststore.type=JKS
         nargs="*",
         default=[],
         required=False,
-        help="List of table IDs required in job runtime, e.g. table_id1 table_id2 table_id3"
+        help="List of table IDs required in job runtime, e.g. table_id1 table_id2 table_id3",
     )
     @arg("-s", "--statement", required=True, help="Job SQL statement")
     @arg.json
     def service__flink__job__create(self):
         """Create a Flink job"""
         project_name = self.get_project()
-        layout = [[
-            "job_id",
-            "job_name",
-        ]]
+        layout = [
+            [
+                "job_id",
+                "job_name",
+            ]
+        ]
         new_job = self.client.create_flink_job(
             project_name,
             self.args.service_name,
@@ -3289,10 +3333,12 @@ ssl.truststore.type=JKS
     def service__flink__job__list(self):
         """List Flink jobs"""
         project_name = self.get_project()
-        layout = [[
-            "id",
-            "status",
-        ]]
+        layout = [
+            [
+                "id",
+                "status",
+            ]
+        ]
         self.print_response(
             self.client.list_flink_jobs(project_name, self.args.service_name), json=self.args.json, table_layout=layout
         )
@@ -3304,16 +3350,18 @@ ssl.truststore.type=JKS
     def service__flink__job__get(self):
         """Get a Flink job"""
         project_name = self.get_project()
-        layout = [[
-            "jid",
-            "name",
-            "state",
-            "start-time",
-            "end-time",
-            "duration",
-            "isStoppable",
-            "maxParallelism",
-        ]]
+        layout = [
+            [
+                "jid",
+                "name",
+                "state",
+                "start-time",
+                "end-time",
+                "duration",
+                "isStoppable",
+                "maxParallelism",
+            ]
+        ]
         job = self.client.get_flink_job(
             project_name,
             self.args.service_name,
@@ -3374,11 +3422,13 @@ ssl.truststore.type=JKS
     def service__terminate(self):
         """Terminate service"""
         if not self.args.force and os.environ.get("AIVEN_FORCE") != "true":
-            self.print_boxed([
-                "Please re-enter the service name(s) to confirm the service termination.",
-                "This cannot be undone and all the data in the service will be lost!",
-                "Re-entering service name(s) can be skipped with the --force option.",
-            ])
+            self.print_boxed(
+                [
+                    "Please re-enter the service name(s) to confirm the service termination.",
+                    "This cannot be undone and all the data in the service will be lost!",
+                    "Re-entering service name(s) can be skipped with the --force option.",
+                ]
+            )
 
             for name in self.args.service_name:
                 user_input = input("Re-enter service name {!r} for immediate termination: ".format(name))
@@ -3728,7 +3778,7 @@ ssl.truststore.type=JKS
         action="append",
         help="Associate static IP address with service",
         metavar="STATIC_IP_ID",
-        dest="static_ips"
+        dest="static_ips",
     )
     @arg(
         "--read-replica-for",
@@ -3774,10 +3824,12 @@ ssl.truststore.type=JKS
                 user_config["pg_read_replica"] = True
                 user_config["service_to_fork_from"] = self.args.read_replica_for
             else:
-                service_integrations.append({
-                    "integration_type": "read_replica",
-                    "source_service": self.args.read_replica_for,
-                })
+                service_integrations.append(
+                    {
+                        "integration_type": "read_replica",
+                        "source_service": self.args.read_replica_for,
+                    }
+                )
 
         try:
             self.client.create_service(
@@ -3852,7 +3904,7 @@ ssl.truststore.type=JKS
         user supplies an 'm3_version' this method modifies the user_config
         as the server side would.
         """
-        service_version_key = f'{service_type}_version'
+        service_version_key = f"{service_type}_version"
 
         # M3 components have special cases for m3_version as key
         if service_type in {"m3db", "m3aggregator", "m3coordinator"}:
@@ -3874,7 +3926,7 @@ ssl.truststore.type=JKS
             return  # No EOL specified
 
         end_of_life_time = parse_iso8601(service_version["aiven_end_of_life_time"])
-        eol_status = 'is reaching EOL soon' if current_time < end_of_life_time else 'has reached EOL'
+        eol_status = "is reaching EOL soon" if current_time < end_of_life_time else "has reached EOL"
 
         warning = [
             "   !!! WARNING !!!",
@@ -3988,7 +4040,7 @@ ssl.truststore.type=JKS
         user_config = self.create_user_config(user_config_schema)
 
         # If the user requests a version change, check EOL status
-        service_type = service['service_type']
+        service_type = service["service_type"]
         requested_version = self._extract_user_config_version(service_type, user_config)
 
         if requested_version:
@@ -4103,7 +4155,7 @@ ssl.truststore.type=JKS
         help=(
             "If copying from existing project, use the same billing group "
             "used by source project instead of creating a new one"
-        )
+        ),
     )
     @arg.country_code
     @arg.billing_address
@@ -4329,7 +4381,9 @@ server_encryption_options:
     keystore_password: {password}
     truststore: ./sstableloader.truststore.jks
     truststore_password: {password}
-""".format(password=self.args.password)
+""".format(
+                        password=self.args.password
+                    )
                 )
 
             # The Project CA signs the certificate used by the Cassandra native transport, aka the regular client port
@@ -4338,34 +4392,38 @@ server_encryption_options:
                 (project_ca_path, "Project"),
                 (internode_ca_path, "Cassandra internode service nodes"),
             ]:
-                subprocess.check_call([
-                    "keytool",
-                    "-importcert",
-                    "-alias",
-                    "{} CA".format(alias),
-                    "-keystore",
-                    os.path.join(self.args.target_directory, "sstableloader.truststore.jks"),
-                    "-storepass",
-                    self.args.password,
-                    "-file",
-                    path,
-                    "-noprompt",
-                ])
+                subprocess.check_call(
+                    [
+                        "keytool",
+                        "-importcert",
+                        "-alias",
+                        "{} CA".format(alias),
+                        "-keystore",
+                        os.path.join(self.args.target_directory, "sstableloader.truststore.jks"),
+                        "-storepass",
+                        self.args.password,
+                        "-file",
+                        path,
+                        "-noprompt",
+                    ]
+                )
             # Connecting to the native transport port happens via username and password credentials, while connecting to
             # the SSL storage port requires this client certificate
-            subprocess.check_call([
-                "openssl",
-                "pkcs12",
-                "-export",
-                "-out",
-                os.path.join(self.args.target_directory, "sstableloader.keystore.p12"),
-                "-inkey",
-                client_key_path,
-                "-in",
-                client_cert_path,
-                "-passout",
-                "pass:{}".format(self.args.password),
-            ])
+            subprocess.check_call(
+                [
+                    "openssl",
+                    "pkcs12",
+                    "-export",
+                    "-out",
+                    os.path.join(self.args.target_directory, "sstableloader.keystore.p12"),
+                    "-inkey",
+                    client_key_path,
+                    "-in",
+                    client_cert_path,
+                    "-passout",
+                    "pass:{}".format(self.args.password),
+                ]
+            )
         finally:
             # These are not used when connecting with the Java based sstableloader utility
             if not self.args.preserve_pem:
@@ -4393,12 +4451,11 @@ server_encryption_options:
         cassandra_component = None
         internode_component = None
         for component in service["components"]:
-            if (
-                component["component"] == "cassandra" and component["route"] == "dynamic" and component["usage"] == "primary"
-            ):
+            if component["component"] == "cassandra" and component["route"] == "dynamic" and component["usage"] == "primary":
                 cassandra_component = component
             elif (
-                component["component"] == "cassandra_internode" and component["route"] == "dynamic"
+                component["component"] == "cassandra_internode"
+                and component["route"] == "dynamic"
                 and component["usage"] == "primary"
             ):
                 internode_component = component
@@ -4478,10 +4535,7 @@ server_encryption_options:
     def _print_tags(self, tags):
         layout = [["key", "value"]]
         self.print_response(
-            [{
-                "key": key,
-                "value": value
-            } for key, value in tags["tags"].items()],
+            [{"key": key, "value": value} for key, value in tags["tags"].items()],
             json=self.args.json,
             table_layout=layout,
         )
@@ -4707,29 +4761,33 @@ server_encryption_options:
         for billing_group in billing_groups:
             billing_group["credit_card"] = self._format_card_info(billing_group)
             billing_group["billing_emails"] = [item["email"] for item in billing_group["billing_emails"]]
-        layout = [[
-            "billing_group_id",
-            "billing_group_name",
-            "account_name",
-        ]]
+        layout = [
+            [
+                "billing_group_id",
+                "billing_group_name",
+                "account_name",
+            ]
+        ]
         if self.args.verbose:
-            layout.extend([
-                "payment_method",
-                "credit_card",
-                "vat_id",
-                "billing_currency",
-                "estimated_balance_usd",
-                "estimated_balance_local",
-                "billing_extra_text",
-                "billing_emails",
-                "company",
-                "address_lines",
-                "country_code",
-                "city",
-                "state",
-                "zip_code",
-                "billing_address",
-            ])
+            layout.extend(
+                [
+                    "payment_method",
+                    "credit_card",
+                    "vat_id",
+                    "billing_currency",
+                    "estimated_balance_usd",
+                    "estimated_balance_local",
+                    "billing_extra_text",
+                    "billing_emails",
+                    "company",
+                    "address_lines",
+                    "country_code",
+                    "city",
+                    "state",
+                    "zip_code",
+                    "billing_address",
+                ]
+            )
         self.print_response(billing_groups, json=self.args.json, table_layout=layout)
 
     @arg("name", help="Billing group name")
@@ -4825,11 +4883,13 @@ server_encryption_options:
             if not projects:
                 print("None")
                 return
-            layout = [[
-                "project_name",
-                "estimated_balance",
-                "available_credits",
-            ]]
+            layout = [
+                [
+                    "project_name",
+                    "estimated_balance",
+                    "available_credits",
+                ]
+            ]
             self.print_response(projects, json=False, table_layout=layout)
 
     @arg.billing_group
@@ -4875,21 +4935,23 @@ server_encryption_options:
     @arg.billing_group
     @arg(
         "--sort",
-        choices=["invoice_number", "period_begin", "period_end", "state", "currency", "total_inc_vat", "total_vat_zero"]
+        choices=["invoice_number", "period_begin", "period_end", "state", "currency", "total_inc_vat", "total_vat_zero"],
     )
     @arg.json
     @arg.verbose
     def billing_group__invoice_list(self):
         """List billing group invoices"""
         result = self.client.list_billing_group_invoices(billing_group=self.args.id, sort=self.args.sort)
-        layout = [[
-            "invoice_number",
-            "period_begin",
-            "period_end",
-            "state",
-            "total_inc_vat",
-            "total_vat_zero",
-        ]]
+        layout = [
+            [
+                "invoice_number",
+                "period_begin",
+                "period_end",
+                "state",
+                "total_inc_vat",
+                "total_vat_zero",
+            ]
+        ]
         if self.args.verbose:
             layout.extend(["currency", "download"])
         self.print_response(result, json=self.args.json, table_layout=layout)
@@ -4900,15 +4962,17 @@ server_encryption_options:
     def billing_group__invoice_lines(self):
         """Get billing group invoice lines"""
         result = self.client.get_billing_group_invoice_lines(billing_group=self.args.id, invoice_number=self.args.invoice)
-        layout = [[
-            "timestamp_begin",
-            "timestamp_end",
-            "line_type",
-            "description",
-            "line_total_local",
-            "local_currency",
-            "line_total_usd",
-        ]]
+        layout = [
+            [
+                "timestamp_begin",
+                "timestamp_end",
+                "line_type",
+                "description",
+                "line_total_local",
+                "local_currency",
+                "line_total_usd",
+            ]
+        ]
         self.print_response(result, json=self.args.json, table_layout=layout)
 
     @arg.json

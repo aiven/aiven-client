@@ -134,7 +134,7 @@ class AivenClientBase:  # pylint: disable=old-style-class
         body: Any = None,
         params: Any = None,
         result_key: Optional[str] = None,
-        retry: Optional[int] = None
+        retry: Optional[int] = None,
     ) -> Mapping:
         # Retry GET operations by default
         if retry is None and op == self.get:  # pylint: disable=comparison-with-callable
@@ -449,9 +449,9 @@ class AivenClient(AivenClientBase):
         ns_block_data_expiry_dur: Optional[str] = None,
         ns_buffer_future_dur: Optional[str] = None,
         ns_buffer_past_dur: Optional[str] = None,
-        ns_writes_to_commitlog: Optional[bool] = None
+        ns_writes_to_commitlog: Optional[bool] = None,
     ) -> None:
-        re_ns_duration = re.compile(r'\d+[smhd]')
+        re_ns_duration = re.compile(r"\d+[smhd]")
 
         def _validate_ns_dur(val: str) -> None:
             if not re_ns_duration.match(val):
@@ -493,9 +493,7 @@ class AivenClient(AivenClientBase):
         return self.verify(
             self.put,
             self.build_path("project", project, "service", service),
-            body={"user_config": {
-                "namespaces": new_namespaces
-            }},
+            body={"user_config": {"namespaces": new_namespaces}},
         )
 
     def add_m3_namespace(
@@ -510,11 +508,11 @@ class AivenClient(AivenClientBase):
         ns_block_data_expiry_dur: Optional[str] = None,
         ns_buffer_future_dur: Optional[str] = None,
         ns_buffer_past_dur: Optional[str] = None,
-        ns_writes_to_commitlog: Optional[bool] = None
+        ns_writes_to_commitlog: Optional[bool] = None,
     ) -> Mapping:
         service_res = self.get_service(project=project, service=service)
         namespaces = service_res.get("user_config", {}).get("namespaces", [])
-        valid_namespace_types = {'unaggregated', 'aggregated'}
+        valid_namespace_types = {"unaggregated", "aggregated"}
         if ns_type not in valid_namespace_types:
             raise ValueError(f"Invalid namespace type {ns_type}, valid types {valid_namespace_types}")
         new_namespace = {
@@ -529,15 +527,13 @@ class AivenClient(AivenClientBase):
             ns_block_data_expiry_dur=ns_block_data_expiry_dur,
             ns_buffer_future_dur=ns_buffer_future_dur,
             ns_buffer_past_dur=ns_buffer_past_dur,
-            ns_writes_to_commitlog=ns_writes_to_commitlog
+            ns_writes_to_commitlog=ns_writes_to_commitlog,
         )
         namespaces.append(new_namespace)
         return self.verify(
             self.put,
             self.build_path("project", project, "service", service),
-            body={"user_config": {
-                "namespaces": namespaces
-            }},
+            body={"user_config": {"namespaces": namespaces}},
         )
 
     def update_m3_namespace(
@@ -551,7 +547,7 @@ class AivenClient(AivenClientBase):
         ns_block_data_expiry_dur: Optional[str] = None,
         ns_buffer_future_dur: Optional[str] = None,
         ns_buffer_past_dur: Optional[str] = None,
-        ns_writes_to_commitlog: Optional[bool] = None
+        ns_writes_to_commitlog: Optional[bool] = None,
     ) -> Mapping:
         service_res = self.get_service(project=project, service=service)
         namespaces = service_res.get("user_config", {}).get("namespaces", [])
@@ -569,14 +565,12 @@ class AivenClient(AivenClientBase):
             ns_block_data_expiry_dur=ns_block_data_expiry_dur,
             ns_buffer_future_dur=ns_buffer_future_dur,
             ns_buffer_past_dur=ns_buffer_past_dur,
-            ns_writes_to_commitlog=ns_writes_to_commitlog
+            ns_writes_to_commitlog=ns_writes_to_commitlog,
         )
         return self.verify(
             self.put,
             self.build_path("project", project, "service", service),
-            body={"user_config": {
-                "namespaces": namespaces
-            }},
+            body={"user_config": {"namespaces": namespaces}},
         )
 
     def list_service_topics(self, project: str, service: str) -> Mapping:
@@ -1081,7 +1075,7 @@ class AivenClient(AivenClientBase):
         kafka_startup_mode: Optional[str] = None,
         jdbc_table: Optional[str] = None,
         opensearch_index: Optional[str] = None,
-        like_options: Optional[str] = None
+        like_options: Optional[str] = None,
     ) -> Mapping:
         path = self.build_path(
             "project",
@@ -1289,7 +1283,8 @@ class AivenClient(AivenClientBase):
         for peering_connection in vpc["peering_connections"]:
             # pylint: disable=too-many-boolean-expressions
             if (
-                peering_connection["peer_cloud_account"] == peer_cloud_account and peering_connection["peer_vpc"] == peer_vpc
+                peering_connection["peer_cloud_account"] == peer_cloud_account
+                and peering_connection["peer_vpc"] == peer_vpc
                 and (peer_region is UNDEFINED or peering_connection["peer_region"] == peer_region)
                 and (peer_resource_group is UNDEFINED or peering_connection["peer_resource_group"] == peer_resource_group)
             ):
@@ -1315,7 +1310,7 @@ class AivenClient(AivenClientBase):
         project: str,
         project_vpc_id: str,
         add: Optional[Sequence[Mapping[str, str]]] = None,
-        delete: Optional[Sequence[str]] = None
+        delete: Optional[Sequence[str]] = None,
     ) -> Mapping:
         path = self.build_path(
             "project",
@@ -1542,10 +1537,7 @@ class AivenClient(AivenClientBase):
             self.post,
             path,
             result_key="queries",
-            body={
-                "limit": 100,
-                "order_by": "query_duration:desc"
-            },
+            body={"limit": 100, "order_by": "query_duration:desc"},
         )
 
     def get_service_query_stats(self, project: str, service: str, service_type: Optional[str] = None) -> Mapping:
@@ -2018,10 +2010,7 @@ class AivenClient(AivenClientBase):
 
     def get_billing_group_events(self, billing_group: str, *, limit: int = 100) -> Mapping:
         return self.verify(
-            self.get,
-            self.build_path("billing-group", billing_group, "events"),
-            params={"limit": limit},
-            result_key="events"
+            self.get, self.build_path("billing-group", billing_group, "events"), params={"limit": limit}, result_key="events"
         )
 
     def list_billing_group_credits(self, billing_group: str) -> Mapping:
@@ -2046,16 +2035,18 @@ class AivenClient(AivenClientBase):
         )
         for invoice in invoices:
             if invoice.get("download_cookie"):
-                invoice["download"] = self.base_url + self.api_prefix + self.build_path(
-                    "billing-group", billing_group, "invoice", invoice["invoice_number"], invoice["download_cookie"]
+                invoice["download"] = (
+                    self.base_url
+                    + self.api_prefix
+                    + self.build_path(
+                        "billing-group", billing_group, "invoice", invoice["invoice_number"], invoice["download_cookie"]
+                    )
                 )
         return invoices
 
     def get_billing_group_invoice_lines(self, billing_group: str, invoice_number: str) -> Mapping:
         return self.verify(
-            self.get,
-            self.build_path("billing-group", billing_group, "invoice", invoice_number, "lines"),
-            result_key="lines"
+            self.get, self.build_path("billing-group", billing_group, "invoice", invoice_number, "lines"), result_key="lines"
         )
 
     def start_service_maintenance(self, project: str, service: str) -> Mapping:

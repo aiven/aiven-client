@@ -3,7 +3,8 @@
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
+
 import sys
 import version
 

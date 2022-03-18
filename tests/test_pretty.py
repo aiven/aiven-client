@@ -51,20 +51,24 @@ def test_flatten_list():
 def test_print_table():
     """Print table, ensure we don't try to format non-visible field"""
     rows = []
-    rows.append({
-        "ip": ipaddress.IPv4Address("192.168.16.1"),
-        "network": ipaddress.IPv4Network("192.168.16.0/20"),
-        "metric": 1,
-        "next_hop_ip": ipaddress.IPv4Address("192.168.16.2"),
-        "next_hop_mac": "0c:d0:f8:a3:04:31",
-        "function1": test_print_table
-    })
-    rows.append({
-        "ip": ipaddress.IPv4Address("10.0.0.1"),
-        "network": ipaddress.IPv4Network("10.0.0.0/16"),
-        "metric": 100,
-        "function2": test_print_table
-    })
+    rows.append(
+        {
+            "ip": ipaddress.IPv4Address("192.168.16.1"),
+            "network": ipaddress.IPv4Network("192.168.16.0/20"),
+            "metric": 1,
+            "next_hop_ip": ipaddress.IPv4Address("192.168.16.2"),
+            "next_hop_mac": "0c:d0:f8:a3:04:31",
+            "function1": test_print_table,
+        }
+    )
+    rows.append(
+        {
+            "ip": ipaddress.IPv4Address("10.0.0.1"),
+            "network": ipaddress.IPv4Network("10.0.0.0/16"),
+            "metric": 100,
+            "function2": test_print_table,
+        }
+    )
 
     def get_output(rows, *, drop_fields=None, table_layout=None):
         temp_io = io.StringIO()
@@ -112,24 +116,25 @@ IP            NETWORK          METRIC
 
 
 def test_yield_table():
-    rows = [{
-        "access_control": {
-            "pg_allow_replication": True
+    rows = [
+        {
+            "access_control": {"pg_allow_replication": True},
+            "password": "asdfghjkl",
+            "type": "primary",
+            "username": "avnadmin",
         },
-        "password": "asdfghjkl",
-        "type": "primary",
-        "username": "avnadmin",
-    }, {
-        "access_control": {
-            "redis_acl_categories": ["+@all"],
-            "redis_acl_channels": ["*"],
-            "redis_acl_commands": ["+get", "-set"],
-            "redis_acl_keys": ["key1", "key2"],
+        {
+            "access_control": {
+                "redis_acl_categories": ["+@all"],
+                "redis_acl_channels": ["*"],
+                "redis_acl_commands": ["+get", "-set"],
+                "redis_acl_keys": ["key1", "key2"],
+            },
+            "password": "qwertyuiop",
+            "type": "regular",
+            "username": "myuser",
         },
-        "password": "qwertyuiop",
-        "type": "regular",
-        "username": "myuser",
-    }]
+    ]
 
     one_row_layout_pg = [["username", "type", "access_control.pg_allow_replication"]]
     result = yield_table(rows, table_layout=one_row_layout_pg)

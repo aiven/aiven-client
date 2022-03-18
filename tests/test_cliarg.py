@@ -51,8 +51,7 @@ def test_user_config_json_error_conflict():
 
 
 def test_user_config_json_success():
-    """Success scenario
-    """
+    """Success scenario"""
 
     class T(CommandLineTool):
         """Test class"""

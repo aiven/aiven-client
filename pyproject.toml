@@ -1,0 +1,22 @@
+# NOTE: you have to use single-quoted strings in TOML for regular expressions.
+# It's the equivalent of r-strings in Python.  Multiline strings are treated as
+# verbose regular expressions by Black.  Use [ ] to denote a significant space
+# character.
+
+[tool.black]
+line-length = 125
+target-version = ['py37', 'py38', 'py39']  # 'py310' is not yet available on Fedora 34
+include = '\.pyi?$'
+exclude = '''
+/(
+  \.direnv|\.eggs|\.git|\.mypy_cache|\.venv
+)
+'''
+
+[tool.isort]
+combine_as_imports = true
+force_alphabetical_sort = true
+line_length = 125
+no_sections = true  # This breaks the python convention...
+# The below settings are specifically required for Black compatibility
+profile = "black"

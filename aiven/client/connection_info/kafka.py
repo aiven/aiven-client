@@ -12,8 +12,9 @@ class KafkaConnectionInfo:  # pylint: disable=too-few-public-methods
     host: str
     port: int
 
-    def _kafkacat(self, protocol: str, ca_path: str, extra: Sequence[str], store: Store,
-                  get_project_ca: Callable[[], str]) -> Sequence[str]:
+    def _kafkacat(
+        self, protocol: str, ca_path: str, extra: Sequence[str], store: Store, get_project_ca: Callable[[], str]
+    ) -> Sequence[str]:
         store.handle(get_project_ca, ca_path)
         address = f"{self.host}:{self.port}"
         return ["kafkacat", "-b", address, "-X", f"security.protocol={protocol}", "-X", f"ssl.ca.location={ca_path}", *extra]
@@ -56,7 +57,7 @@ class KafkaCertificateConnectionInfo(KafkaConnectionInfo):
             service["components"],
             route=route,
             privatelink_connection_id=privatelink_connection_id,
-            kafka_authentication_method="certificate"
+            kafka_authentication_method="certificate",
         )
         user = find_user(service, username)
         if "access_cert" not in user:
@@ -92,7 +93,7 @@ class KafkaSASLConnectionInfo(KafkaConnectionInfo):
             service["components"],
             route=route,
             privatelink_connection_id=privatelink_connection_id,
-            kafka_authentication_method="sasl"
+            kafka_authentication_method="sasl",
         )
         user = find_user(service, username)
         if "password" not in user:
