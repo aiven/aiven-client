@@ -1,13 +1,15 @@
 # Copyright (c) 2021 Aiven, Helsinki, Finland. https://aiven.io/
 from .common import ConnectionInfoError
 from aiven.client.common import UNDEFINED
-from typing import Mapping, Optional
+from typing import Any, Mapping, Optional, Sequence, TypeVar
 
 import ipaddress
 import urllib.parse
 
+T = TypeVar("T")
 
-def find_component(items, **filters):
+
+def find_component(items: Sequence[Mapping[str, T]], **filters: str) -> Mapping[str, T]:
     for item in items:
         if all(key in item and item[key] == value for key, value in filters.items() if value is not UNDEFINED):
             return item
@@ -15,7 +17,7 @@ def find_component(items, **filters):
     raise ConnectionInfoError(f"Could not find connection information with filters {msg_filters}")
 
 
-def find_user(service, username):
+def find_user(service: Mapping[str, Any], username: str) -> Mapping[str, Any]:
     for user in service["users"]:
         if user["username"] == username:
             return user
@@ -31,7 +33,7 @@ def format_uri(
     port: Optional[int] = None,
     netloc: Optional[str] = None,
     path: str = "",
-    query: Optional[Mapping[str, str]] = None,
+    query: Optional[Mapping[str, Any]] = None,
     fragment: str = "",
 ) -> str:
     if netloc is None:
@@ -60,4 +62,5 @@ def format_uri(
             if port is not None and port != {"http": 80, "https": 443}.get(scheme.lower()):
                 bits.append(f":{port}")
         netloc = "".join(bits)
-    return urllib.parse.urlunsplit((scheme, netloc, path, urllib.parse.urlencode(query), fragment))
+    encoded_query = urllib.parse.urlencode(query) if query is not None else None
+    return urllib.parse.urlunsplit((scheme, netloc, path, encoded_query, fragment))

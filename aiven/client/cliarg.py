@@ -2,15 +2,16 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
-
-from .argx import arg, UserError
+# type: ignore[attr-defined]
+from .argx import arg, CommandLineTool, UserError
 from functools import wraps
+from typing import Any, Callable, Dict, TypeVar
 
 import json as jsonlib
 import os
 
 
-def get_json_config(path_or_string):
+def get_json_config(path_or_string: str) -> Dict[str, Any]:
     # If parameter is empty, return an empty dict
     if not path_or_string:
         return {}
@@ -22,15 +23,18 @@ def get_json_config(path_or_string):
     return jsonlib.loads(path_or_string)
 
 
-def json_path_or_string(param_name):
-    def wrapper(fun):
+T = TypeVar("T")
+
+
+def json_path_or_string(param_name: str) -> Callable[[Callable[[CommandLineTool], T]], Callable[[CommandLineTool], T]]:
+    def wrapper(fun: Callable[[CommandLineTool], T]) -> Callable[[CommandLineTool], T]:
         arg(
             param_name,
             help="JSON string or path (preceded by '@') to a JSON configuration file",
         )(fun)
 
         @wraps(fun)
-        def wrapped(self):
+        def wrapped(self: CommandLineTool) -> T:
             setattr(
                 self.args,
                 param_name,
@@ -43,10 +47,10 @@ def json_path_or_string(param_name):
     return wrapper
 
 
-def user_config_json():
+def user_config_json() -> Callable[[Callable[[CommandLineTool], T]], Callable[[CommandLineTool], T]]:
     """User config that accepts arbitrary JSON"""
 
-    def wrapper(fun):
+    def wrapper(fun: Callable[[CommandLineTool], T]) -> Callable[[CommandLineTool], T]:
         arg(
             "--user-config-json",
             default=None,
@@ -55,8 +59,9 @@ def user_config_json():
         )(fun)
 
         @wraps(fun)
-        def wrapped(self):
-            if ("user_config" in self.args and (self.args.user_config_json and self.args.user_config)):
+        def wrapped(self: CommandLineTool) -> T:
+            assert self.args is not None
+            if "user_config" in self.args and (self.args.user_config_json and self.args.user_config):
                 raise UserError("-c (user config) and --user-config-json parameters can not be used at the same time")
             try:
                 setattr(
