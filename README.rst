@@ -1,7 +1,7 @@
 Aiven Client |BuildStatus|_
 ###########################
 
-.. |BuildStatus| image:: https://github.com/aiven/aiven-client/workflows/Build%20Aiven%20Client/badge.svg?branch=master
+.. |BuildStatus| image:: https://github.com/aiven/aiven-client/workflows/Build%20Aiven%20Client/badge.svg?branch=main
 .. _BuildStatus: https://github.com/aiven/aiven-client/actions
 
 Aiven is a next-generation managed cloud services platform.  Its focus is in
@@ -428,7 +428,7 @@ For working with `kafkacat <https://github.com/edenhill/kafkacat>`_ (see also ou
 Contributing
 ============
 
-Check the `CONTRIBUTING <https://github.com/aiven/aiven-client/blob/master/.github/CONTRIBUTING.md>`_ guide for details on how to contribute to this repository.
+Check the `CONTRIBUTING <https://github.com/aiven/aiven-client/blob/main/.github/CONTRIBUTING.md>`_ guide for details on how to contribute to this repository.
 
 Keep Reading
 ============
