@@ -9,6 +9,7 @@ from aiven.client.common import UNDEFINED
 from aiven.client.connection_info.common import Store
 from aiven.client.connection_info.kafka import KafkaCertificateConnectionInfo, KafkaSASLConnectionInfo
 from aiven.client.connection_info.pg import PGConnectionInfo
+from aiven.client.connection_info.redis import RedisConnectionInfo
 from aiven.client.speller import suggest
 from collections import Counter
 from datetime import datetime, timedelta, timezone
@@ -1471,6 +1472,28 @@ class AivenCLI(argx.CommandLineTool):
         )
         print(ci.connection_string())
 
+    @arg.project
+    @arg.service_name
+    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
+    @arg("--usage", choices=("primary", "replica"))
+    @arg("-p", "--privatelink-connection-id")
+    @arg("--replica", action="store_true")
+    @arg("-u", "--username", default="default")
+    @arg("-d", "--db")
+    def service__connection_info__redis__uri(self):
+        """Redis connection string"""
+        service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
+
+        ci = RedisConnectionInfo.from_service(
+            service,
+            route=self._get_route_from_args(),
+            usage=self._get_usage_from_args(),
+            privatelink_connection_id=self._get_privatelink_connection_id_from_args(),
+            username=self.args.username,
+            db=self.args.db,
+        )
+        print(ci.uri())
+
     @optional_auth
     @arg.project
     @arg.service_name
@@ -1496,9 +1519,11 @@ class AivenCLI(argx.CommandLineTool):
             command, params, env = self._build_influx_start_info(url)
         elif service_type == "postgres":
             command, params, env = self._build_psql_start_info(url)
+        elif service_type == "rediss":
+            command, params, env = self._build_redis_start_info(url)
         else:
             raise argx.UserError(
-                "Unsupported service type {}. Only InfluxDB and PostgreSQL are supported".format(service_type)
+                "Unsupported service type {}. Only InfluxDB, PostgreSQL, and Redis are supported".format(service_type)
             )
 
         try:
@@ -1528,6 +1553,19 @@ class AivenCLI(argx.CommandLineTool):
         match = re.match(pw_pattern, url)
         connect_info = re.sub(pw_pattern, "\\1@\\3", url)
         return "psql", [connect_info], {"PGPASSWORD": match.group(2)}
+
+    def _build_redis_start_info(self, url):
+        info = urlparse(url)
+        params = [
+            "--tls",
+            "-h",
+            info.hostname,
+            "-p",
+            str(info.port),
+            "--user",
+            info.username,
+        ]
+        return "redis-cli", params, {"REDISCLI_AUTH": info.password}
 
     @arg.project
     @arg.service_name
