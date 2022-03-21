@@ -1064,7 +1064,7 @@ class AivenClient(AivenClientBase):
         self,
         project: str,
         service: str,
-        table_properties: Dict[str, str],
+        table_properties: Mapping[str, str],
     ) -> Mapping:
         path = self.build_path(
             "project",
