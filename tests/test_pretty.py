@@ -2,7 +2,8 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
-from aiven.client.pretty import flatten_list, format_item, print_table, yield_table
+from aiven.client.pretty import flatten_list, format_item, print_table, ResultType, TableLayout, yield_table
+from typing import Any, Collection, Optional
 
 import datetime
 import decimal
@@ -37,18 +38,18 @@ import re
         (ipaddress.IPv6Network("fd00:0:1::/120"), "fd00:0:1::/120"),
     ],
 )
-def test_format_item(value, expected):
+def test_format_item(value: Any, expected: str) -> None:
     assert format_item(None, value) == expected
 
 
-def test_flatten_list():
-    original_list = [["column1", "column2", "column3"], "detail1", "detail2"]
+def test_flatten_list() -> None:
+    original_list: TableLayout = [["column1", "column2", "column3"], "detail1", "detail2"]
     flat_list = flatten_list(original_list)
     assert original_list == [["column1", "column2", "column3"], "detail1", "detail2"]  # ensure it doesn't have side effects
     assert flat_list == ["column1", "column2", "column3", "detail1", "detail2"]
 
 
-def test_print_table():
+def test_print_table() -> None:
     """Print table, ensure we don't try to format non-visible field"""
     rows = []
     rows.append(
@@ -70,13 +71,18 @@ def test_print_table():
         }
     )
 
-    def get_output(rows, *, drop_fields=None, table_layout=None):
+    def get_output(
+        rows: Optional[ResultType],
+        *,
+        drop_fields: Optional[Collection[str]] = None,
+        table_layout: Optional[TableLayout] = None,
+    ) -> str:
         temp_io = io.StringIO()
         print_table(rows, drop_fields=drop_fields, table_layout=table_layout, file=temp_io)
         temp_io.seek(0)
         return temp_io.read()
 
-    def fuzzy_compare_assert(actual, expected):
+    def fuzzy_compare_assert(actual: str, expected: str) -> None:
         cleanup_actual = re.sub(r" +$", "", actual.strip(), flags=re.MULTILINE)
         cleanup_expected = re.sub(r" +$", "", expected.strip(), flags=re.MULTILINE)
         assert cleanup_actual == cleanup_expected
@@ -115,7 +121,7 @@ IP            NETWORK          METRIC
         get_output(rows)
 
 
-def test_yield_table():
+def test_yield_table() -> None:
     rows = [
         {
             "access_control": {"pg_allow_replication": True},
@@ -154,7 +160,11 @@ def test_yield_table():
         "myuser    regular  key1, key2",
     ]
 
-    vertical_layout_both = [["username", "type"], "access_control.redis_acl_keys", "access_control.pg_allow_replication"]
+    vertical_layout_both: TableLayout = [
+        ["username", "type"],
+        "access_control.redis_acl_keys",
+        "access_control.pg_allow_replication",
+    ]
     result = yield_table(rows, table_layout=vertical_layout_both)
     assert list(result) == [
         "USERNAME  TYPE   ",
