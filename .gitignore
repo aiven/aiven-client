@@ -12,3 +12,4 @@ Pipfile*
 __pycache__/
 .mypy_cache/
 .vscode
+venv
