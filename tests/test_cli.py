@@ -9,9 +9,11 @@ from aiven.client.cli import AivenCLI, ClientFactory, EOL_ADVANCE_WARNING_TIME
 from collections import namedtuple
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
+from typing import Mapping, Optional
 from unittest import mock
 
 import pytest
+import uuid
 
 
 def test_cli():
@@ -404,3 +406,64 @@ def test_user_logout():
     aiven_client = mock.Mock(spec_set=AivenClient)
     assert build_aiven_cli(aiven_client).run(["user", "logout", "--no-token-revoke"]) is None
     aiven_client.access_token_revoke.assert_not_called()
+
+
+def test_create_oauth2_client():
+    aiven_client = mock.Mock(spec_set=AivenClient)
+
+    created_client_id = None
+
+    def _create_client(
+        account_id: str, name: str, description: Optional[str] = None  # pylint: disable=unused-argument
+    ) -> Mapping:
+        nonlocal created_client_id
+
+        created_client_id = str(uuid.uuid4())
+
+        return {
+            "client_id": created_client_id,
+            "name": name,
+            "description": description,
+        }
+
+    def _create_redirect(account_id: str, client_id: str, uri: str) -> Mapping:  # pylint: disable=unused-argument
+        return {
+            "redirect_id": 127,
+            "redirect_uri": uri,
+        }
+
+    aiven_client.create_oauth2_client.side_effect = _create_client
+    aiven_client.create_oauth2_client_redirect.side_effect = _create_redirect
+    aiven_client.create_oauth2_client_secret.return_value = {"secret_id": str(uuid.uuid4()), "secret": "MySecret"}
+
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "account",
+            "oauth2-client",
+            "create",
+            "a2313127",
+            "--name",
+            "MyOAuth2App",
+            "--redirect-uri",
+            "https://example.com/redirect",
+            "--description",
+            "My description",
+        ]
+    )
+
+    aiven_client.create_oauth2_client.assert_called_with(
+        "a2313127",
+        name="MyOAuth2App",
+        description="My description",
+    )
+
+    aiven_client.create_oauth2_client_redirect.assert_called_with(
+        "a2313127",
+        created_client_id,
+        "https://example.com/redirect",
+    )
+
+    aiven_client.create_oauth2_client_secret.assert_called_with(
+        "a2313127",
+        created_client_id,
+    )

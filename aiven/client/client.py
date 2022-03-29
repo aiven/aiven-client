@@ -2140,3 +2140,26 @@ class AivenClient(AivenClientBase):
             self.delete,
             self.build_path("account", account_id, "team", team_id, "project", project),
         )
+
+    def create_oauth2_client(self, account_id: str, name: str, description: Optional[str] = None) -> Mapping:
+        return self.verify(
+            self.post,
+            self.build_path("account", account_id, "oauth_client"),
+            body={"name": name, "description": description},
+        )
+
+    def delete_oauth2_client(self, account_id: str, client_id: str) -> Mapping:
+        return self.verify(
+            self.delete,
+            self.build_path("account", account_id, "oauth_client", client_id),
+        )
+
+    def create_oauth2_client_redirect(self, account_id: str, client_id: str, uri: str) -> Mapping:
+        return self.verify(
+            self.post,
+            self.build_path("account", account_id, "oauth_client", client_id, "redirect"),
+            body={"redirect_uri": uri},
+        )
+
+    def create_oauth2_client_secret(self, account_id: str, client_id: str) -> Mapping:
+        return self.verify(self.post, self.build_path("account", account_id, "oauth_client", client_id, "secret"), body={})

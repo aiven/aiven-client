@@ -5115,6 +5115,42 @@ server_encryption_options:
         )
         print(response["message"])
 
+    @arg.json
+    @arg.account_id
+    @arg("-n", "--name", required=True, help="OAuth2 application name")
+    @arg(
+        "--redirect-uri",
+        required=True,
+        help="Redirect URI",
+    )
+    @arg(
+        "-d",
+        "--description",
+        required=False,
+        help="App description",
+    )
+    def account__oauth2_client__create(self):
+        """Create new OAuth2 client."""
+        oauth2_client = self.client.create_oauth2_client(
+            self.args.account_id,
+            name=self.args.name,
+            description=self.args.description,
+        )
+        client_id = oauth2_client["client_id"]
+
+        try:
+            redirect = self.client.create_oauth2_client_redirect(self.args.account_id, client_id, self.args.redirect_uri)
+            secret = self.client.create_oauth2_client_secret(self.args.account_id, client_id)
+
+            oauth2_client["redirect_uri"] = redirect["redirect_uri"]
+            oauth2_client["secret"] = secret["secret"]
+        except Exception:
+            self.client.delete_oauth2_client(self.args.account_id, client_id)
+            raise
+
+        table_layout = ["client_id", "name", "redirect_uri", "secret"]
+        self.print_response(oauth2_client, json=self.args.json, single_item=True, table_layout=table_layout)
+
 
 if __name__ == "__main__":
     AivenCLI().main()
