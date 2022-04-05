@@ -10,3 +10,5 @@ pylint>=2.12.2,<3.0
 pytest
 # Lock isort to the same major version used in downstream build environments
 isort>=5.10.1,<6.0
+# To prevent black from breaking (https://github.com/psf/black/issues/2964, https://github.com/psf/black/pull/2966)
+click < 8.1.0

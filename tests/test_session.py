@@ -10,7 +10,7 @@ from requests import Session
 import pytest
 
 
-def test_valid_requests_session():
+def test_valid_requests_session() -> None:
     """Test that get_requests_session returns a valid Session that has the expected parameters set."""
 
     session = get_requests_session()
@@ -31,7 +31,7 @@ def test_valid_requests_session():
         ("timeout", 0),
     ],
 )
-def test_adapter_parameters_are_passed_along(argument, value):
+def test_adapter_parameters_are_passed_along(argument: str, value: int) -> None:
     session = get_requests_session(**{argument: value})
     adapter = session.adapters["https://"]
     assert isinstance(adapter, AivenClientAdapter)

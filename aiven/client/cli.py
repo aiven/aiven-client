@@ -121,7 +121,7 @@ def get_current_date() -> datetime:
 
 
 if (sys.version_info.major, sys.version_info.minor) >= (3, 8):
-    from typing import Protocol
+    from typing import Protocol  # pylint: disable=no-name-in-module
 
     class ClientFactory(Protocol):  # pylint: disable=too-few-public-methods
         def __call__(self, base_url: str, show_http: bool, request_timeout: Optional[int]):

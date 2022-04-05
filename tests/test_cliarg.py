@@ -5,10 +5,10 @@
 
 # pylint: disable=no-member
 from aiven.client.argx import CommandLineTool
-from aiven.client.cliarg import arg
+from aiven.client.cliarg import arg  # type: ignore
 
 
-def test_user_config_json_error_json():
+def test_user_config_json_error_json() -> None:
     """Test that @arg.user_config_json causes
     CommandLineTool.run() to exit cleanly with return value 1
     if JSON is incorrect
@@ -19,7 +19,7 @@ def test_user_config_json_error_json():
 
         @arg.user_config_json()
         @arg()
-        def t(self):
+        def t(self) -> None:
             """t"""
 
     error_json_arg = ["t", "--user-config-json", "foo"]
@@ -28,7 +28,7 @@ def test_user_config_json_error_json():
     assert ret == 1
 
 
-def test_user_config_json_error_conflict():
+def test_user_config_json_error_conflict() -> None:
     """Test that @arg.user_config_json causes
     CommandLineTool.run() to exit cleanly with return value 1
     if both user_config (-c) and --user-config-json parameters
@@ -41,7 +41,7 @@ def test_user_config_json_error_conflict():
         @arg.user_config
         @arg.user_config_json()
         @arg()
-        def t(self):
+        def t(self) -> None:
             """t"""
 
     error_conflict_arg = ["t", "-c", "userconfkey=val", "--user-config-json", '{"foo":"bar"}']
@@ -50,7 +50,7 @@ def test_user_config_json_error_conflict():
     assert ret == 1
 
 
-def test_user_config_json_success():
+def test_user_config_json_success() -> None:
     """Success scenario"""
 
     class T(CommandLineTool):
@@ -58,17 +58,17 @@ def test_user_config_json_success():
 
         @arg.user_config_json()
         @arg()
-        def t(self):
+        def t(self) -> None:
             """t"""
 
     valid_json_arg = ["t", "--user-config-json", '{"foo":"bar"}']
     test_class = T("avn")
     ret = test_class.run(args=valid_json_arg)
     assert ret is None  # Should run() return 0 actually?
-    assert test_class.args.user_config_json == {"foo": "bar"}
+    assert test_class.args.user_config_json == {"foo": "bar"}  # type: ignore
 
 
-def test_user_config_success():
+def test_user_config_success() -> None:
     """Test that user config parameter -c works and not cause conflict with
     --user_config_json
     """
@@ -79,7 +79,7 @@ def test_user_config_success():
         @arg.user_config
         @arg.user_config_json()
         @arg()
-        def t(self):
+        def t(self) -> None:
             """t"""
 
     user_config_arg = ["t", "-c", "userconfkey=val"]

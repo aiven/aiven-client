@@ -16,7 +16,7 @@ import sys
 
 # string type checking must work on python 2.x and 3.x
 try:
-    basestring
+    basestring  # pylint: disable=used-before-assignment
 except NameError:
     basestring = str  # pylint: disable=redefined-builtin
 

@@ -3,58 +3,59 @@
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
 try:
-    from functools import cached_property
+    from functools import cached_property  # type: ignore
 except ImportError:
     cached_property = None
 
 from aiven.client.argx import arg, CommandLineTool
+from typing import Callable, List, NoReturn
 
 
 class TestCLI(CommandLineTool):
     __test__ = False  # to avoid PytestCollectionWarning
 
     @arg()
-    def xxx(self):
+    def xxx(self) -> None:
         """7"""
 
     @arg()
-    def aaa(self):
+    def aaa(self) -> None:
         """1"""
 
     @arg()
-    def ccc(self):
+    def ccc(self) -> None:
         """4"""
 
 
 class SubCLI(CommandLineTool):
     @arg()
-    def yyy(self):
+    def yyy(self) -> None:
         """8"""
 
     @arg()
-    def bbb(self):
+    def bbb(self) -> None:
         """2"""
 
     @arg()
-    def ddd(self):
+    def ddd(self) -> None:
         """5"""
 
 
 class SubCLI2(CommandLineTool):
     @arg()
-    def yyz(self):
+    def yyz(self) -> None:
         """9"""
 
     @arg()
-    def bbc(self):
+    def bbc(self) -> None:
         """3"""
 
     @arg()
-    def dde(self):
+    def dde(self) -> None:
         """6"""
 
 
-def test_extended_commands_remain_alphabetically_ordered():
+def test_extended_commands_remain_alphabetically_ordered() -> None:
     cli = TestCLI("testcli")
     cli.extend_commands(cli)  # Force the CLI to have its full arg set at execution
 
@@ -70,22 +71,22 @@ def test_extended_commands_remain_alphabetically_ordered():
 
 class DescriptorCLI(CommandLineTool):
     @property
-    def raise1(self):
+    def raise1(self) -> NoReturn:
         raise RuntimeError("evaluated raise1")
 
     if cached_property is not None:
 
         @cached_property
-        def raise2(self):
+        def raise2(self) -> NoReturn:
             raise RuntimeError("evaluated raise2")
 
     @arg("something")
-    def example_command(self):
+    def example_command(self) -> None:
         """Example command."""
 
 
-def test_descriptors_are_not_eagerly_evaluated():
+def test_descriptors_are_not_eagerly_evaluated() -> None:
     cli = DescriptorCLI("DescriptorCLI")
-    calls = []
+    calls: List[Callable] = []
     cli.add_cmds(calls.append)
     assert calls == [cli.example_command]

@@ -3,46 +3,46 @@
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
 
-# pylint: disable=no-member
 from aiven.client import AivenClient
 from aiven.client.cli import AivenCLI, ClientFactory, EOL_ADVANCE_WARNING_TIME
-from collections import namedtuple
+from argparse import Namespace
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
-from typing import Mapping, Optional
+from pytest import LogCaptureFixture
+from typing import Any, Iterator, Mapping, Optional
 from unittest import mock
 
 import pytest
 import uuid
 
 
-def test_cli():
+def test_cli() -> None:
     with pytest.raises(SystemExit) as excinfo:
         AivenCLI().run(args=["--help"])
     assert excinfo.value.code == 0
 
 
-def test_cloud_list():
+def test_cloud_list() -> None:
     AivenCLI().run(args=["cloud", "list"])
 
 
-def test_service_plans():
+def test_service_plans() -> None:
     AivenCLI().run(args=["service", "plans"])
 
 
-def test_service_types_v():
+def test_service_types_v() -> None:
     AivenCLI().run(args=["service", "types", "-v"])
 
 
-def test_service_user_create():
+def test_service_user_create() -> None:
     AivenCLI().run(args=["service", "user-create", "service", "--username", "username"])
 
 
-def test_service_topic_create():
+def test_service_topic_create() -> None:
     AivenCLI().run(args=["service", "topic-create", "--partitions", "42", "--replication", "42", "service1", "topic1"])
 
 
-def test_service_topic_create_with_tags():
+def test_service_topic_create_with_tags() -> None:
     AivenCLI().run(
         args=[
             "service",
@@ -61,7 +61,7 @@ def test_service_topic_create_with_tags():
     )
 
 
-def test_service_topic_update():
+def test_service_topic_update() -> None:
     AivenCLI().run(
         args=[
             "service",
@@ -82,15 +82,16 @@ def test_service_topic_update():
     )
 
 
-def test_help():
+def test_help() -> None:
     AivenCLI().run(args=["help"])
 
 
-def test_create_user_config():
+def test_create_user_config() -> None:
     cli = AivenCLI()
-    cli.args = namedtuple("args", ["user_config", "user_option_remove"])
-    cli.args.user_config = ["first.second.third=1", "first.second.with.dot=2", "main=3"]
-    cli.args.user_option_remove = ["first.second.thirdaway", "foo"]
+    cli.args = Namespace(
+        user_config=["first.second.third=1", "first.second.with.dot=2", "main=3"],
+        user_option_remove=["first.second.thirdaway", "foo"],
+    )
     schema = {
         "type": "object",
         "properties": {
@@ -141,11 +142,11 @@ def patched_get_auth_token() -> str:
 
 def build_aiven_cli(client: AivenClient) -> AivenCLI:
     cli = AivenCLI(client_factory=mock.Mock(spec_set=ClientFactory, return_value=client))
-    cli._get_auth_token = patched_get_auth_token  # pylint: disable=protected-access
+    cli._get_auth_token = patched_get_auth_token  # type: ignore # pylint: disable=protected-access
     return cli
 
 
-def test_service_task_create_migration_check():
+def test_service_task_create_migration_check() -> None:
     aiven_client = mock.Mock(spec_set=AivenClient)
     aiven_client.create_service_task.return_value = {
         "message": "created",
@@ -186,7 +187,7 @@ def test_service_task_create_migration_check():
     )
 
 
-def test_service_task_get_migration_check():
+def test_service_task_get_migration_check() -> None:
     aiven_client = mock.Mock(spec_set=AivenClient)
     aiven_client.get_service_task.return_value = {
         "create_time": "2021-08-13T07:10:35Z",
@@ -213,7 +214,7 @@ def test_service_task_get_migration_check():
     )
 
 
-def test_version_eol_check():
+def test_version_eol_check() -> None:
     fake_eol_time = datetime(2021, 9, 10, tzinfo=timezone.utc)
 
     fake_time_safe = fake_eol_time - EOL_ADVANCE_WARNING_TIME - timedelta(days=1)
@@ -232,8 +233,8 @@ def test_version_eol_check():
     ]
 
     cli = AivenCLI(aiven_client)
-    cli.client = aiven_client
-    cli.confirm = mock.Mock()
+    cli.client = aiven_client  # type: ignore
+    cli.confirm = mock.Mock()  # type: ignore
 
     # Test current time < EOL_WARNING time
     with mock.patch("aiven.client.cli.get_current_date", return_value=fake_time_safe):
@@ -246,7 +247,7 @@ def test_version_eol_check():
         cli.confirm.assert_called()  # Confirmation should have been asked
 
 
-def test_create_service_connection_pool():
+def test_create_service_connection_pool() -> None:
     aiven_client = mock.Mock(spec_set=AivenClient)
     aiven_client.update_service_connection_pool.return_value = {"message": "created"}
 
@@ -302,7 +303,7 @@ def test_create_service_connection_pool():
     )
 
 
-def test_update_service_connection_pool():
+def test_update_service_connection_pool() -> None:
     aiven_client = mock.Mock(spec_set=AivenClient)
     aiven_client.update_service_connection_pool.return_value = {"message": "updated"}
 
@@ -377,12 +378,12 @@ def test_update_service_connection_pool():
 
 
 @contextmanager
-def mock_config(return_value):
+def mock_config(return_value: Any) -> Iterator[None]:
     with mock.patch("aiven.client.argx.Config", side_effect=lambda _: return_value):
         yield
 
 
-def test_get_project(caplog):
+def test_get_project(caplog: LogCaptureFixture) -> None:
     # https://github.com/aiven/aiven-client/issues/246
     aiven_client = mock.Mock(spec_set=AivenClient)
     aiven_client.get_services.side_effect = lambda project: []
@@ -398,7 +399,7 @@ def test_get_project(caplog):
     assert not caplog.text
 
 
-def test_user_logout():
+def test_user_logout() -> None:
     aiven_client = mock.Mock(spec_set=AivenClient)
     assert build_aiven_cli(aiven_client).run(["user", "logout"]) is None
     aiven_client.access_token_revoke.assert_called()
@@ -408,7 +409,7 @@ def test_user_logout():
     aiven_client.access_token_revoke.assert_not_called()
 
 
-def test_create_oauth2_client():
+def test_create_oauth2_client() -> None:
     aiven_client = mock.Mock(spec_set=AivenClient)
 
     created_client_id = None
