@@ -1498,7 +1498,7 @@ class AivenClient(AivenClientBase):
 
     def list_static_ip_addresses(self, project: str) -> Mapping:
         path = self._static_ip_address_path(project)
-        return self.verify(self.get, path, result_key="static_ips")
+        return self.verify(self.get, path, result_key="static_ips", params={"limit": 999})
 
     def create_static_ip_address(self, project: str, cloud_name: str) -> Mapping:
         path = self._static_ip_address_path(project)

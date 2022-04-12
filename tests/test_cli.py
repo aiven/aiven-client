@@ -8,11 +8,13 @@ from aiven.client.cli import AivenCLI, ClientFactory, EOL_ADVANCE_WARNING_TIME
 from argparse import Namespace
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
-from pytest import LogCaptureFixture
+from pytest import CaptureFixture, LogCaptureFixture
 from typing import Any, Iterator, Mapping, Optional
 from unittest import mock
 
 import pytest
+import random
+import string
 import uuid
 
 
@@ -468,3 +470,22 @@ def test_create_oauth2_client() -> None:
         "a2313127",
         created_client_id,
     )
+
+
+def test_static_ips_list(capsys: CaptureFixture[str]) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.list_static_ip_addresses.return_value = [
+        {
+            "static_ip_address_id": "".join(random.choices(string.ascii_letters, k=16)).lower(),
+            "state": "created",
+            "cloud_name": "".join(random.choices(string.ascii_letters, k=10)).lower(),
+            "service_name": "null",
+            "ip_address": f"10.0.0.{i}",
+        }
+        for i in range(70)
+    ]
+
+    build_aiven_cli(aiven_client).run(args=["static-ip", "list", "--project", "test"])
+    stdout, _ = capsys.readouterr()
+    assert "10.0.0.0" in stdout
+    assert "10.0.0.69" in stdout
