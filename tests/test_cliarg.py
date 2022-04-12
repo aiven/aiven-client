@@ -65,7 +65,7 @@ def test_user_config_json_success() -> None:
     test_class = T("avn")
     ret = test_class.run(args=valid_json_arg)
     assert ret is None  # Should run() return 0 actually?
-    assert test_class.args.user_config_json == {"foo": "bar"}  # type: ignore
+    assert test_class.args.user_config_json == {"foo": "bar"}
 
 
 def test_user_config_success() -> None:

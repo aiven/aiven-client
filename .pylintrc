@@ -22,7 +22,8 @@ disable=
     ungrouped-imports,
     use-sequence-for-iteration,
     wrong-import-order,
-    wrong-import-position
+    wrong-import-position,
+    no-member
 
 [FORMAT]
 max-line-length=125

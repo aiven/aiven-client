@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from .pretty import TableLayout
 from aiven.client import envdefault, pretty
-from argparse import Action
+from argparse import Action, Namespace
 from os import PathLike
 from typing import (
     Any,
@@ -144,9 +144,10 @@ class Config(dict):
 
 
 class CommandLineTool:  # pylint: disable=old-style-class
+    config: Config
+
     def __init__(self, name: str, parser: Optional[argparse.ArgumentParser] = None):
         self.log = logging.getLogger(name)
-        self.config: Optional[Config] = None
         self._cats: Dict[Tuple[str, ...], argparse._SubParsersAction] = {}
         self._extensions: List[CommandLineTool] = []
         self.parser = parser or argparse.ArgumentParser(prog=name, formatter_class=CustomFormatter)
@@ -157,7 +158,7 @@ class CommandLineTool:  # pylint: disable=old-style-class
         )
         self.parser.add_argument("--version", action="version", version="aiven-client {}".format(__version__))
         self.subparsers = self.parser.add_subparsers(title="command categories", dest="command", help="", metavar="")
-        self.args: Optional[argparse.Namespace] = None
+        self.args: Namespace = Namespace()
 
     def add_cmd(self, func: Callable) -> None:
         """Add a parser for a single command method call"""

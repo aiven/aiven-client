@@ -4,7 +4,7 @@ from __future__ import annotations
 from ._utils import find_component, find_user, format_uri
 from .common import ConnectionInfoError
 from dataclasses import dataclass
-from typing import Any, Mapping, Sequence
+from typing import Any, Mapping, Sequence, Union
 
 
 @dataclass
@@ -23,7 +23,7 @@ class PGConnectionInfo:
         *,
         route: str,
         usage: str,
-        privatelink_connection_id: str,
+        privatelink_connection_id: Union[object, str],
         username: str,
         dbname: str,
         sslmode: str,

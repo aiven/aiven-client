@@ -235,7 +235,7 @@ def test_version_eol_check() -> None:
     ]
 
     cli = AivenCLI(aiven_client)
-    cli.client = aiven_client  # type: ignore
+    cli.client = aiven_client
     cli.confirm = mock.Mock()  # type: ignore
 
     # Test current time < EOL_WARNING time

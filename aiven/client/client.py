@@ -135,7 +135,7 @@ class AivenClientBase:  # pylint: disable=old-style-class
         params: Any = None,
         result_key: Optional[str] = None,
         retry: Optional[int] = None,
-    ) -> Mapping:
+    ) -> Any:
         # Retry GET operations by default
         if retry is None and op == self.get:  # pylint: disable=comparison-with-callable
             attempts = 3
@@ -185,10 +185,10 @@ class AivenClientBase:  # pylint: disable=old-style-class
 class AivenClient(AivenClientBase):
     """Aiven Client with high-level operations"""
 
-    def get_service_versions(self) -> Mapping:
+    def get_service_versions(self) -> Sequence[Mapping[str, str]]:
         return self.verify(self.get, "/service_versions", result_key="service_versions")
 
-    def get_service_indexes(self, project: str, service: str) -> Mapping:
+    def get_service_indexes(self, project: str, service: str) -> Sequence[Dict[str, Any]]:
         return self.verify(
             self.get,
             self.build_path("project", project, "service", service, "index"),
@@ -201,14 +201,14 @@ class AivenClient(AivenClientBase):
             self.build_path("project", project, "service", service, "index", index_name),
         )
 
-    def get_clouds(self, project: Optional[str]) -> Mapping:
+    def get_clouds(self, project: Optional[str]) -> Sequence[Dict[str, Any]]:
         if project is None:
             path = "/clouds"
         else:
             path = self.build_path("project", project, "clouds")
         return self.verify(self.get, path, result_key="clouds")
 
-    def get_service(self, project: str, service: str) -> Mapping:
+    def get_service(self, project: str, service: str) -> Dict[str, Any]:
         return self.verify(
             self.get,
             self.build_path("project", project, "service", service),
@@ -333,11 +333,11 @@ class AivenClient(AivenClientBase):
         body = {"operation": "set-access-control", "access_control": access_control}
         return self.verify(self.put, path, body=body)
 
-    def get_service_integration_endpoints(self, project: str) -> Mapping:
+    def get_service_integration_endpoints(self, project: str) -> Sequence[Dict[str, Any]]:
         path = self.build_path("project", project, "integration_endpoint")
         return self.verify(self.get, path, result_key="service_integration_endpoints")
 
-    def get_service_integration_endpoint_types(self, project: str) -> Mapping:
+    def get_service_integration_endpoint_types(self, project: str) -> Sequence[Dict[str, Any]]:
         path = self.build_path("project", project, "integration_endpoint_types")
         return self.verify(self.get, path, result_key="endpoint_types")
 
@@ -369,15 +369,15 @@ class AivenClient(AivenClientBase):
             self.build_path("project", project, "integration_endpoint", endpoint_id),
         )
 
-    def get_service_backups(self, project: str, service: str) -> Mapping:
+    def get_service_backups(self, project: str, service: str) -> Sequence[Dict[str, Any]]:
         path = self.build_path("project", project, "service", service, "backups")
         return self.verify(self.get, path, result_key="backups")
 
-    def get_service_integrations(self, project: str, service: str) -> Mapping:
+    def get_service_integrations(self, project: str, service: str) -> Sequence[Dict[str, Any]]:
         path = self.build_path("project", project, "service", service, "integration")
         return self.verify(self.get, path, result_key="service_integrations")
 
-    def get_service_integration_types(self, project: str) -> Mapping:
+    def get_service_integration_types(self, project: str) -> Sequence[Dict[str, Any]]:
         path = self.build_path("project", project, "integration_types")
         return self.verify(self.get, path, result_key="integration_types")
 
@@ -480,7 +480,7 @@ class AivenClient(AivenClientBase):
         if ns_writes_to_commitlog is not None:
             ns["options"]["writes_to_commitlog"] = bool(ns_writes_to_commitlog)
 
-    def list_m3_namespaces(self, project: str, service: str) -> Sequence:
+    def list_m3_namespaces(self, project: str, service: str) -> Sequence[Dict[str, Any]]:
         service_res = self.get_service(project=project, service=service)
         return service_res.get("user_config", {}).get("namespaces", [])
 
@@ -573,7 +573,7 @@ class AivenClient(AivenClientBase):
             body={"user_config": {"namespaces": namespaces}},
         )
 
-    def list_service_topics(self, project: str, service: str) -> Mapping:
+    def list_service_topics(self, project: str, service: str) -> Sequence[Dict[str, Any]]:
         return self.verify(
             self.get,
             self.build_path("project", project, "service", service, "topic"),
@@ -591,7 +591,7 @@ class AivenClient(AivenClientBase):
         retention_bytes: int,
         retention_hours: int,
         cleanup_policy: str,
-        tags: Optional[Sequence[str]] = None,
+        tags: Optional[Sequence[Mapping[str, str]]] = None,
     ) -> Mapping:
         body: Dict[str, Any] = {
             "cleanup_policy": cleanup_policy,
@@ -984,7 +984,7 @@ class AivenClient(AivenClientBase):
         )
         return self.verify(self.delete, path)
 
-    def list_mirrormaker_replication_flows(self, project: str, service: str) -> Mapping:
+    def list_mirrormaker_replication_flows(self, project: str, service: str) -> Sequence[Dict[str, Any]]:
         path = self.build_path("project", project, "service", service, "mirrormaker", "replication-flows")
         return self.verify(self.get, path, result_key="replication_flows")
 
@@ -1112,7 +1112,7 @@ class AivenClient(AivenClientBase):
         }
         return self.verify(self.post, path, body=body)
 
-    def list_flink_jobs(self, project: str, service: str) -> Mapping:
+    def list_flink_jobs(self, project: str, service: str) -> Sequence[Dict[str, Any]]:
         path = self.build_path(
             "project",
             project,
@@ -1244,7 +1244,7 @@ class AivenClient(AivenClientBase):
         peer_vpc: str,
         peer_region: Union[object, str] = UNDEFINED,
         peer_resource_group: Union[object, str] = UNDEFINED,
-    ) -> Optional[Mapping]:
+    ) -> Dict:
         vpc = self.get_project_vpc(project=project, project_vpc_id=project_vpc_id)
         for peering_connection in vpc["peering_connections"]:
             # pylint: disable=too-many-boolean-expressions
@@ -1300,7 +1300,7 @@ class AivenClient(AivenClientBase):
         )
         return self.verify(self.get, path)
 
-    def update_project_tags(self, project: str, tag_updates: Mapping[str, str]) -> Mapping:
+    def update_project_tags(self, project: str, tag_updates: Mapping[str, Optional[str]]) -> Mapping:
         path = self.build_path(
             "project",
             project,
@@ -1415,11 +1415,11 @@ class AivenClient(AivenClientBase):
         path = self._privatelink_path(project, service, "aws")
         return self.verify(self.get, path)
 
-    def list_service_privatelink_aws_connections(self, project: str, service: str) -> Mapping:
+    def list_service_privatelink_aws_connections(self, project: str, service: str) -> Sequence[Dict[str, Any]]:
         path = self._privatelink_path(project, service, "aws") + "/connections"
         return self.verify(self.get, path, result_key="connections")
 
-    def create_service_privatelink_azure(self, project: str, service: str, user_subscription_ids: str) -> Mapping:
+    def create_service_privatelink_azure(self, project: str, service: str, user_subscription_ids: Sequence[str]) -> Mapping:
         path = self._privatelink_path(project, service, "azure")
         return self.verify(self.post, path, body={"user_subscription_ids": user_subscription_ids})
 
@@ -1427,7 +1427,7 @@ class AivenClient(AivenClientBase):
         path = self._privatelink_path(project, service, "azure", "refresh")
         return self.verify(self.post, path)
 
-    def update_service_privatelink_azure(self, project: str, service: str, user_subscription_ids: str) -> Mapping:
+    def update_service_privatelink_azure(self, project: str, service: str, user_subscription_ids: Sequence[str]) -> Mapping:
         path = self._privatelink_path(project, service, "azure")
         return self.verify(self.put, path, body={"user_subscription_ids": user_subscription_ids})
 
@@ -1451,18 +1451,18 @@ class AivenClient(AivenClientBase):
         path = self._privatelink_path(project, service, "azure")
         return self.verify(self.get, path)
 
-    def list_service_privatelink_azure_connections(self, project: str, service: str) -> Mapping:
+    def list_service_privatelink_azure_connections(self, project: str, service: str) -> Sequence[Dict[str, Any]]:
         path = self._privatelink_path(project, service, "azure") + "/connections"
         return self.verify(self.get, path, result_key="connections")
 
-    def list_privatelink_cloud_availability(self, project: str) -> Mapping:
+    def list_privatelink_cloud_availability(self, project: str) -> Sequence[Dict[str, Any]]:
         path = self.build_path("project", project, "privatelink-availability")
         return self.verify(self.get, path, result_key="privatelink_availability")
 
     def _static_ip_address_path(self, project: str, *parts: str) -> str:
         return self.build_path("project", project, "static-ips", *parts)
 
-    def list_static_ip_addresses(self, project: str) -> Mapping:
+    def list_static_ip_addresses(self, project: str) -> Sequence[Dict[str, Any]]:
         path = self._static_ip_address_path(project)
         return self.verify(self.get, path, result_key="static_ips", params={"limit": 999})
 
@@ -1485,11 +1485,11 @@ class AivenClient(AivenClientBase):
     def delete_service(self, project: str, service: str) -> Mapping:
         return self.verify(self.delete, self.build_path("project", project, "service", service))
 
-    def get_pg_service_current_queries(self, project: str, service: str) -> Mapping:
+    def get_pg_service_current_queries(self, project: str, service: str) -> Sequence[Dict[str, Any]]:
         warnings.warn("Use the get_service_current_queries method", DeprecationWarning)
         return self.get_service_current_queries(project, service)
 
-    def get_pg_service_query_stats(self, project: str, service: str) -> Mapping:
+    def get_pg_service_query_stats(self, project: str, service: str) -> Sequence[Dict[str, Any]]:
         warnings.warn("Use the get_service_query_stats method", DeprecationWarning)
         return self.get_service_query_stats(project, service, service_type="pg")
 
@@ -1497,7 +1497,7 @@ class AivenClient(AivenClientBase):
         warnings.warn("Use the reset_service_query_stats method", DeprecationWarning)
         return self.reset_service_query_stats(project, service)
 
-    def get_service_current_queries(self, project: str, service: str) -> Mapping:
+    def get_service_current_queries(self, project: str, service: str) -> Sequence[Dict[str, Any]]:
         path = self.build_path("project", project, "service", service, "query", "activity")
         return self.verify(
             self.post,
@@ -1506,7 +1506,9 @@ class AivenClient(AivenClientBase):
             body={"limit": 100, "order_by": "query_duration:desc"},
         )
 
-    def get_service_query_stats(self, project: str, service: str, service_type: Optional[str] = None) -> Mapping:
+    def get_service_query_stats(
+        self, project: str, service: str, service_type: Optional[str] = None
+    ) -> Sequence[Dict[str, Any]]:
         if service_type is None:
             service_type = self.get_service(project, service)["service_type"]
         path = self.build_path("project", project, "service", service, service_type, "query", "stats")
@@ -1556,7 +1558,7 @@ class AivenClient(AivenClientBase):
         body = {"tags": tags}
         return self.verify(self.put, path, body=body)
 
-    def get_services(self, project: str) -> Mapping:
+    def get_services(self, project: str) -> Sequence[Dict[str, Any]]:
         return self.verify(
             self.get,
             self.build_path("project", project, "service"),
@@ -1595,7 +1597,7 @@ class AivenClient(AivenClientBase):
 
     def create_account_authentication_method(
         self, account_id: str, method_name: str, method_type: str, options: Optional[Mapping[str, str]] = None
-    ) -> Mapping:
+    ) -> Dict:
         body = dict(options) if options else {}
         body["authentication_method_name"] = method_name
         body["authentication_method_type"] = method_type
@@ -1613,10 +1615,10 @@ class AivenClient(AivenClientBase):
         account_id: str,
         authentication_id: str,
         method_name: Optional[str] = None,
-        method_enable: Optional[str] = None,
+        method_enable: Optional[bool] = None,
         options: Optional[Mapping[str, str]] = None,
     ) -> Mapping:
-        body = dict(options) if options else {}
+        body: Dict[str, Any] = dict(options) if options else {}
         if method_name is not None:
             body["authentication_method_name"] = method_name
         if method_enable is not None:
@@ -1625,7 +1627,7 @@ class AivenClient(AivenClientBase):
         path = self.build_path("account", account_id, "authentication", authentication_id)
         return self.verify(self.put, path, body=body, result_key="authentication_method")
 
-    def get_account_authentication_methods(self, account_id: str) -> Mapping:
+    def get_account_authentication_methods(self, account_id: str) -> Sequence[Dict[str, Any]]:
         path = self.build_path("account", account_id, "authentication")
         return self.verify(self.get, path, result_key="authentication_methods")
 
@@ -1682,7 +1684,7 @@ class AivenClient(AivenClientBase):
     def get_project(self, project: str) -> Mapping:
         return self.verify(self.get, self.build_path("project", project), result_key="project")
 
-    def get_projects(self) -> Mapping:
+    def get_projects(self) -> Sequence[Dict[str, Any]]:
         return self.verify(self.get, "/project", result_key="projects")
 
     def update_project(
@@ -1734,7 +1736,7 @@ class AivenClient(AivenClientBase):
     def get_project_ca(self, project: str) -> Mapping:
         return self.verify(self.get, self.build_path("project", project, "kms", "ca"))
 
-    def get_service_ca(self, project: str, service: str, ca: str) -> Mapping:
+    def get_service_ca(self, project: str, service: str, ca: str) -> Dict:
         path = self.build_path("project", project, "service", service, "kms", "ca", ca)
         return self.verify(self.get, path)
 
@@ -1753,10 +1755,10 @@ class AivenClient(AivenClientBase):
     def remove_project_user(self, project: str, user_email: str) -> Mapping:
         return self.verify(self.delete, self.build_path("project", project, "user", user_email))
 
-    def list_project_users(self, project: str) -> Mapping:
+    def list_project_users(self, project: str) -> Sequence[Dict[str, Any]]:
         return self.verify(self.get, self.build_path("project", project, "users"), result_key="users")
 
-    def list_invited_project_users(self, project: str) -> Mapping:
+    def list_invited_project_users(self, project: str) -> Sequence[Dict[str, Any]]:
         return self.verify(self.get, self.build_path("project", project, "users"), result_key="invitations")
 
     def create_user(self, email: str, password: Optional[str], real_name: str, *, tenant: Optional[str] = None) -> Mapping:
@@ -1790,14 +1792,14 @@ class AivenClient(AivenClientBase):
         request = {"description": description}
         return self.verify(self.put, self.build_path("access_token", token_prefix), body=request)
 
-    def access_tokens_list(self) -> Mapping:
+    def access_tokens_list(self) -> Sequence[Dict[str, Any]]:
         return self.verify(self.get, "/access_token", result_key="tokens")
 
     def expire_user_tokens(self) -> Mapping:
         return self.verify(self.post, "/me/expire_tokens")
 
     def get_service_logs(
-        self, project: str, service: str, sort_order: Optional[str] = None, offset: Optional[int] = None, limit: int = 100
+        self, project: str, service: str, sort_order: Optional[str] = None, offset: Optional[str] = None, limit: int = 100
     ) -> Mapping:
         body: Dict[str, Any] = {"limit": limit}
         if offset is not None:
@@ -1810,7 +1812,7 @@ class AivenClient(AivenClientBase):
             body=body,
         )
 
-    def get_events(self, project: str, limit: int = 100) -> Mapping:
+    def get_events(self, project: str, limit: int = 100) -> Sequence[Dict[str, Any]]:
         params = {"limit": limit}
         return self.verify(
             self.get,
@@ -1819,7 +1821,7 @@ class AivenClient(AivenClientBase):
             result_key="events",
         )
 
-    def get_cards(self) -> Mapping:
+    def get_cards(self) -> Sequence[Dict[str, Any]]:
         return self.verify(self.get, "/card", result_key="cards")
 
     def add_card(self, stripe_token: str) -> Mapping:
@@ -1850,7 +1852,7 @@ class AivenClient(AivenClientBase):
     def get_stripe_key(self) -> Mapping:
         return self.verify(self.get, self.build_path("config", "stripe_key"))
 
-    def list_project_credits(self, project: str) -> Mapping:
+    def list_project_credits(self, project: str) -> Sequence[Dict[str, Any]]:
         return self.verify(
             self.get,
             self.build_path("project", project, "credits"),
@@ -1910,13 +1912,13 @@ class AivenClient(AivenClientBase):
 
         return self.verify(self.post, "/billing-group", body=body, result_key="billing_group")
 
-    def get_billing_groups(self) -> Mapping:
+    def get_billing_groups(self) -> Sequence[Dict[str, Any]]:
         return self.verify(self.get, "/billing-group", result_key="billing_groups")
 
     def get_billing_group(self, billing_group: str) -> Mapping:
         return self.verify(self.get, self.build_path("billing-group", billing_group), result_key="billing_group")
 
-    def get_billing_group_projects(self, billing_group: str) -> Mapping:
+    def get_billing_group_projects(self, billing_group: str) -> Sequence[Dict[str, Any]]:
         return self.verify(self.get, self.build_path("billing-group", billing_group, "projects"), result_key="projects")
 
     def update_billing_group(
@@ -1974,12 +1976,12 @@ class AivenClient(AivenClientBase):
         body = {"projects_names": project_names}
         return self.verify(self.post, self.build_path("billing-group", billing_group, "projects-assign"), body=body)
 
-    def get_billing_group_events(self, billing_group: str, *, limit: int = 100) -> Mapping:
+    def get_billing_group_events(self, billing_group: str, *, limit: int = 100) -> Sequence[Dict[str, Any]]:
         return self.verify(
             self.get, self.build_path("billing-group", billing_group, "events"), params={"limit": limit}, result_key="events"
         )
 
-    def list_billing_group_credits(self, billing_group: str) -> Mapping:
+    def list_billing_group_credits(self, billing_group: str) -> Sequence[Dict[str, Any]]:
         return self.verify(
             self.get,
             self.build_path("billing-group", billing_group, "credits"),
@@ -1994,7 +1996,7 @@ class AivenClient(AivenClientBase):
             result_key="credit",
         )
 
-    def list_billing_group_invoices(self, billing_group: str, *, sort: Optional[str] = None) -> Mapping:
+    def list_billing_group_invoices(self, billing_group: str, *, sort: Optional[str] = None) -> Sequence[Dict[str, Any]]:
         params = {"sort": sort} if sort else {}
         invoices = self.verify(
             self.get, self.build_path("billing-group", billing_group, "invoice"), params=params, result_key="invoices"
@@ -2010,7 +2012,7 @@ class AivenClient(AivenClientBase):
                 )
         return invoices
 
-    def get_billing_group_invoice_lines(self, billing_group: str, invoice_number: str) -> Mapping:
+    def get_billing_group_invoice_lines(self, billing_group: str, invoice_number: str) -> Sequence[Dict[str, Any]]:
         return self.verify(
             self.get, self.build_path("billing-group", billing_group, "invoice", invoice_number, "lines"), result_key="lines"
         )
@@ -2043,7 +2045,7 @@ class AivenClient(AivenClientBase):
             self.build_path("project", project, "service", service, "migration"),
         )
 
-    def list_teams(self, account_id: str) -> Mapping:
+    def list_teams(self, account_id: str) -> Sequence[Dict[str, Any]]:
         return self.verify(
             self.get,
             self.build_path("account", account_id, "teams"),
@@ -2060,7 +2062,7 @@ class AivenClient(AivenClientBase):
     def delete_team(self, account_id: str, team_id: str) -> Mapping:
         return self.verify(self.delete, self.build_path("account", account_id, "team", team_id))
 
-    def list_team_members(self, account_id: str, team_id: str) -> Mapping:
+    def list_team_members(self, account_id: str, team_id: str) -> Sequence[Dict[str, Any]]:
         return self.verify(
             self.get,
             self.build_path("account", account_id, "team", team_id, "members"),
@@ -2074,7 +2076,7 @@ class AivenClient(AivenClientBase):
             body={"email": email},
         )
 
-    def list_team_invites(self, account_id: str, team_id: str) -> Mapping:
+    def list_team_invites(self, account_id: str, team_id: str) -> Sequence[Dict[str, Any]]:
         return self.verify(
             self.get,
             self.build_path("account", account_id, "team", team_id, "invites"),
@@ -2087,7 +2089,7 @@ class AivenClient(AivenClientBase):
             self.build_path("account", account_id, "team", team_id, "member", user_id),
         )
 
-    def list_team_projects(self, account_id: str, team_id: str) -> Mapping:
+    def list_team_projects(self, account_id: str, team_id: str) -> Sequence[Dict[str, Any]]:
         return self.verify(
             self.get,
             self.build_path("account", account_id, "team", team_id, "projects"),
@@ -2107,7 +2109,7 @@ class AivenClient(AivenClientBase):
             self.build_path("account", account_id, "team", team_id, "project", project),
         )
 
-    def create_oauth2_client(self, account_id: str, name: str, description: Optional[str] = None) -> Mapping:
+    def create_oauth2_client(self, account_id: str, name: str, description: Optional[str] = None) -> Dict:
         return self.verify(
             self.post,
             self.build_path("account", account_id, "oauth_client"),
