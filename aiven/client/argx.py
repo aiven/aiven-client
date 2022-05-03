@@ -111,6 +111,17 @@ def arg(*args: Any, **kwargs: Any) -> Callable:
     return wrap
 
 
+def name_to_cmd_parts(name: str) -> List[str]:
+    if "__" in name:
+        # allow multi-level commands, separating each level with double underscores
+        cmd_parts = name.split("__")
+    else:
+        # previously we only allowed two levels, separated by a single underscore
+        cmd_parts = name.split("_", 1)
+
+    return [part.replace("_", "-") for part in cmd_parts]
+
+
 class Config(dict):
     def __init__(self, file_path: PathLike):
         dict.__init__(self)
@@ -163,14 +174,7 @@ class CommandLineTool:  # pylint: disable=old-style-class
         """Add a parser for a single command method call"""
         assert func.__doc__, f"Missing docstring for {func.__qualname__}"
 
-        # allow multi-level commands, separating each level with double underscores
-        if "__" in func.__name__:
-            cmd_parts = func.__name__.split("__")
-        else:
-            # previously we only allowed two levels, separated by a single underscore
-            cmd_parts = func.__name__.split("_", 1)
-
-        cmd_parts = [part.replace("_", "-") for part in cmd_parts]
+        cmd_parts = name_to_cmd_parts(func.__name__)
         cats, cmd = cmd_parts, cmd_parts.pop()
 
         subparsers = self.subparsers
