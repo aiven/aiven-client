@@ -4,6 +4,7 @@
 # See the file `LICENSE` for details.
 from .common import UNDEFINED
 from .session import get_requests_session
+from http import HTTPStatus
 from requests import Response
 from typing import Any, Callable, Collection, Dict, Mapping, Optional, Sequence, Set, Tuple, Type, Union
 from urllib.parse import quote
@@ -164,6 +165,10 @@ class AivenClientBase:  # pylint: disable=old-style-class
                     attempts,
                 )
                 time.sleep(0.2)
+
+        # Check API is actually returning data or not
+        if response.status_code == HTTPStatus.NO_CONTENT:
+            return None
 
         result = response.json()
         if result.get("error"):
@@ -2114,10 +2119,30 @@ class AivenClient(AivenClientBase):
             body={"name": name, "description": description},
         )
 
+    def list_oauth2_clients(self, account_id: str) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path("account", account_id, "oauth_client"),
+            result_key="oauth2_clients",
+        )
+
+    def get_oauth2_client(self, account_id: str, client_id: str) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path("account", account_id, "oauth_client", client_id),
+        )
+
     def delete_oauth2_client(self, account_id: str, client_id: str) -> Mapping:
         return self.verify(
             self.delete,
             self.build_path("account", account_id, "oauth_client", client_id),
+        )
+
+    def list_oauth2_client_redirects(self, account_id: str, client_id: str) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path("account", account_id, "oauth_client", client_id, "redirect"),
+            result_key="redirects",
         )
 
     def create_oauth2_client_redirect(self, account_id: str, client_id: str, uri: str) -> Mapping:
@@ -2127,5 +2152,24 @@ class AivenClient(AivenClientBase):
             body={"redirect_uri": uri},
         )
 
+    def remove_oauth2_client_redirect(self, account_id: str, client_id: str, redirect_id: str) -> Mapping:
+        return self.verify(
+            self.delete,
+            self.build_path("account", account_id, "oauth_client", client_id, "redirect", redirect_id),
+        )
+
+    def list_oauth2_client_secrets(self, account_id: str, client_id: str) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path("account", account_id, "oauth_client", client_id, "secret"),
+            result_key="secrets",
+        )
+
     def create_oauth2_client_secret(self, account_id: str, client_id: str) -> Mapping:
         return self.verify(self.post, self.build_path("account", account_id, "oauth_client", client_id, "secret"), body={})
+
+    def remove_oauth2_client_secret(self, account_id: str, client_id: str, secret_id: str) -> Mapping:
+        return self.verify(
+            self.delete,
+            self.build_path("account", account_id, "oauth_client", client_id, "secret", secret_id),
+        )
