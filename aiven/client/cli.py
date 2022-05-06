@@ -5104,6 +5104,97 @@ server_encryption_options:
         table_layout = ["client_id", "name", "redirect_uri", "secret"]
         self.print_response(oauth2_client, json=self.args.json, single_item=True, table_layout=table_layout)
 
+    @arg.json
+    @arg.account_id
+    def account__oauth2_client__list(self):
+        """List OAuth2 client configuration."""
+
+        oauth2_clients = self.client.list_oauth2_clients(self.args.account_id)
+        table_layout = ["client_id", "name", "description"]
+        self.print_response(oauth2_clients, json=self.args.json, table_layout=table_layout)
+
+    @arg.json
+    @arg.account_id
+    @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
+    def account__oauth2_client__get(self):
+        """Get an OAuth2 client configuration."""
+
+        oauth2_client = self.client.get_oauth2_client(self.args.account_id, self.args.oauth2_client_id)
+        table_layout = ["client_id", "name", "description"]
+        self.print_response(oauth2_client, json=self.args.json, single_item=True, table_layout=table_layout)
+
+    @arg.json
+    @arg.account_id
+    @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
+    def account__oauth2_client__delete(self):
+        """Remove an OAuth2 client."""
+
+        self.client.delete_oauth2_client(self.args.account_id, self.args.oauth2_client_id)
+
+    @arg.json
+    @arg.account_id
+    @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
+    def account__oauth2_client__redirect_list(self):
+        """List OAuth2 client redirects."""
+
+        oauth2_client_redirects = self.client.list_oauth2_client_redirects(self.args.account_id, self.args.oauth2_client_id)
+        table_layout = ["redirect_id", "redirect_uri"]
+        self.print_response(oauth2_client_redirects, json=self.args.json, table_layout=table_layout)
+
+    @arg.json
+    @arg.account_id
+    @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
+    @arg("--redirect-uri", help="Redirect URI")
+    def account__oauth2_client__redirect_create(self):
+        """Add an allowed redirect URI to an OAuth2 client."""
+
+        redirect = self.client.create_oauth2_client_redirect(
+            self.args.account_id, self.args.oauth2_client_id, self.args.redirect_uri
+        )
+
+        table_layout = ["redirect_id", "redirect_uri"]
+        self.print_response(redirect, json=self.args.json, table_layout=table_layout)
+
+    @arg.json
+    @arg.account_id
+    @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
+    @arg("--redirect-uri-id", help="Redirect URI id", required=True)
+    def account__oauth2_client__redirect_delete(self):
+        """Add an allowed redirect URI to an OAuth2 client."""
+
+        self.client.delete_oauth2_client_redirect(
+            self.args.account_id, self.args.oauth2_client_id, self.args.redirect_uri_id
+        )
+
+    @arg.json
+    @arg.account_id
+    @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
+    def account__oauth2_client__secret_list(self):
+        """List OAuth2 client secrets."""
+
+        oauth2_client_secrets = self.client.list_oauth2_client_secrets(self.args.account_id, self.args.oauth2_client_id)
+        table_layout = ["secret_id", "secret_suffix"]
+        self.print_response(oauth2_client_secrets, json=self.args.json, table_layout=table_layout)
+
+    @arg.json
+    @arg.account_id
+    @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
+    def account__oauth2_client__secret_create(self):
+        """List OAuth2 client secrets."""
+
+        secret = self.client.create_oauth2_client_secret(self.args.account_id, self.args.oauth2_client_id)
+        table_layout = ["secret_id", "secret_suffix", "secret"]
+        self.print_response(secret, json=self.args.json, single_item=True, table_layout=table_layout)
+
+    @arg.json
+    @arg.account_id
+    @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
+    @arg("--secret-id", help="Client secret id")
+    def account__oauth2_client__secret_delete(self):
+        """List OAuth2 client secrets."""
+
+        self.client.delete_oauth2_client_secret(self.args.account_id, self.args.oauth2_client_id, self.args.secret_id)
+
 
 if __name__ == "__main__":
     AivenCLI().main()

@@ -392,6 +392,53 @@ Remove user from the team::
 
   $ avn account team user-delete --team-id <team_id> --user-id <user_id> <account_id>
 
+
+.. _oauth2-clients:
+
+Configuring OAuth2 Clients
+--------------------------
+
+List configured OAuth2 clients::
+
+  $ avn account oauth2-client list <account_id>
+
+Get a configured OAuth2 client's configuration::
+
+  $ avn account oauth2-client list <account_id> --oauth2-client-id <client_id>
+
+Create a new OAuth2 client information::
+
+  $ avn account oauth2-client create <account_id> --name <app_name> -d <app_description> --redirect-uri <redirect_uri>
+
+Delete an OAuth2 client::
+
+  $ avn account oauth2-client delete <account_id> --oauth2-client-id <client_id>
+
+List an OAuth2 client's redirect URIs::
+
+  $ avn account oauth2-client redirect-list <account_id> --oauth2-client-id <client_id>
+
+Create a new OAuth2 client redirect URI::
+
+  $ avn account oauth2-client redirect-create <account_id> --oauth2-client-id <client_id> --redirect-uri <redirect_uri>
+
+Delete an OAuth2 client redirect URI::
+
+  $ avn account oauth2-client redirect-delete <account_id> --oauth2-client-id <client_id> --redirect-uri-id <redirect_uri_id>
+
+List an OAuth2 client's secrets::
+
+  $ avn account oauth2-client secret-list <account_id> --oauth2-client-id <client_id>
+
+Create a new OAUth2 client secret::
+
+  $ avn account oauth2-client secret-create <account_id> --oauth2-client-id <client_id>
+
+Delete an OAuth2 client's secret::
+
+  $ avn account oauth2-client secret-delete <account_id> --oauth2-client-id <client_id> --secret-id <secret_id>
+
+
 Extra Features
 ==============
 
