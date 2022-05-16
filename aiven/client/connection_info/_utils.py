@@ -1,7 +1,7 @@
 # Copyright (c) 2021 Aiven, Helsinki, Finland. https://aiven.io/
 from .common import ConnectionInfoError
 from aiven.client.common import UNDEFINED
-from typing import Any, Mapping, Optional, Sequence, TypeVar
+from typing import Any, Mapping, Optional, Sequence, TypeVar, Union
 
 import ipaddress
 import urllib.parse
@@ -9,7 +9,7 @@ import urllib.parse
 T = TypeVar("T")
 
 
-def find_component(items: Sequence[Mapping[str, T]], **filters: str) -> Mapping[str, T]:
+def find_component(items: Sequence[Mapping[str, T]], **filters: Union[object, str]) -> Mapping[str, T]:
     for item in items:
         if all(key in item and item[key] == value for key, value in filters.items() if value is not UNDEFINED):
             return item

@@ -4,7 +4,7 @@ from __future__ import annotations
 from ._utils import find_component, find_user, format_uri
 from .common import ConnectionInfoError
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any, Mapping, Union
 
 
 @dataclass
@@ -17,7 +17,14 @@ class RedisConnectionInfo:
 
     @classmethod
     def from_service(
-        cls, service: Mapping[str, Any], *, route: str, usage: str, privatelink_connection_id: str, username: str, db: str
+        cls,
+        service: Mapping[str, Any],
+        *,
+        route: str,
+        usage: str,
+        privatelink_connection_id: Union[object, str],
+        username: str,
+        db: str,
     ) -> RedisConnectionInfo:
         if service["service_type"] != "redis":
             raise ConnectionInfoError(
