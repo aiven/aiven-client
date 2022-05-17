@@ -8,7 +8,7 @@ import os
 import subprocess
 
 
-def get_project_version(version_file):
+def get_project_version(version_file: str) -> str:
     version_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), version_file)
     try:
         module = importlib.machinery.SourceFileLoader("version", version_file).load_module()
