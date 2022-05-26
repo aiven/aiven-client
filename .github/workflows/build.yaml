@@ -1,5 +1,7 @@
 name: Build Aiven Client
 
+permissions: read-all
+
 on:
   push:
     branches:
@@ -21,6 +23,8 @@ jobs:
 
       - id: checkout-code
         uses: actions/checkout@v2
+        with:
+          persist-credentials: false
 
       - id: prepare-python
         uses: actions/setup-python@v2
@@ -55,6 +59,8 @@ jobs:
     steps:
       - id: checkout-code
         uses: actions/checkout@v2
+        with:
+          persist-credentials: false
 
       - id: prepare-python
         uses: actions/setup-python@v2
@@ -67,4 +73,3 @@ jobs:
           pip install pytest
           pip install -e .
           pytest -vv tests/
-
