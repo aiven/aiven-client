@@ -3778,8 +3778,17 @@ ssl.truststore.type=JKS
     )
     @arg(
         "--no-project-vpc",
-        action="store_true",
-        help="Do not put the service into a project VPC even if the project has one in the selected cloud",
+        action="store_const",
+        const=True,
+        default=True,
+        help="Do not put the service into a project VPC even if the project has one in the selected cloud. This is the default action",
+    )
+    @arg(
+        "--use-project-vpc",
+        action="store_const",
+        const=False,
+        dest="no_project_vpc",
+        help="Put the service into a project VPC if the project has one in the selected cloud",
     )
     @arg(
         "--static-ip",
@@ -4033,8 +4042,17 @@ ssl.truststore.type=JKS
     )
     @arg(
         "--no-project-vpc",
-        action="store_true",
-        help="Do not put the service into a project VPC even if the project has one in the selected cloud",
+        action="store_const",
+        const=True,
+        default=True,
+        help="Do not put the service into a project VPC even if the project has one in the selected cloud. This is the default action",
+    )
+    @arg(
+        "--use-project-vpc",
+        action="store_const",
+        const=False,
+        dest="no_project_vpc",
+        help="Put the service into a project VPC if the project has one in the selected cloud",
     )
     @arg.force
     def service__update(self) -> None:
