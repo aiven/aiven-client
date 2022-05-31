@@ -4,7 +4,9 @@
 # See the file `LICENSE` for details.
 
 from aiven.client import AivenClient
+from aiven.client.argx import UserError
 from aiven.client.cli import AivenCLI, ClientFactory, EOL_ADVANCE_WARNING_TIME
+from aiven.client.common import UNDEFINED
 from argparse import Namespace
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
@@ -647,3 +649,51 @@ def test_static_ips_list(capsys: CaptureFixture[str]) -> None:
     stdout, _ = capsys.readouterr()
     assert "10.0.0.0" in stdout
     assert "10.0.0.69" in stdout
+
+
+def test_vpc_args_no_project_vpc() -> None:
+    cli = AivenCLI()
+    cli.parse_args(['service', 'create', '--service-type=pg',
+                    '--no-project-vpc', 'service-name'])
+    assert cli.args.project_vpc_id is None
+    assert cli.args.no_project_vpc == True
+
+    assert cli._get_service_project_vpc_id() is None
+
+
+def test_vpc_args_use_project_vpc() -> None:
+    cli = AivenCLI()
+    cli.parse_args(['service', 'create', '--service-type=pg',
+                    '--use-project-vpc', 'service-name'])
+    assert cli.args.project_vpc_id is None
+    assert cli.args.no_project_vpc == False
+
+    assert cli._get_service_project_vpc_id() is UNDEFINED
+
+
+def test_vpc_args_project_vpc_id() -> None:
+    cli = AivenCLI()
+    cli.parse_args(['service', 'create', '--service-type=pg',
+                    '--project-vpc-id=27', 'service-name'])
+    assert cli.args.project_vpc_id == '27'
+    assert cli.args.no_project_vpc == UNDEFINED
+
+    assert cli._get_service_project_vpc_id() == '27'
+
+
+def test_vpc_args_bad_combination_use_project_vpc() -> None:
+    cli = AivenCLI()
+    cli.parse_args(['service', 'create', '--service-type=pg',
+                    '--project-vpc-id=27', '--use-project-vpc', 'service-name'])
+    with pytest.raises(UserError) as excinfo:
+        cli._get_service_project_vpc_id()
+    assert str(excinfo.value).startswith('Only one of --project-vpc-id')
+
+
+def test_vpc_args_bad_combination_no_project_vpc() -> None:
+    cli = AivenCLI()
+    cli.parse_args(['service', 'create', '--service-type=pg',
+                    '--project-vpc-id=27', '--no-project-vpc', 'service-name'])
+    with pytest.raises(UserError) as excinfo:
+        cli._get_service_project_vpc_id()
+    assert str(excinfo.value).startswith('Only one of --project-vpc-id')

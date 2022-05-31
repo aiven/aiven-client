@@ -3709,10 +3709,18 @@ ssl.truststore.type=JKS
 
     def _get_service_project_vpc_id(self) -> Optional[Union[object, str]]:
         """Utility method for service_create and service_update"""
+        # no_project_vpc will be:
+        #
+        # * False if the user explicitly requested --no-project-vpc
+        # * True if the user explicitly requested --use-project-vpc
+        # * UNDEFINED otherwise, which we take to mean "no project vpc"
         if self.args.project_vpc_id is None:
             project_vpc_id = None if self.args.no_project_vpc else UNDEFINED
-        elif self.args.no_project_vpc:
-            raise argx.UserError("Only one of --project-vpc-id and --no-project-vpc can be specified")
+        elif self.args.no_project_vpc != UNDEFINED:
+            raise argx.UserError(
+                "Only one of --project-vpc-id and --no-project-vpc/"
+                "--use-project-vpc can be specified"
+            )
         else:
             project_vpc_id = self.args.project_vpc_id
         return project_vpc_id
@@ -3780,13 +3788,14 @@ ssl.truststore.type=JKS
         "--no-project-vpc",
         action="store_const",
         const=True,
-        default=True,
+        default=UNDEFINED,
         help="Do not put the service into a project VPC even if the project has one in the selected cloud. This is the default action",
     )
     @arg(
         "--use-project-vpc",
         action="store_const",
         const=False,
+        default=UNDEFINED,
         dest="no_project_vpc",
         help="Put the service into a project VPC if the project has one in the selected cloud",
     )
@@ -4044,13 +4053,14 @@ ssl.truststore.type=JKS
         "--no-project-vpc",
         action="store_const",
         const=True,
-        default=True,
+        default=UNDEFINED,
         help="Do not put the service into a project VPC even if the project has one in the selected cloud. This is the default action",
     )
     @arg(
         "--use-project-vpc",
         action="store_const",
         const=False,
+        default=UNDEFINED,
         dest="no_project_vpc",
         help="Put the service into a project VPC if the project has one in the selected cloud",
     )
