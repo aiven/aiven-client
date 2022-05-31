@@ -657,7 +657,7 @@ def test_vpc_args_no_project_vpc() -> None:
     assert cli.args.project_vpc_id is None
     assert cli.args.no_project_vpc is True
 
-    assert cli._get_service_project_vpc_id() is None
+    assert cli._get_service_project_vpc_id() is None  # pylint: disable=protected-access
 
 
 def test_vpc_args_use_project_vpc() -> None:
@@ -666,7 +666,7 @@ def test_vpc_args_use_project_vpc() -> None:
     assert cli.args.project_vpc_id is None
     assert cli.args.no_project_vpc is False
 
-    assert cli._get_service_project_vpc_id() is UNDEFINED
+    assert cli._get_service_project_vpc_id() is UNDEFINED  # pylint: disable=protected-access
 
 
 def test_vpc_args_project_vpc_id() -> None:
@@ -675,14 +675,14 @@ def test_vpc_args_project_vpc_id() -> None:
     assert cli.args.project_vpc_id == "27"
     assert cli.args.no_project_vpc == UNDEFINED
 
-    assert cli._get_service_project_vpc_id() == "27"
+    assert cli._get_service_project_vpc_id() == "27"  # pylint: disable=protected-access
 
 
 def test_vpc_args_bad_combination_use_project_vpc() -> None:
     cli = AivenCLI()
     cli.parse_args(["service", "create", "--service-type=pg", "--project-vpc-id=27", "--use-project-vpc", "service-name"])
     with pytest.raises(UserError) as excinfo:
-        cli._get_service_project_vpc_id()
+        cli._get_service_project_vpc_id()  # pylint: disable=protected-access
     assert str(excinfo.value).startswith("Only one of --project-vpc-id")
 
 
@@ -690,5 +690,5 @@ def test_vpc_args_bad_combination_no_project_vpc() -> None:
     cli = AivenCLI()
     cli.parse_args(["service", "create", "--service-type=pg", "--project-vpc-id=27", "--no-project-vpc", "service-name"])
     with pytest.raises(UserError) as excinfo:
-        cli._get_service_project_vpc_id()
+        cli._get_service_project_vpc_id()  # pylint: disable=protected-access
     assert str(excinfo.value).startswith("Only one of --project-vpc-id")
