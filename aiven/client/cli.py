@@ -3717,10 +3717,7 @@ ssl.truststore.type=JKS
         if self.args.project_vpc_id is None:
             project_vpc_id = None if self.args.no_project_vpc else UNDEFINED
         elif self.args.no_project_vpc != UNDEFINED:
-            raise argx.UserError(
-                "Only one of --project-vpc-id and --no-project-vpc/"
-                "--use-project-vpc can be specified"
-            )
+            raise argx.UserError("Only one of --project-vpc-id and --no-project-vpc/" "--use-project-vpc can be specified")
         else:
             project_vpc_id = self.args.project_vpc_id
         return project_vpc_id

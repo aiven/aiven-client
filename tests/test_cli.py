@@ -653,8 +653,7 @@ def test_static_ips_list(capsys: CaptureFixture[str]) -> None:
 
 def test_vpc_args_no_project_vpc() -> None:
     cli = AivenCLI()
-    cli.parse_args(['service', 'create', '--service-type=pg',
-                    '--no-project-vpc', 'service-name'])
+    cli.parse_args(["service", "create", "--service-type=pg", "--no-project-vpc", "service-name"])
     assert cli.args.project_vpc_id is None
     assert cli.args.no_project_vpc == True
 
@@ -663,8 +662,7 @@ def test_vpc_args_no_project_vpc() -> None:
 
 def test_vpc_args_use_project_vpc() -> None:
     cli = AivenCLI()
-    cli.parse_args(['service', 'create', '--service-type=pg',
-                    '--use-project-vpc', 'service-name'])
+    cli.parse_args(["service", "create", "--service-type=pg", "--use-project-vpc", "service-name"])
     assert cli.args.project_vpc_id is None
     assert cli.args.no_project_vpc == False
 
@@ -673,27 +671,24 @@ def test_vpc_args_use_project_vpc() -> None:
 
 def test_vpc_args_project_vpc_id() -> None:
     cli = AivenCLI()
-    cli.parse_args(['service', 'create', '--service-type=pg',
-                    '--project-vpc-id=27', 'service-name'])
-    assert cli.args.project_vpc_id == '27'
+    cli.parse_args(["service", "create", "--service-type=pg", "--project-vpc-id=27", "service-name"])
+    assert cli.args.project_vpc_id == "27"
     assert cli.args.no_project_vpc == UNDEFINED
 
-    assert cli._get_service_project_vpc_id() == '27'
+    assert cli._get_service_project_vpc_id() == "27"
 
 
 def test_vpc_args_bad_combination_use_project_vpc() -> None:
     cli = AivenCLI()
-    cli.parse_args(['service', 'create', '--service-type=pg',
-                    '--project-vpc-id=27', '--use-project-vpc', 'service-name'])
+    cli.parse_args(["service", "create", "--service-type=pg", "--project-vpc-id=27", "--use-project-vpc", "service-name"])
     with pytest.raises(UserError) as excinfo:
         cli._get_service_project_vpc_id()
-    assert str(excinfo.value).startswith('Only one of --project-vpc-id')
+    assert str(excinfo.value).startswith("Only one of --project-vpc-id")
 
 
 def test_vpc_args_bad_combination_no_project_vpc() -> None:
     cli = AivenCLI()
-    cli.parse_args(['service', 'create', '--service-type=pg',
-                    '--project-vpc-id=27', '--no-project-vpc', 'service-name'])
+    cli.parse_args(["service", "create", "--service-type=pg", "--project-vpc-id=27", "--no-project-vpc", "service-name"])
     with pytest.raises(UserError) as excinfo:
         cli._get_service_project_vpc_id()
-    assert str(excinfo.value).startswith('Only one of --project-vpc-id')
+    assert str(excinfo.value).startswith("Only one of --project-vpc-id")
