@@ -655,7 +655,7 @@ def test_vpc_args_no_project_vpc() -> None:
     cli = AivenCLI()
     cli.parse_args(["service", "create", "--service-type=pg", "--no-project-vpc", "service-name"])
     assert cli.args.project_vpc_id is None
-    assert cli.args.no_project_vpc == True
+    assert cli.args.no_project_vpc is True
 
     assert cli._get_service_project_vpc_id() is None
 
@@ -664,7 +664,7 @@ def test_vpc_args_use_project_vpc() -> None:
     cli = AivenCLI()
     cli.parse_args(["service", "create", "--service-type=pg", "--use-project-vpc", "service-name"])
     assert cli.args.project_vpc_id is None
-    assert cli.args.no_project_vpc == False
+    assert cli.args.no_project_vpc is False
 
     assert cli._get_service_project_vpc_id() is UNDEFINED
 

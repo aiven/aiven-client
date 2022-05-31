@@ -3786,7 +3786,8 @@ ssl.truststore.type=JKS
         action="store_const",
         const=True,
         default=UNDEFINED,
-        help="Do not put the service into a project VPC even if the project has one in the selected cloud. This is the default action",
+        help="Do not put the service into a project VPC even if the project has one in the selected cloud."
+        " This is the default action",
     )
     @arg(
         "--use-project-vpc",
@@ -4051,7 +4052,8 @@ ssl.truststore.type=JKS
         action="store_const",
         const=True,
         default=UNDEFINED,
-        help="Do not put the service into a project VPC even if the project has one in the selected cloud. This is the default action",
+        help="Do not put the service into a project VPC even if the project has one in the selected cloud."
+        " This is the default action",
     )
     @arg(
         "--use-project-vpc",
