@@ -5153,7 +5153,7 @@ server_encryption_options:
 
     @arg.json
     @arg.account_id
-    def account__oauth2_client__list(self):
+    def account__oauth2_client__list(self) -> None:
         """List OAuth2 client configuration."""
 
         oauth2_clients = self.client.list_oauth2_clients(self.args.account_id)
@@ -5163,7 +5163,7 @@ server_encryption_options:
     @arg.json
     @arg.account_id
     @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
-    def account__oauth2_client__get(self):
+    def account__oauth2_client__get(self) -> None:
         """Get an OAuth2 client configuration."""
 
         oauth2_client = self.client.get_oauth2_client(self.args.account_id, self.args.oauth2_client_id)
@@ -5173,7 +5173,7 @@ server_encryption_options:
     @arg.json
     @arg.account_id
     @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
-    def account__oauth2_client__delete(self):
+    def account__oauth2_client__delete(self) -> None:
         """Remove an OAuth2 client."""
 
         self.client.delete_oauth2_client(self.args.account_id, self.args.oauth2_client_id)
@@ -5181,7 +5181,7 @@ server_encryption_options:
     @arg.json
     @arg.account_id
     @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
-    def account__oauth2_client__redirect_list(self):
+    def account__oauth2_client__redirect_list(self) -> None:
         """List OAuth2 client redirects."""
 
         oauth2_client_redirects = self.client.list_oauth2_client_redirects(self.args.account_id, self.args.oauth2_client_id)
@@ -5192,7 +5192,7 @@ server_encryption_options:
     @arg.account_id
     @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
     @arg("--redirect-uri", help="Redirect URI")
-    def account__oauth2_client__redirect_create(self):
+    def account__oauth2_client__redirect_create(self) -> None:
         """Add an allowed redirect URI to an OAuth2 client."""
 
         redirect = self.client.create_oauth2_client_redirect(
@@ -5206,7 +5206,7 @@ server_encryption_options:
     @arg.account_id
     @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
     @arg("--redirect-uri-id", help="Redirect URI id", required=True)
-    def account__oauth2_client__redirect_delete(self):
+    def account__oauth2_client__redirect_delete(self) -> None:
         """Add an allowed redirect URI to an OAuth2 client."""
 
         self.client.delete_oauth2_client_redirect(
@@ -5216,7 +5216,7 @@ server_encryption_options:
     @arg.json
     @arg.account_id
     @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
-    def account__oauth2_client__secret_list(self):
+    def account__oauth2_client__secret_list(self) -> None:
         """List OAuth2 client secrets."""
 
         oauth2_client_secrets = self.client.list_oauth2_client_secrets(self.args.account_id, self.args.oauth2_client_id)
@@ -5226,7 +5226,7 @@ server_encryption_options:
     @arg.json
     @arg.account_id
     @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
-    def account__oauth2_client__secret_create(self):
+    def account__oauth2_client__secret_create(self) -> None:
         """List OAuth2 client secrets."""
 
         secret = self.client.create_oauth2_client_secret(self.args.account_id, self.args.oauth2_client_id)
@@ -5237,7 +5237,7 @@ server_encryption_options:
     @arg.account_id
     @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
     @arg("--secret-id", help="Client secret id")
-    def account__oauth2_client__secret_delete(self):
+    def account__oauth2_client__secret_delete(self) -> None:
         """List OAuth2 client secrets."""
 
         self.client.delete_oauth2_client_secret(self.args.account_id, self.args.oauth2_client_id, self.args.secret_id)
