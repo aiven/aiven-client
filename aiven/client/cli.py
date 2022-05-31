@@ -3707,9 +3707,31 @@ ssl.truststore.type=JKS
             print(ex.response.text)
             raise
 
+    def _validate_using_cloud_vpc(self) -> None:
+        """Raise an error if we might unexpectedly end up using a Project VPC"""
+        # If the user was specific about VPC then we don't need to worry
+        if self.args.no_project_vpc or self.args.project_vpc_id is not None:
+            return
+
+        # If the user did not specify a cloud, then `service create` will use
+        # some variant of something historical, and `service update` will use
+        # the same cloud. In either case, we don't need to worry.
+        if self.args.cloud is None:
+            return
+
+        project_name = self.get_project()
+        vpc_list = self.client.list_project_vpcs(project=project_name)["vpcs"]
+        clouds_with_vpc = [x["cloud_name"] for x in vpc_list]
+        if self.args.cloud in clouds_with_vpc:
+            raise argx.UserError(
+                f"Cloud {self.args.cloud} has a VPC. Specify --project-vpc-id=<vpc-id> to use it,"
+                " or --no-project-vpc to use the public internet"
+            )
+
     def _get_service_project_vpc_id(self) -> Optional[Union[object, str]]:
         """Utility method for service_create and service_update"""
         if self.args.project_vpc_id is None:
+            self._validate_using_cloud_vpc()
             project_vpc_id = None if self.args.no_project_vpc else UNDEFINED
         elif self.args.no_project_vpc:
             raise argx.UserError("Only one of --project-vpc-id and --no-project-vpc can be specified")
@@ -5126,7 +5148,7 @@ server_encryption_options:
 
     @arg.json
     @arg.account_id
-    def account__oauth2_client__list(self):
+    def account__oauth2_client__list(self) -> None:
         """List OAuth2 client configuration."""
 
         oauth2_clients = self.client.list_oauth2_clients(self.args.account_id)
@@ -5136,7 +5158,7 @@ server_encryption_options:
     @arg.json
     @arg.account_id
     @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
-    def account__oauth2_client__get(self):
+    def account__oauth2_client__get(self) -> None:
         """Get an OAuth2 client configuration."""
 
         oauth2_client = self.client.get_oauth2_client(self.args.account_id, self.args.oauth2_client_id)
@@ -5146,7 +5168,7 @@ server_encryption_options:
     @arg.json
     @arg.account_id
     @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
-    def account__oauth2_client__delete(self):
+    def account__oauth2_client__delete(self) -> None:
         """Remove an OAuth2 client."""
 
         self.client.delete_oauth2_client(self.args.account_id, self.args.oauth2_client_id)
@@ -5154,7 +5176,7 @@ server_encryption_options:
     @arg.json
     @arg.account_id
     @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
-    def account__oauth2_client__redirect_list(self):
+    def account__oauth2_client__redirect_list(self) -> None:
         """List OAuth2 client redirects."""
 
         oauth2_client_redirects = self.client.list_oauth2_client_redirects(self.args.account_id, self.args.oauth2_client_id)
@@ -5165,7 +5187,7 @@ server_encryption_options:
     @arg.account_id
     @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
     @arg("--redirect-uri", help="Redirect URI")
-    def account__oauth2_client__redirect_create(self):
+    def account__oauth2_client__redirect_create(self) -> None:
         """Add an allowed redirect URI to an OAuth2 client."""
 
         redirect = self.client.create_oauth2_client_redirect(
@@ -5179,7 +5201,7 @@ server_encryption_options:
     @arg.account_id
     @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
     @arg("--redirect-uri-id", help="Redirect URI id", required=True)
-    def account__oauth2_client__redirect_delete(self):
+    def account__oauth2_client__redirect_delete(self) -> None:
         """Add an allowed redirect URI to an OAuth2 client."""
 
         self.client.delete_oauth2_client_redirect(
@@ -5189,7 +5211,7 @@ server_encryption_options:
     @arg.json
     @arg.account_id
     @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
-    def account__oauth2_client__secret_list(self):
+    def account__oauth2_client__secret_list(self) -> None:
         """List OAuth2 client secrets."""
 
         oauth2_client_secrets = self.client.list_oauth2_client_secrets(self.args.account_id, self.args.oauth2_client_id)
@@ -5199,7 +5221,7 @@ server_encryption_options:
     @arg.json
     @arg.account_id
     @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
-    def account__oauth2_client__secret_create(self):
+    def account__oauth2_client__secret_create(self) -> None:
         """List OAuth2 client secrets."""
 
         secret = self.client.create_oauth2_client_secret(self.args.account_id, self.args.oauth2_client_id)
@@ -5210,7 +5232,7 @@ server_encryption_options:
     @arg.account_id
     @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
     @arg("--secret-id", help="Client secret id")
-    def account__oauth2_client__secret_delete(self):
+    def account__oauth2_client__secret_delete(self) -> None:
         """List OAuth2 client secrets."""
 
         self.client.delete_oauth2_client_secret(self.args.account_id, self.args.oauth2_client_id, self.args.secret_id)
