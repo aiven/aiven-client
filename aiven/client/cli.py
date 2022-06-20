@@ -2802,6 +2802,55 @@ ssl.truststore.type=JKS
 
     @arg.project
     @arg.service_name
+    @arg(
+        "--permission",
+        help="Permission, schema_registry_read or schema_registry_write",
+        required=True,
+    )
+    @arg(
+        "--resource",
+        help="Resource Config: or Subject:<subject>, accepts * and ? as wildcard characters",
+        required=True,
+    )
+    @arg(
+        "--username",
+        help="Username, accepts * and ? as wildcard characters",
+        required=True,
+    )
+    def service__schema_registry_acl_add(self) -> None:
+        """Add a Kafka Schema Registry ACL entry"""
+        response = self.client.add_service_kafka_schema_registry_acl(
+            project=self.get_project(),
+            service=self.args.service_name,
+            permission=self.args.permission,
+            resource=self.args.resource,
+            username=self.args.username,
+        )
+        print(response["message"])
+
+    @arg.project
+    @arg.service_name
+    @arg("acl_id", help="ID of the Schema Registry ACL entry to delete")
+    def service__schema_registry_acl_delete(self) -> None:
+        """Delete a Kafka Schema Registry ACL entry"""
+        response = self.client.delete_service_kafka_schema_registry_acl(
+            project=self.get_project(), service=self.args.service_name, acl_id=self.args.acl_id
+        )
+        print(response["message"])
+
+    @arg.project
+    @arg.service_name
+    @arg.json
+    def service__schema_registry_acl_list(self) -> None:
+        """List Kafka Schema Registry ACL entries"""
+        service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
+
+        layout = ["id", "username", "resource", "permission"]
+
+        self.print_response(service.get("schema_registry_acl", []), json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg.service_name
     @arg("--username", help="Only show rules for user", required=False)
     @arg.json
     def service__es_acl_list(self) -> None:

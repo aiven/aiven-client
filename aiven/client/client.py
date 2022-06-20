@@ -729,6 +729,24 @@ class AivenClient(AivenClientBase):
             },
         )
 
+    def add_service_kafka_schema_registry_acl(
+        self,
+        project: str,
+        service: str,
+        permission: str,
+        resource: str,
+        username: str,
+    ) -> Mapping:
+        return self.verify(
+            self.post,
+            self.build_path("project", project, "service", service, "kafka", "schema-registry", "acl"),
+            body={
+                "permission": permission,
+                "resource": resource,
+                "username": username,
+            },
+        )
+
     def create_connector_config_based_on_current(
         self, project: str, service: str, connector_name: str, config_update: Mapping[str, Any]
     ) -> Mapping:
@@ -745,6 +763,12 @@ class AivenClient(AivenClientBase):
         return self.verify(
             self.delete,
             self.build_path("project", project, "service", service, "acl", acl_id),
+        )
+
+    def delete_service_kafka_schema_registry_acl(self, project: str, service: str, acl_id: str) -> Mapping:
+        return self.verify(
+            self.delete,
+            self.build_path("project", project, "service", service, "kafka", "schema-registry", "acl", acl_id),
         )
 
     def get_available_kafka_connectors(self, project: str, service: str) -> Mapping:
