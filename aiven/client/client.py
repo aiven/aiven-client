@@ -1396,6 +1396,7 @@ class AivenClient(AivenClientBase):
         powered: Optional[bool] = None,
         termination_protection: Optional[bool] = None,
         project_vpc_id: Union[object, str] = UNDEFINED,
+        schema_registry_authorization: Optional[bool] = None,
     ) -> Mapping:
         user_config = user_config or {}
         body: Dict[str, Any] = {}
@@ -1417,6 +1418,8 @@ class AivenClient(AivenClientBase):
             body["project_vpc_id"] = project_vpc_id
         if termination_protection is not None:
             body["termination_protection"] = termination_protection
+        if schema_registry_authorization is not None:
+            body["schema_registry_authz"] = schema_registry_authorization
 
         path = self.build_path("project", project, "service", service)
         return self.verify(self.put, path, body=body, result_key="service")

@@ -4077,6 +4077,16 @@ ssl.truststore.type=JKS
         help="Disable termination protection",
     )
     @arg(
+        "--enable-schema-registry-authorization",
+        action="store_true",
+        help="Enable Schema Registry authorization",
+    )
+    @arg(
+        "--disable-schema-registry-authorization",
+        action="store_true",
+        help="Disable Schema Registry authorization",
+    )
+    @arg(
         "--project-vpc-id",
         help="Put service into a project VPC. The VPC's cloud must match the service's cloud",
     )
@@ -4120,6 +4130,17 @@ ssl.truststore.type=JKS
             termination_protection = False
         if self.args.group_name:
             self.log.warning("--group-name parameter is deprecated and has no effect")
+
+        if self.args.enable_schema_registry_authorization and self.args.disable_schema_registry_authorization:
+            raise argx.UserError(
+                "--enable-schema-registry-authorization and --disable-schema-registry-authorization are mutually exclusive."
+            )
+        schema_registry_authorization = None
+        if self.args.enable_schema_registry_authorization:
+            schema_registry_authorization = True
+        if self.args.disable_schema_registry_authorization:
+            schema_registry_authorization = False
+
         try:
             self.client.update_service(
                 cloud=self.args.cloud,
@@ -4133,6 +4154,7 @@ ssl.truststore.type=JKS
                 user_config=user_config,
                 termination_protection=termination_protection,
                 project_vpc_id=project_vpc_id,
+                schema_registry_authorization=schema_registry_authorization,
             )
         except client.Error as ex:
             try:
