@@ -729,6 +729,24 @@ class AivenClient(AivenClientBase):
             },
         )
 
+    def add_service_kafka_schema_registry_acl(
+        self,
+        project: str,
+        service: str,
+        permission: str,
+        resource: str,
+        username: str,
+    ) -> Mapping:
+        return self.verify(
+            self.post,
+            self.build_path("project", project, "service", service, "kafka", "schema-registry", "acl"),
+            body={
+                "permission": permission,
+                "resource": resource,
+                "username": username,
+            },
+        )
+
     def create_connector_config_based_on_current(
         self, project: str, service: str, connector_name: str, config_update: Mapping[str, Any]
     ) -> Mapping:
@@ -745,6 +763,12 @@ class AivenClient(AivenClientBase):
         return self.verify(
             self.delete,
             self.build_path("project", project, "service", service, "acl", acl_id),
+        )
+
+    def delete_service_kafka_schema_registry_acl(self, project: str, service: str, acl_id: str) -> Mapping:
+        return self.verify(
+            self.delete,
+            self.build_path("project", project, "service", service, "kafka", "schema-registry", "acl", acl_id),
         )
 
     def get_available_kafka_connectors(self, project: str, service: str) -> Mapping:
@@ -1372,6 +1396,7 @@ class AivenClient(AivenClientBase):
         powered: Optional[bool] = None,
         termination_protection: Optional[bool] = None,
         project_vpc_id: Union[object, str] = UNDEFINED,
+        schema_registry_authorization: Optional[bool] = None,
     ) -> Mapping:
         user_config = user_config or {}
         body: Dict[str, Any] = {}
@@ -1393,6 +1418,8 @@ class AivenClient(AivenClientBase):
             body["project_vpc_id"] = project_vpc_id
         if termination_protection is not None:
             body["termination_protection"] = termination_protection
+        if schema_registry_authorization is not None:
+            body["schema_registry_authz"] = schema_registry_authorization
 
         path = self.build_path("project", project, "service", service)
         return self.verify(self.put, path, body=body, result_key="service")

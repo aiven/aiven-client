@@ -2802,6 +2802,55 @@ ssl.truststore.type=JKS
 
     @arg.project
     @arg.service_name
+    @arg(
+        "--permission",
+        help="Permission, schema_registry_read or schema_registry_write",
+        required=True,
+    )
+    @arg(
+        "--resource",
+        help="Resource Config: or Subject:<subject>, accepts * and ? as wildcard characters",
+        required=True,
+    )
+    @arg(
+        "--username",
+        help="Username, accepts * and ? as wildcard characters",
+        required=True,
+    )
+    def service__schema_registry_acl_add(self) -> None:
+        """Add a Kafka Schema Registry ACL entry"""
+        response = self.client.add_service_kafka_schema_registry_acl(
+            project=self.get_project(),
+            service=self.args.service_name,
+            permission=self.args.permission,
+            resource=self.args.resource,
+            username=self.args.username,
+        )
+        print(response["message"])
+
+    @arg.project
+    @arg.service_name
+    @arg("acl_id", help="ID of the Schema Registry ACL entry to delete")
+    def service__schema_registry_acl_delete(self) -> None:
+        """Delete a Kafka Schema Registry ACL entry"""
+        response = self.client.delete_service_kafka_schema_registry_acl(
+            project=self.get_project(), service=self.args.service_name, acl_id=self.args.acl_id
+        )
+        print(response["message"])
+
+    @arg.project
+    @arg.service_name
+    @arg.json
+    def service__schema_registry_acl_list(self) -> None:
+        """List Kafka Schema Registry ACL entries"""
+        service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
+
+        layout = ["id", "username", "resource", "permission"]
+
+        self.print_response(service.get("schema_registry_acl", []), json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg.service_name
     @arg("--username", help="Only show rules for user", required=False)
     @arg.json
     def service__es_acl_list(self) -> None:
@@ -4028,6 +4077,16 @@ ssl.truststore.type=JKS
         help="Disable termination protection",
     )
     @arg(
+        "--enable-schema-registry-authorization",
+        action="store_true",
+        help="Enable Schema Registry authorization",
+    )
+    @arg(
+        "--disable-schema-registry-authorization",
+        action="store_true",
+        help="Disable Schema Registry authorization",
+    )
+    @arg(
         "--project-vpc-id",
         help="Put service into a project VPC. The VPC's cloud must match the service's cloud",
     )
@@ -4071,6 +4130,17 @@ ssl.truststore.type=JKS
             termination_protection = False
         if self.args.group_name:
             self.log.warning("--group-name parameter is deprecated and has no effect")
+
+        if self.args.enable_schema_registry_authorization and self.args.disable_schema_registry_authorization:
+            raise argx.UserError(
+                "--enable-schema-registry-authorization and --disable-schema-registry-authorization are mutually exclusive."
+            )
+        schema_registry_authorization = None
+        if self.args.enable_schema_registry_authorization:
+            schema_registry_authorization = True
+        if self.args.disable_schema_registry_authorization:
+            schema_registry_authorization = False
+
         try:
             self.client.update_service(
                 cloud=self.args.cloud,
@@ -4084,6 +4154,7 @@ ssl.truststore.type=JKS
                 user_config=user_config,
                 termination_protection=termination_protection,
                 project_vpc_id=project_vpc_id,
+                schema_registry_authorization=schema_registry_authorization,
             )
         except client.Error as ex:
             try:
