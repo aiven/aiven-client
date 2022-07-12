@@ -4,12 +4,14 @@
 # See the file `LICENSE` for details.
 
 from aiven.client import AivenClient
+from aiven.client.argx import UserError
 from aiven.client.cli import AivenCLI, ClientFactory, EOL_ADVANCE_WARNING_TIME
+from aiven.client.common import UNDEFINED
 from argparse import Namespace
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pytest import CaptureFixture, LogCaptureFixture
-from typing import Any, Iterator, Mapping, Optional
+from typing import Any, cast, Iterator, Mapping, Optional
 from unittest import mock
 
 import pytest
@@ -647,3 +649,149 @@ def test_static_ips_list(capsys: CaptureFixture[str]) -> None:
     stdout, _ = capsys.readouterr()
     assert "10.0.0.0" in stdout
     assert "10.0.0.69" in stdout
+
+
+def dummy_client_for_vpc_tests(cloud_with_vpc: Optional[str] = None) -> AivenCLI:
+    cli = AivenCLI()
+
+    class Client:  # pylint: disable=too-few-public-methods
+        def list_project_vpcs(self, project: str) -> dict:  # pylint: disable=unused-argument
+            if cloud_with_vpc:
+                return {"vpcs": [{"cloud_name": cloud_with_vpc}]}
+            else:
+                return {"vpcs": []}
+
+    cli.client = cast(AivenClient, Client())
+    return cli
+
+
+def test_cloud_has_vpc_user_said_nothing() -> None:
+    cli = dummy_client_for_vpc_tests("my-cloud")
+    cli.parse_args(["service", "create", "--project=my-name", "--cloud=my-cloud", "--service-type=pg", "service-name"])
+    with pytest.raises(UserError) as excinfo:
+        cli._get_service_project_vpc_id()  # pylint: disable=protected-access
+    assert str(excinfo.value).startswith("Cloud my-cloud has a VPC")
+
+
+def test_cloud_has_vpc_user_said_nothing_and_no_cloud_switch() -> None:
+    """When the user does not specify --cloud, we assume an "earlier" cloud will be re-used
+
+    (and that the user is OK with the configuration of that cloud)
+    """
+    cli = dummy_client_for_vpc_tests("my-cloud")
+    cli.parse_args(["service", "create", "--project=my-name", "--service-type=pg", "service-name"])
+    vpc_id = cli._get_service_project_vpc_id()  # pylint: disable=protected-access
+    assert vpc_id is UNDEFINED
+
+
+def test_cloud_has_vpc_user_said_no_vpc() -> None:
+    cli = dummy_client_for_vpc_tests("my-cloud")
+    cli.parse_args(
+        [
+            "service",
+            "create",
+            "--project=my-name",
+            "--cloud=my-cloud",
+            "--service-type=pg",
+            "--no-project-vpc",
+            "service-name",
+        ]
+    )
+    vpc_id = cli._get_service_project_vpc_id()  # pylint: disable=protected-access
+    assert vpc_id is None
+
+
+def test_cloud_has_vpc_user_gave_vpc_id() -> None:
+    cli = dummy_client_for_vpc_tests("my-cloud")
+    cli.parse_args(
+        [
+            "service",
+            "create",
+            "--project=my-name",
+            "--cloud=my-cloud",
+            "--service-type=pg",
+            "--project-vpc-id=27",
+            "service-name",
+        ]
+    )
+    vpc_id = cli._get_service_project_vpc_id()  # pylint: disable=protected-access
+    assert vpc_id == "27"
+
+
+def test_cloud_has_vpc_user_gave_both_switches() -> None:
+    cli = dummy_client_for_vpc_tests("my-cloud")
+    cli.parse_args(
+        [
+            "service",
+            "create",
+            "--project=my-name",
+            "--cloud=my-cloud",
+            "--service-type=pg",
+            "--no-project-vpc",
+            "--project-vpc-id=27",
+            "service-name",
+        ]
+    )
+    with pytest.raises(UserError) as excinfo:
+        cli._get_service_project_vpc_id()  # pylint: disable=protected-access
+    assert str(excinfo.value).startswith("Only one of --project-vpc-id")
+
+
+def test_cloud_has_no_vpc_user_said_nothing() -> None:
+    cli = dummy_client_for_vpc_tests()
+    cli.parse_args(["service", "create", "--project=my-name", "--cloud=my-cloud", "--service-type=pg", "service-name"])
+    vpc_id = cli._get_service_project_vpc_id()  # pylint: disable=protected-access
+    assert vpc_id is UNDEFINED
+
+
+def test_cloud_has_no_vpc_user_said_no_vpc() -> None:
+    cli = dummy_client_for_vpc_tests()
+    cli.parse_args(
+        [
+            "service",
+            "create",
+            "--project=my-name",
+            "--cloud=my-cloud",
+            "--service-type=pg",
+            "--no-project-vpc",
+            "service-name",
+        ]
+    )
+    vpc_id = cli._get_service_project_vpc_id()  # pylint: disable=protected-access
+    assert vpc_id is None
+
+
+def test_cloud_has_no_vpc_user_gave_vpc_id() -> None:
+    cli = dummy_client_for_vpc_tests()
+    cli.parse_args(
+        [
+            "service",
+            "create",
+            "--project=my-name",
+            "--cloud=my-cloud",
+            "--service-type=pg",
+            "--project-vpc-id=27",
+            "service-name",
+        ]
+    )
+    vpc_id = cli._get_service_project_vpc_id()  # pylint: disable=protected-access
+    assert vpc_id == "27"
+
+
+def test_cloud_has_no_vpc_user_gave_both_switches() -> None:
+    cli = dummy_client_for_vpc_tests()
+    cli.parse_args(
+        [
+            "service",
+            "create",
+            "--project=my-name",
+            "--cloud=my-cloud",
+            "--service-type=pg",
+            "--no-project-vpc",
+            "--project-vpc-id=27",
+            "service-name",
+        ]
+    )
+    with pytest.raises(UserError) as excinfo:
+        cli._get_service_project_vpc_id()  # pylint: disable=protected-access
+    assert str(excinfo.value).startswith("Only one of --project-vpc-id")

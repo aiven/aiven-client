@@ -3756,9 +3756,31 @@ ssl.truststore.type=JKS
             print(ex.response.text)
             raise
 
+    def _validate_using_cloud_vpc(self) -> None:
+        """Raise an error if we might unexpectedly end up using a Project VPC"""
+        # If the user was specific about VPC then we don't need to worry
+        if self.args.no_project_vpc or self.args.project_vpc_id is not None:
+            return
+
+        # If the user did not specify a cloud, then `service create` will use
+        # some variant of something historical, and `service update` will use
+        # the same cloud. In either case, we don't need to worry.
+        if self.args.cloud is None:
+            return
+
+        project_name = self.get_project()
+        vpc_list = self.client.list_project_vpcs(project=project_name)["vpcs"]
+        clouds_with_vpc = [x["cloud_name"] for x in vpc_list]
+        if self.args.cloud in clouds_with_vpc:
+            raise argx.UserError(
+                f"Cloud {self.args.cloud} has a VPC. Specify --project-vpc-id=<vpc-id> to use it,"
+                " or --no-project-vpc to use the public internet"
+            )
+
     def _get_service_project_vpc_id(self) -> Optional[Union[object, str]]:
         """Utility method for service_create and service_update"""
         if self.args.project_vpc_id is None:
+            self._validate_using_cloud_vpc()
             project_vpc_id = None if self.args.no_project_vpc else UNDEFINED
         elif self.args.no_project_vpc:
             raise argx.UserError("Only one of --project-vpc-id and --no-project-vpc can be specified")
