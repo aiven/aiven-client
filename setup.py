@@ -38,6 +38,7 @@ setup(
     license="Apache 2.0",
     name="aiven-client",
     packages=find_packages(exclude=["tests"]),
+    package_data={"aiven.client": ["py.typed"]},
     platforms=["POSIX", "MacOS", "Windows"],
     description="Aiven.io client library / command-line client",
     long_description=open("README.rst").read(),
