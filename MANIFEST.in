@@ -1,3 +1,5 @@
+global-include *.typed
+
 include aiven/*.py
 include tests/*.py
 include scripts/*
