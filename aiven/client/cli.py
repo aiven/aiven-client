@@ -1343,6 +1343,7 @@ class AivenCLI(argx.CommandLineTool):
             store = Store.skip
         return store
 
+    # This method should be deprecated and removed over time. Check service__connection_info__kcat
     @arg.project
     @arg.service_name
     @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
@@ -1366,7 +1367,8 @@ class AivenCLI(argx.CommandLineTool):
                 privatelink_connection_id=self._get_privatelink_connection_id_from_args(),
                 username=self.args.username,
             )
-            cmd = ci.kafkacat(
+            cmd = ci.kcat(
+                "kafkacat",
                 store,
                 get_project_ca=self._get_project_ca,
                 ca_path=self.args.ca_path,
@@ -1380,7 +1382,57 @@ class AivenCLI(argx.CommandLineTool):
                 privatelink_connection_id=self._get_privatelink_connection_id_from_args(),
                 username=self.args.username,
             )
-            cmd = sasl_ci.kafkacat(
+            cmd = sasl_ci.kcat(
+                "kafkacat",
+                store,
+                get_project_ca=self._get_project_ca,
+                ca_path=self.args.ca_path,
+            )
+        else:
+            raise NotImplementedError(self.args.kafka_authentication_method)
+
+        print(" ".join(cmd))
+
+    @arg.project
+    @arg.service_name
+    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
+    @arg("-p", "--privatelink-connection-id")
+    @arg("-a", "--kafka-authentication-method", choices=("certificate", "sasl"), default="certificate")
+    @arg("-u", "--username", default="avnadmin")
+    @arg("--ca", default="ca.pem", dest="ca_path")
+    @arg("--client-cert", default="service.crt", dest="client_cert_path")
+    @arg("--client-key", default="service.key", dest="client_key_path")
+    @arg("-w", "--write", action="store_true", help="Save certificate and key files if they don't not exist")
+    @arg("-W", "--overwrite", action="store_true", help="Save and overwrite certificate and key files")
+    def service__connection_info__kcat(self) -> None:
+        """kcat command string"""
+        service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
+        store = self._get_store_from_args()
+
+        if self.args.kafka_authentication_method == "certificate":
+            ci = KafkaCertificateConnectionInfo.from_service(
+                service,
+                route=self._get_route_from_args(),
+                privatelink_connection_id=self._get_privatelink_connection_id_from_args(),
+                username=self.args.username,
+            )
+            cmd = ci.kcat(
+                "kcat",
+                store,
+                get_project_ca=self._get_project_ca,
+                ca_path=self.args.ca_path,
+                client_cert_path=self.args.client_cert_path,
+                client_key_path=self.args.client_key_path,
+            )
+        elif self.args.kafka_authentication_method == "sasl":
+            sasl_ci = KafkaSASLConnectionInfo.from_service(
+                service,
+                route=self._get_route_from_args(),
+                privatelink_connection_id=self._get_privatelink_connection_id_from_args(),
+                username=self.args.username,
+            )
+            cmd = sasl_ci.kcat(
+                "kcat",
                 store,
                 get_project_ca=self._get_project_ca,
                 ca_path=self.args.ca_path,

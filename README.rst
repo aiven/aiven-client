@@ -468,7 +468,7 @@ Each project has its own CA cert, and other services (notably Kafka) use mutualT
 
   $ avn service user-creds-download --username avnadmin <service>
 
-For working with `kafkacat <https://github.com/edenhill/kafkacat>`_ (see also our `help article <https://help.aiven.io/en/articles/2607674-using-kafkacat>`_ ) or the command-line tools that ship with Kafka itself, a keystore and trustore are needed. By specifying which user's creds to use, and a secret, you can generate these via ``avn`` too::
+For working with `kcat <https://github.com/edenhill/kcat>`_ (see also our `help article <https://developer.aiven.io/docs/products/kafka/howto/kcat.html>`_ ) or the command-line tools that ship with Kafka itself, a keystore and trustore are needed. By specifying which user's creds to use, and a secret, you can generate these via ``avn`` too::
 
   $ avn service user-kafka-java-creds --username avnadmin -p t0pS3cr3t <service>
 
