@@ -68,7 +68,15 @@ class KafkaCertificateConnectionInfo(KafkaConnectionInfo):
             raise ConnectionInfoError(
                 "Cannot format kafka connection info for service type {service_type}".format_map(service)
             )
-
+        try:
+            find_component(
+                service["components"],
+                kafka_authentication_method="certificate",
+            )
+        except ConnectionInfoError as exc:
+            raise ConnectionInfoError(
+                "Certificate authentication is not enabled in {service_name}".format_map(service)
+            ) from exc
         info = find_component(
             service["components"],
             route=route,
@@ -105,20 +113,22 @@ class KafkaSASLConnectionInfo(KafkaConnectionInfo):
                 "Cannot format kafka connection info for service type {service_type}".format_map(service)
             )
         try:
-            info = find_component(
+            find_component(
                 service["components"],
-                route=route,
-                privatelink_connection_id=privatelink_connection_id,
                 kafka_authentication_method="sasl",
             )
-            user = find_user(service, username)
-            if "password" not in user:
-                raise ConnectionInfoError(f"Could not find password for username {username}")
-            return cls(host=info["host"], port=info["port"], username=username, password=user["password"])
-        except ConnectionInfoError:
-            raise ConnectionInfoError(
-                "SASL authentication is not enabled on {service_name}".format_map(service)
-            )
+        except ConnectionInfoError as exc:
+            raise ConnectionInfoError("SASL authentication is not enabled in {service_name}".format_map(service)) from exc
+        info = find_component(
+            service["components"],
+            route=route,
+            privatelink_connection_id=privatelink_connection_id,
+            kafka_authentication_method="sasl",
+        )
+        user = find_user(service, username)
+        if "password" not in user:
+            raise ConnectionInfoError(f"Could not find password for username {username}")
+        return cls(host=info["host"], port=info["port"], username=username, password=user["password"])
 
     def kcat(self, tool_name: str, store: Store, get_project_ca: Callable[[], str], ca_path: str) -> Sequence[str]:
         extra = [
