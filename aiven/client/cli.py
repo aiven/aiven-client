@@ -1343,7 +1343,7 @@ class AivenCLI(argx.CommandLineTool):
             store = Store.skip
         return store
 
-    # This method should be deprecated and removed over time. Check service__connection_info__kcat
+    # Check service__connection_info__kcat
     @arg.project
     @arg.service_name
     @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))

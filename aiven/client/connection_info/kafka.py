@@ -6,6 +6,8 @@ from .common import ConnectionInfoError, Store
 from dataclasses import dataclass
 from typing import Any, Callable, Mapping, Sequence, Union
 
+import warnings
+
 
 @dataclass
 class KafkaConnectionInfo:  # pylint: disable=too-few-public-methods
@@ -23,6 +25,8 @@ class KafkaConnectionInfo:  # pylint: disable=too-few-public-methods
     ) -> Sequence[str]:
         store.handle(get_project_ca, ca_path)
         address = f"{self.host}:{self.port}"
+        if tool_name == "kafkacat":
+            warnings.warn("Kafkacat is deprecated, use the kcat method instead", DeprecationWarning)
         return [tool_name, "-b", address, "-X", f"security.protocol={protocol}", "-X", f"ssl.ca.location={ca_path}", *extra]
 
 
@@ -100,17 +104,23 @@ class KafkaSASLConnectionInfo(KafkaConnectionInfo):
             raise ConnectionInfoError(
                 "Cannot format kafka connection info for service type {service_type}".format_map(service)
             )
-
-        info = find_component(
-            service["components"],
-            route=route,
-            privatelink_connection_id=privatelink_connection_id,
-            kafka_authentication_method="sasl",
-        )
-        user = find_user(service, username)
-        if "password" not in user:
-            raise ConnectionInfoError(f"Could not find password for username {username}")
-        return cls(host=info["host"], port=info["port"], username=username, password=user["password"])
+        
+        try:
+            info = find_component(
+                service["components"],
+                route=route,
+                privatelink_connection_id=privatelink_connection_id,
+                kafka_authentication_method="sasl",
+            )
+            
+            user = find_user(service, username)
+            if "password" not in user:
+                raise ConnectionInfoError(f"Could not find password for username {username}")
+            return cls(host=info["host"], port=info["port"], username=username, password=user["password"])
+        except ConnectionInfoError:
+            raise ConnectionInfoError(
+                "SASL authentication is not enabled on {service_name}".format_map(service)
+            )
 
     def kcat(self, tool_name: str, store: Store, get_project_ca: Callable[[], str], ca_path: str) -> Sequence[str]:
         extra = [
