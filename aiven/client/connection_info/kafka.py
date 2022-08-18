@@ -104,7 +104,6 @@ class KafkaSASLConnectionInfo(KafkaConnectionInfo):
             raise ConnectionInfoError(
                 "Cannot format kafka connection info for service type {service_type}".format_map(service)
             )
-        
         try:
             info = find_component(
                 service["components"],
@@ -112,7 +111,6 @@ class KafkaSASLConnectionInfo(KafkaConnectionInfo):
                 privatelink_connection_id=privatelink_connection_id,
                 kafka_authentication_method="sasl",
             )
-            
             user = find_user(service, username)
             if "password" not in user:
                 raise ConnectionInfoError(f"Could not find password for username {username}")
