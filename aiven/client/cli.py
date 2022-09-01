@@ -4099,6 +4099,16 @@ ssl.truststore.type=JKS
         help="Disable termination protection",
     )
     @arg(
+        "--enable-rest-proxy-authorization",
+        action="store_true",
+        help="Enable Kafka REST proxy authorization",
+    )
+    @arg(
+        "--disable-rest-proxy-authorization",
+        action="store_true",
+        help="Disable Kafka REST proxy authorization",
+    )
+    @arg(
         "--enable-schema-registry-authorization",
         action="store_true",
         help="Enable Schema Registry authorization",
@@ -4163,6 +4173,16 @@ ssl.truststore.type=JKS
         if self.args.disable_schema_registry_authorization:
             schema_registry_authorization = False
 
+        if self.args.enable_rest_proxy_authorization and self.args.disable_rest_proxy_authorization:
+            raise argx.UserError(
+                "--enable-rest-proxy-authorization and --disable-rest-proxy-authorization are mutually exclusive."
+            )
+        rest_proxy_authorization = None
+        if self.args.enable_rest_proxy_authorization:
+            rest_proxy_authorization = True
+        if self.args.disable_rest_proxy_authorization:
+            rest_proxy_authorization = False
+
         try:
             self.client.update_service(
                 cloud=self.args.cloud,
@@ -4177,6 +4197,7 @@ ssl.truststore.type=JKS
                 termination_protection=termination_protection,
                 project_vpc_id=project_vpc_id,
                 schema_registry_authorization=schema_registry_authorization,
+                rest_proxy_authorization=rest_proxy_authorization,
             )
         except client.Error as ex:
             try:
