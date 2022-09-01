@@ -4049,6 +4049,30 @@ ssl.truststore.type=JKS
                 )
             ) from ex
 
+    def _schema_registry_authorization(self) -> Optional[bool]:
+        if self.args.enable_schema_registry_authorization and self.args.disable_schema_registry_authorization:
+            raise argx.UserError(
+                "--enable-schema-registry-authorization and --disable-schema-registry-authorization are mutually exclusive."
+            )
+        schema_registry_authorization = None
+        if self.args.enable_schema_registry_authorization:
+            schema_registry_authorization = True
+        if self.args.disable_schema_registry_authorization:
+            schema_registry_authorization = False
+        return schema_registry_authorization
+
+    def _rest_proxy_authorization(self) -> Optional[bool]:
+        if self.args.enable_rest_proxy_authorization and self.args.disable_rest_proxy_authorization:
+            raise argx.UserError(
+                "--enable-rest-proxy-authorization and --disable-rest-proxy-authorization are mutually exclusive."
+            )
+        rest_proxy_authorization = None
+        if self.args.enable_rest_proxy_authorization:
+            rest_proxy_authorization = True
+        if self.args.disable_rest_proxy_authorization:
+            rest_proxy_authorization = False
+        return rest_proxy_authorization
+
     @arg.project
     @arg.service_name
     @arg("--group-name", help="New service group (deprecated)")
@@ -4163,25 +4187,8 @@ ssl.truststore.type=JKS
         if self.args.group_name:
             self.log.warning("--group-name parameter is deprecated and has no effect")
 
-        if self.args.enable_schema_registry_authorization and self.args.disable_schema_registry_authorization:
-            raise argx.UserError(
-                "--enable-schema-registry-authorization and --disable-schema-registry-authorization are mutually exclusive."
-            )
-        schema_registry_authorization = None
-        if self.args.enable_schema_registry_authorization:
-            schema_registry_authorization = True
-        if self.args.disable_schema_registry_authorization:
-            schema_registry_authorization = False
-
-        if self.args.enable_rest_proxy_authorization and self.args.disable_rest_proxy_authorization:
-            raise argx.UserError(
-                "--enable-rest-proxy-authorization and --disable-rest-proxy-authorization are mutually exclusive."
-            )
-        rest_proxy_authorization = None
-        if self.args.enable_rest_proxy_authorization:
-            rest_proxy_authorization = True
-        if self.args.disable_rest_proxy_authorization:
-            rest_proxy_authorization = False
+        schema_registry_authorization = self._schema_registry_authorization()
+        rest_proxy_authorization = self._rest_proxy_authorization()
 
         try:
             self.client.update_service(
