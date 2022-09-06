@@ -4783,7 +4783,7 @@ server_encryption_options:
             "card[cvc]": cvc,
             "key": stripe_publishable_key,
         }
-        response = requests.post("https://api.stripe.com/v1/tokens", data=data)
+        response = requests.post("https://api.stripe.com/v1/tokens", data=data, timeout=30)
         if not response.ok:
             print(response.text)
             response.raise_for_status()
