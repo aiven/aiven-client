@@ -45,6 +45,12 @@ except ImportError:
     ARGCOMPLETE_INSTALLED = False
 
 try:
+    import shtab
+    SHTAB_INSTALLED = True
+except ImportError:
+    SHTAB_INSTALLED = False
+
+try:
     from .version import __version__  # pylint: disable=no-name-in-module
 except ImportError:
     __version__ = "UNKNOWN"
@@ -225,10 +231,17 @@ class CommandLineTool:  # pylint: disable=old-style-class
 
         if ARGCOMPLETE_INSTALLED:
             argcomplete.autocomplete(self.parser)
+        
+        if SHTAB_INSTALLED:
+            shtab.add_argument_to(self.parser, ["-s", "--print-completion"])  # magic!
+
 
         ext_args = self.parser.parse_args(args=args)
         for ext in self._extensions:
             ext.args = ext_args
+
+    def get_main_parser(self):
+        return self.parser
 
     def pre_run(self, func: Callable) -> None:
         """Override in sub-class"""
