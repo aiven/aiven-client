@@ -4,11 +4,12 @@
 # See the file `LICENSE` for details.
 
 # pylint: disable=no-member
+from _pytest.logging import LogCaptureFixture
 from aiven.client.argx import CommandLineTool
 from aiven.client.cliarg import arg  # type: ignore
 
 
-def test_user_config_json_error_json() -> None:
+def test_user_config_json_error_json(caplog: LogCaptureFixture) -> None:
     """Test that @arg.user_config_json causes
     CommandLineTool.run() to exit cleanly with return value 1
     if JSON is incorrect
@@ -22,9 +23,14 @@ def test_user_config_json_error_json() -> None:
         def t(self) -> None:
             """t"""
 
-    error_json_arg = ["t", "--user-config-json", "foo"]
+    error_json_arg = ["t", "--user-config-json", "bar"]
     test_class = T("avn")
     ret = test_class.run(args=error_json_arg)
+    # The message can vary across python versions
+    assert (
+        "Invalid user_config_json: Expecting value: line 1 column 1 (char 0)" in caplog.text
+        or "Invalid user_config_json: Unexpected 'b': line 1 column 1 (char 0)" in caplog.text
+    )
     assert ret == 1
 
 
