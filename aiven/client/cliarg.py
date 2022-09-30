@@ -70,7 +70,7 @@ def user_config_json() -> Callable[[Callable[[CommandLineTool], T]], Callable[[C
                     get_json_config(self.args.user_config_json),
                 )
             except jsonlib.decoder.JSONDecodeError as err:
-                raise UserError from err
+                raise UserError(f"Invalid user_config_json: {err!s}") from err
             return fun(self)
 
         return wrapped
