@@ -6,18 +6,28 @@ from .common import ConnectionInfoError, Store
 from dataclasses import dataclass
 from typing import Any, Callable, Mapping, Sequence, Union
 
+import warnings
+
 
 @dataclass
 class KafkaConnectionInfo:  # pylint: disable=too-few-public-methods
     host: str
     port: int
 
-    def _kafkacat(
-        self, protocol: str, ca_path: str, extra: Sequence[str], store: Store, get_project_ca: Callable[[], str]
+    def _kcat(
+        self,
+        tool_name: str,
+        protocol: str,
+        ca_path: str,
+        extra: Sequence[str],
+        store: Store,
+        get_project_ca: Callable[[], str],
     ) -> Sequence[str]:
         store.handle(get_project_ca, ca_path)
         address = f"{self.host}:{self.port}"
-        return ["kafkacat", "-b", address, "-X", f"security.protocol={protocol}", "-X", f"ssl.ca.location={ca_path}", *extra]
+        if tool_name == "kafkacat":
+            warnings.warn("Kafkacat is deprecated, use the kcat method instead", DeprecationWarning)
+        return [tool_name, "-b", address, "-X", f"security.protocol={protocol}", "-X", f"ssl.ca.location={ca_path}", *extra]
 
 
 @dataclass
@@ -25,8 +35,14 @@ class KafkaCertificateConnectionInfo(KafkaConnectionInfo):
     client_cert: str
     client_key: str
 
-    def kafkacat(
-        self, store: Store, get_project_ca: Callable[[], str], ca_path: str, client_key_path: str, client_cert_path: str
+    def kcat(
+        self,
+        tool_name: str,
+        store: Store,
+        get_project_ca: Callable[[], str],
+        ca_path: str,
+        client_key_path: str,
+        client_cert_path: str,
     ) -> Sequence[str]:
         store.handle(lambda: self.client_cert, client_cert_path)
         store.handle(lambda: self.client_key, client_key_path)
@@ -37,7 +53,7 @@ class KafkaCertificateConnectionInfo(KafkaConnectionInfo):
             "-X",
             f"ssl.certificate.location={client_cert_path}",
         ]
-        return self._kafkacat("SSL", ca_path, extra, store, get_project_ca)
+        return self._kcat(tool_name, "SSL", ca_path, extra, store, get_project_ca)
 
     @classmethod
     def from_service(
@@ -52,7 +68,15 @@ class KafkaCertificateConnectionInfo(KafkaConnectionInfo):
             raise ConnectionInfoError(
                 "Cannot format kafka connection info for service type {service_type}".format_map(service)
             )
-
+        try:
+            find_component(
+                service["components"],
+                kafka_authentication_method="certificate",
+            )
+        except ConnectionInfoError as exc:
+            raise ConnectionInfoError(
+                "Certificate authentication is not enabled in {service_name}".format_map(service)
+            ) from exc
         info = find_component(
             service["components"],
             route=route,
@@ -88,7 +112,13 @@ class KafkaSASLConnectionInfo(KafkaConnectionInfo):
             raise ConnectionInfoError(
                 "Cannot format kafka connection info for service type {service_type}".format_map(service)
             )
-
+        try:
+            find_component(
+                service["components"],
+                kafka_authentication_method="sasl",
+            )
+        except ConnectionInfoError as exc:
+            raise ConnectionInfoError("SASL authentication is not enabled in {service_name}".format_map(service)) from exc
         info = find_component(
             service["components"],
             route=route,
@@ -100,7 +130,7 @@ class KafkaSASLConnectionInfo(KafkaConnectionInfo):
             raise ConnectionInfoError(f"Could not find password for username {username}")
         return cls(host=info["host"], port=info["port"], username=username, password=user["password"])
 
-    def kafkacat(self, store: Store, get_project_ca: Callable[[], str], ca_path: str) -> Sequence[str]:
+    def kcat(self, tool_name: str, store: Store, get_project_ca: Callable[[], str], ca_path: str) -> Sequence[str]:
         extra = [
             "-X",
             "sasl.mechanisms=SCRAM-SHA-256",
@@ -109,4 +139,4 @@ class KafkaSASLConnectionInfo(KafkaConnectionInfo):
             "-X",
             f"sasl.password={self.password}",
         ]
-        return self._kafkacat("SASL_SSL", ca_path, extra, store, get_project_ca)
+        return self._kcat(tool_name, "SASL_SSL", ca_path, extra, store, get_project_ca)
