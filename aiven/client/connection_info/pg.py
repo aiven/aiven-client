@@ -64,7 +64,7 @@ class PGConnectionInfo:
         )
 
     def connection_string(self) -> str:
-        return f"host='{self.host}' port='{self.port}' user={self.username} dbname='{self.dbname}'"
+        return f"host='{self.host}' port='{self.port}' user={self.username} dbname='{self.dbname}' password='{self.password}'"
 
     def psql(self) -> Sequence[str]:
         return ["psql", self.uri()]
