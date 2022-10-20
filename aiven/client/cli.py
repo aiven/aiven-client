@@ -1199,6 +1199,74 @@ class AivenCLI(argx.CommandLineTool):
         self.print_response(resp, format=self.args.format, json=self.args.json, table_layout=layout)
 
     @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def service__privatelink__google__create(self) -> None:
+        """Create a privatelink for a Google Cloud service"""
+        resp = self.client.create_service_privatelink_google(
+            project=self.get_project(),
+            service=self.args.service_name,
+        )
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def service__privatelink__google__get(self) -> None:
+        """Get privatelink information for a Google Cloud service"""
+        resp = self.client.get_service_privatelink_google(project=self.get_project(), service=self.args.service_name)
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def service__privatelink__google__delete(self) -> None:
+        """Delete privatelink from a Google Cloud service"""
+        resp = self.client.delete_service_privatelink_google(project=self.get_project(), service=self.args.service_name)
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def service__privatelink__google__refresh(self) -> None:
+        """Refresh privatelink state of a service in Google Cloud, including connected/pending endpoints"""
+        resp = self.client.refresh_service_privatelink_google(project=self.get_project(), service=self.args.service_name)
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def service__privatelink__google__connection__list(self) -> None:
+        """List privatelink connections for a Google Cloud service"""
+        resp = self.client.list_service_privatelink_google_connections(
+            project=self.get_project(), service=self.args.service_name
+        )
+        print(resp)
+        layout = ["privatelink_connection_id", "psc_connection_id", "state", "user_ip_address"]
+        self.print_response(resp["connections"], format=self.args.format, json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg.service_name
+    @arg("--privatelink-connection-id", help="The Aiven assigned ID of the privatelink connection to approve", required=True)
+    @arg("--user-ip-address", help="IP address assigned to the connecting Private Service Connect endpoint", required=True)
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def service__privatelink__google__connection__approve(self) -> None:
+        """Approve a privatelink connection to a Google Cloud service"""
+        resp = self.client.approve_service_privatelink_google_connection(
+            project=self.get_project(),
+            service=self.args.service_name,
+            privatelink_connection_id=self.args.privatelink_connection_id,
+            user_ip_address=self.args.user_ip_address,
+        )
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
     @arg("--format", help="Format string for output")
     @arg.json
     def service__privatelink__availability(self) -> None:
