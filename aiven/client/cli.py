@@ -4,7 +4,7 @@
 # See the file `LICENSE` for details.
 from . import argx, client
 from aiven.client import AivenClient, envdefault
-from aiven.client.cliarg import arg  # type: ignore
+from aiven.client.cliarg import arg
 from aiven.client.common import UNDEFINED
 from aiven.client.connection_info.common import Store
 from aiven.client.connection_info.kafka import KafkaCertificateConnectionInfo, KafkaSASLConnectionInfo

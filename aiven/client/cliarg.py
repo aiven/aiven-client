@@ -2,7 +2,6 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
-# type: ignore[attr-defined]
 from .argx import arg, CommandLineTool, UserError
 from functools import wraps
 from typing import Any, Callable, Dict, TypeVar

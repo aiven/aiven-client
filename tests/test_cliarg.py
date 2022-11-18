@@ -3,10 +3,9 @@
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
 
-# pylint: disable=no-member
 from _pytest.logging import LogCaptureFixture
 from aiven.client.argx import CommandLineTool
-from aiven.client.cliarg import arg  # type: ignore
+from aiven.client.cliarg import arg
 
 
 def test_user_config_json_error_json(caplog: LogCaptureFixture) -> None:
