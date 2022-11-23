@@ -3,4 +3,6 @@
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
 
-from .client import AivenClient  # noqa
+from .client import AivenClient
+
+__all__ = ("AivenClient",)
