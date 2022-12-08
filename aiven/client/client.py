@@ -2115,6 +2115,9 @@ class AivenClient(AivenClientBase):
             result_key="account_invites",
         )
 
+    def delete_team_invite(self, account_id: str, team_id: str, email: str) -> Mapping:
+        return self.verify(self.delete, self.build_path("account", account_id, "team", team_id, "invites", email))
+
     def delete_team_member(self, account_id: str, team_id: str, user_id: str) -> Mapping:
         return self.verify(
             self.delete,

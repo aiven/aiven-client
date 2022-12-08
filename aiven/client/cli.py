@@ -800,6 +800,14 @@ class AivenCLI(argx.CommandLineTool):
     @arg.json
     @arg.account_id
     @arg.team_id
+    @arg.email
+    def account__team__invite_delete(self) -> None:
+        """Delete pending invite from a team"""
+        self.client.delete_team_invite(self.args.account_id, self.args.team_id, self.args.email)
+
+    @arg.json
+    @arg.account_id
+    @arg.team_id
     @arg.user_id
     def account__team__user_delete(self) -> None:
         """Delete user from a team"""
