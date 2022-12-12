@@ -1487,6 +1487,28 @@ class AivenClient(AivenClientBase):
         path = self._privatelink_path(project, service, "azure") + "/connections"
         return self.verify(self.get, path, result_key="connections")
 
+    def create_service_privatelink_google(self, project: str, service: str) -> Mapping:
+        path = self._privatelink_path(project, service, "google")
+        return self.verify(self.post, path, body={})
+
+    def get_service_privatelink_google(self, project: str, service: str) -> Mapping:
+        path = self._privatelink_path(project, service, "google")
+        return self.verify(self.get, path)
+
+    def refresh_service_privatelink_google(self, project: str, service: str) -> Mapping:
+        path = self._privatelink_path(project, service, "google", "refresh")
+        return self.verify(self.post, path)
+
+    def list_service_privatelink_google_connections(self, project: str, service: str) -> Sequence[Dict[str, Any]]:
+        path = self._privatelink_path(project, service, "google") + "/connections"
+        return self.verify(self.get, path, result_key="connections")
+
+    def approve_service_privatelink_connection_google(
+        self, project: str, service: str, privatelink_connection_id: str, user_ip_address: str
+    ) -> Mapping:
+        path = self._privatelink_path(project, service, "google", "connections", privatelink_connection_id, "approve")
+        return self.verify(self.post, path, body={"user_ip_address": user_ip_address})
+
     def list_privatelink_cloud_availability(self, project: str) -> Sequence[Dict[str, Any]]:
         path = self.build_path("project", project, "privatelink-availability")
         return self.verify(self.get, path, result_key="privatelink_availability")

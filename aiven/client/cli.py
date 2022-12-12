@@ -1199,6 +1199,68 @@ class AivenCLI(argx.CommandLineTool):
         self.print_response(resp, format=self.args.format, json=self.args.json, table_layout=layout)
 
     @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def service__privatelink__google__create(self) -> None:
+        """Create Goole Private Service Connect publisher for a service"""
+        resp = self.client.create_service_privatelink_google(
+            project=self.get_project(),
+            service=self.args.service_name,
+        )
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def service__privatelink__google__get(self) -> None:
+        """Get Google Private Service Connect publisher information for a service"""
+        resp = self.client.get_service_privatelink_google(project=self.get_project(), service=self.args.service_name)
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
+    @arg.service_name
+    def service__privatelink__google__refresh(self) -> None:
+        """Refresh Google Private Service Connect to discover new endpoints"""
+        self.client.refresh_service_privatelink_google(
+            project=self.get_project(),
+            service=self.args.service_name,
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg.json
+    def service__privatelink__google__connection__list(self) -> None:
+        """List Google Private Service Connect connections for a service"""
+        resp = self.client.list_service_privatelink_google_connections(
+            project=self.get_project(), service=self.args.service_name
+        )
+        layout = ["privatelink_connection_id", "psc_connection_id", "state", "user_ip_address"]
+        self.print_response(resp, format=self.args.format, json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg.service_name
+    @arg("--format", help="Format string for output")
+    @arg(
+        "--endpoint-ip-address",
+        metavar="IP_ADDRESS",
+        help="(Private) IP address of endpoint in user Google cloud project",
+    )
+    @arg.json
+    @arg("privatelink_connection_id", help="Aiven privatelink connection ID")
+    def service__privatelink__google__connection__approve(self) -> None:
+        """Approve a Google Private Service Connect connection in pending-user-approval state"""
+        resp = self.client.approve_service_privatelink_connection_google(
+            project=self.get_project(),
+            service=self.args.service_name,
+            privatelink_connection_id=self.args.privatelink_connection_id,
+            user_ip_address=self.args.endpoint_ip_address,
+        )
+        self.print_response([resp], format=self.args.format, json=self.args.json)
+
+    @arg.project
     @arg("--format", help="Format string for output")
     @arg.json
     def service__privatelink__availability(self) -> None:
