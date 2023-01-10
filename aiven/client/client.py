@@ -1347,6 +1347,10 @@ class AivenClient(AivenClientBase):
         body = {"tags": tags}
         return self.verify(self.put, path, body=body)
 
+    def get_project_sbom_download_url(self, project: str, output_format: str) -> Mapping[str, str]:
+        path = self.build_path("project", project, "generate-sbom-download-url", output_format)
+        return self.verify(self.get, path)
+
     def create_service(
         self,
         project: str,

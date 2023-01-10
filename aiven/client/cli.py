@@ -4735,6 +4735,27 @@ server_encryption_options:
         response = self.client.replace_project_tags(project=project_name, tags=self._tag_replace_body_from_args())
         print(response["message"])
 
+    @arg.project
+    @arg(
+        "--output",
+        help="Output extension(CSV or SPDX), for the SBOM report.",
+        required=True,
+    )
+    def project__generate_sbom(self) -> None:
+        """Generate SBOM report from a given project"""
+        allowed_extensions = ["csv", "spdx"]
+        if self.args.output not in allowed_extensions:
+            raise argx.UserError(f"Unsupported output extension. Please, use one from this list: {allowed_extensions}")
+
+        response = self.client.get_project_sbom_download_url(project=self.get_project(), output_format=self.args.output)
+
+        download_url = response.get("download_url")
+        if not download_url:
+            raise argx.UserError("Cannot retrieve a SBOM download url from server.")
+
+        sbom_url = {"sbom_report_url": f"{self.client.base_url}{self.client.api_prefix}{download_url}"}
+        self.print_response(sbom_url)
+
     @arg.email
     @arg("--real-name", help="User real name", required=True)
     def user__create(self) -> None:
