@@ -67,6 +67,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - uses: syphar/restore-virtualenv@v1
+        with:
+          requirement_files: requirements.dev.txt
+
       - id: dependencies
         run: |
           python -m pip install --upgrade pip==21.2.4
