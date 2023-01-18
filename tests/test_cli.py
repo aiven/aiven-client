@@ -5,13 +5,13 @@
 
 from aiven.client import AivenClient
 from aiven.client.argx import UserError
-from aiven.client.cli import AivenCLI, ClientFactory, EOL_ADVANCE_WARNING_TIME
+from aiven.client.cli import AivenCLI, ClientFactory, convert_str_to_value, EOL_ADVANCE_WARNING_TIME
 from aiven.client.common import UNDEFINED
 from argparse import Namespace
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pytest import CaptureFixture, LogCaptureFixture
-from typing import Any, cast, Iterator, Mapping, Optional
+from typing import Any, cast, Iterator, Mapping, Optional, Union
 from unittest import mock
 
 import pytest
@@ -138,6 +138,97 @@ def test_create_user_config() -> None:
         "foo": None,
         "main": 3,
     }
+
+
+@pytest.mark.parametrize(
+    ("user_config_args,config_type,expected_value"),
+    [
+        ('[{"description":"test","network":"0.0.0.0/0"}]', "array", [{"description": "test", "network": "0.0.0.0/0"}]),
+        (
+            '[{"description":"test","network":"0.0.0.0/0"},{"description":"test2","network":"100.1.0.0/16"}]',
+            "array",
+            [{"description": "test", "network": "0.0.0.0/0"}, {"description": "test2", "network": "100.1.0.0/16"}],
+        ),
+        (
+            '[{"description":"test","network":"0.0.0.0/0"},"0.0.0.0"]',
+            "array",
+            [{"description": "test", "network": "0.0.0.0/0"}, "0.0.0.0"],
+        ),
+        ("['0.0.0.0','0.0.0/8']", "array", ["0.0.0.0", "0.0.0/8"]),
+        ("123", "integer", 123),
+        ("10.0", "number", 10.0),
+        ("false", "boolean", False),
+    ],
+)
+def test_convert_str_to_value(user_config_args: str, config_type: str, expected_value: Union[str, dict]) -> None:
+    cli = AivenCLI()
+    cli.args = Namespace()
+    schema = {
+        "type": config_type,
+        "title": "Test",
+        "description": "Just for test",
+        "items": {
+            "type": ["string", "object"],
+            "title": "",
+            "example": "test",
+            "maxLength": 43,
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "title": "Test description",
+                    "example": "test description",
+                    "maxLength": 1024,
+                },
+                "network": {},
+            },
+            "required": ["test"],
+            "additionalProperties": False,
+        },
+        "default": ["test"],
+        "maxItems": 1024,
+        "property_parts": ["test"],
+    }
+    converted_value = convert_str_to_value(schema, user_config_args)
+    assert converted_value == expected_value
+
+
+@pytest.mark.parametrize(
+    ("user_config_args,config_type,error_message"),
+    [
+        ("0.0.0.0/8,0.0.0.0", "dict", "Support for option value type(s) 'dict' not implemented"),
+        ("True", "boolean", "Invalid boolean value 'True': expected one of 1, 0, true, false"),
+        # ("")
+    ],
+)
+def test_convert_str_to_value_fails(user_config_args: str, config_type: str, error_message: str) -> None:
+    schema = {
+        "type": config_type,
+        "title": "Test",
+        "description": "Just for test",
+        "items": {
+            "type": ["string", "object"],
+            "title": "",
+            "example": "test",
+            "maxLength": 43,
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "title": "Test description",
+                    "example": "test description",
+                    "maxLength": 1024,
+                },
+                "network": {},
+            },
+            "required": ["test"],
+            "additionalProperties": False,
+        },
+        "default": ["test"],
+        "maxItems": 1024,
+        "property_parts": ["test"],
+    }
+    with pytest.raises(UserError) as excinfo:
+        convert_str_to_value(schema, user_config_args)
+    assert str(excinfo.value).startswith(error_message)
 
 
 def patched_get_auth_token() -> str:
