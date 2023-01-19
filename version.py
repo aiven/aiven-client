@@ -11,10 +11,18 @@ import subprocess
 def _detached() -> bool:
     try:
         # Returns exit code 1 if detached
-        result = subprocess.Popen(["git", "symbolic-ref", "-q", "HEAD"])
+        result = subprocess.run(["git", "symbolic-ref", "-q", "HEAD"])
         return result.returncode == 1
     except OSError:
         return False
+
+
+def pep440ify(git_describe_version: str) -> str:
+    if git_describe_version:
+        version, commits, sha = git_describe_version.split("-")
+        # Remove the number of commits.
+        return f"{version}+{sha}"
+    return git_describe_version
 
 
 def get_project_version(version_file: str) -> str:
@@ -38,6 +46,8 @@ def get_project_version(version_file: str) -> str:
                 # If in detached state add some mockery to version so it
                 # it parseable by setuptools.
                 git_ver = f"0.0.0+{git_ver}"
+            else:
+                git_ver = pep440ify(git_ver)
             if git_ver and ((git_ver != file_ver) or not file_ver):
                 open(version_file, "w").write("__version__ = '%s'\n" % git_ver)
                 return git_ver
