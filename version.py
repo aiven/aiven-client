@@ -5,7 +5,36 @@ automatically maintains the latest git tag + revision info in a python file
 
 import importlib.machinery
 import os
+import re
 import subprocess
+
+
+def _detached() -> bool:
+    try:
+        # Returns exit code 1 if detached
+        result = subprocess.run(["git", "symbolic-ref", "-q", "HEAD"])
+        return result.returncode == 1
+    except OSError:
+        return False
+
+
+MAJOR_MINOR_PATCH_MATCHER = re.compile("^\d+.\d+.\d+$")
+
+
+def pep440ify(git_describe_version: str) -> str:
+    if git_describe_version:
+        if _detached():
+            if MAJOR_MINOR_PATCH_MATCHER.match(git_describe_version):
+                return git_describe_version
+            else:
+                # If in detached state and does not match to major.minor.patch pattern
+                # add some mockery to version so it is parseable by setuptools.
+                return f"0.0.0+{git_describe_version}"
+        else:
+            version, commits, sha = git_describe_version.split("-")
+            # Remove the number of commits.
+            return f"{version}+{sha}"
+    return git_describe_version
 
 
 def get_project_version(version_file: str) -> str:
@@ -25,6 +54,7 @@ def get_project_version(version_file: str) -> str:
         stdout, _ = proc.communicate()
         if stdout:
             git_ver = stdout.splitlines()[0].strip().decode("utf-8")
+            git_ver = pep440ify(git_ver)
             if git_ver and ((git_ver != file_ver) or not file_ver):
                 open(version_file, "w").write("__version__ = '%s'\n" % git_ver)
                 return git_ver
