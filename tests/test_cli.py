@@ -86,6 +86,24 @@ def test_service_topic_update() -> None:
     )
 
 
+def test_service_create_from_pitr() -> None:
+    AivenCLI().run(
+        args=[
+            "service",
+            "create",
+            "service-fork",
+            "--service-type",
+            "pg",
+            "--plan",
+            "business-4",
+            "--service-to-fork-from",
+            "service",
+            "--recovery-target-time",
+            "2023-01-20 11:38:49.926085+00:00",
+        ]
+    )
+
+
 def test_help() -> None:
     AivenCLI().run(args=["help"])
 

@@ -3823,6 +3823,8 @@ ssl.truststore.type=JKS
         default=False,
         help="Enable termination protection",
     )
+    @arg("--service-to-fork-from", help="Service to fork from")
+    @arg("--recovery-target-time", help="PITR recovery point in format 2023-02-01 11:38:49")
     @arg.force
     def service__create(self) -> None:
         """Create a service"""
@@ -3863,6 +3865,11 @@ ssl.truststore.type=JKS
                         "source_service": self.args.read_replica_for,
                     }
                 )
+        elif self.args.recovery_target_time and self.args.service_to_fork_from:
+            user_config["service_to_fork_from"] = self.args.service_to_fork_from
+            user_config["recovery_target_time"] = self.args.recovery_target_time
+        elif self.args.service_to_fork_from:
+            user_config["service_to_fork_from"] = self.args.service_to_fork_from
 
         try:
             self.client.create_service(
