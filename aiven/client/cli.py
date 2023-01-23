@@ -5262,6 +5262,219 @@ server_encryption_options:
 
         self.client.delete_oauth2_client_secret(self.args.account_id, self.args.oauth2_client_id, self.args.secret_id)
 
+    @arg.project
+    @arg.service_name
+    def service__flink__list_applications(self) -> None:
+        """List Flink applications"""
+        self.print_response(
+            self.client.flink_list_applications(
+                project=self.args.project,
+                service=self.args.service_name,
+            ),
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg.json_path_or_string("application_properties")
+    def service__flink__create_application(self) -> None:
+        """Create Flink application"""
+        self.print_response(
+            self.client.flink_create_application(
+                project=self.args.project,
+                service=self.args.service_name,
+                application_properties=self.args.application_properties,
+            ),
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg.flink_application_id
+    def service__flink__get_application(self) -> None:
+        """Get Flink application"""
+        self.print_response(
+            self.client.flink_get_application(
+                project=self.args.project,
+                service=self.args.service_name,
+                application_id=self.args.application_id,
+            ),
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg.flink_application_id
+    @arg.json_path_or_string("application_properties")
+    def service__flink__update_application(self) -> None:
+        """Update Flink application"""
+        self.print_response(
+            self.client.flink_update_application(
+                project=self.args.project,
+                service=self.args.service_name,
+                application_id=self.args.application_id,
+                application_properties=self.args.application_properties,
+            ),
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg.flink_application_id
+    def service__flink__delete_application(self) -> None:
+        """Delete Flink application"""
+        self.print_response(
+            self.client.flink_delete_application(
+                project=self.args.project,
+                service=self.args.service_name,
+                application_id=self.args.application_id,
+            ),
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg.flink_application_id
+    @arg.json_path_or_string("application_version_properties")
+    def service__flink__create_application_version(self) -> None:
+        """Create Flink application version"""
+        self.print_response(
+            self.client.flink_create_application_version(
+                project=self.args.project,
+                service=self.args.service_name,
+                application_id=self.args.application_id,
+                application_version_properties=self.args.application_version_properties,
+            ),
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg.flink_application_id
+    @arg.json_path_or_string("application_version_properties")
+    def service__flink__validate_application_version(self) -> None:
+        """Validate Flink application version"""
+        self.print_response(
+            self.client.flink_validate_application_version(
+                project=self.args.project,
+                service=self.args.service_name,
+                application_id=self.args.application_id,
+                application_version_properties=self.args.application_version_properties,
+            ),
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg.flink_application_id
+    @arg.flink_application_version_id
+    def service__flink__get_application_version(self) -> None:
+        """Get Flink application version"""
+        self.print_response(
+            self.client.flink_get_application_version(
+                project=self.args.project,
+                service=self.args.service_name,
+                application_id=self.args.application_id,
+                application_version_id=self.args.application_version_id,
+            ),
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg.flink_application_id
+    @arg.flink_application_version_id
+    def service__flink__delete_application_version(self) -> None:
+        """Delete Flink application version"""
+        self.print_response(
+            self.client.flink_delete_application_version(
+                project=self.args.project,
+                service=self.args.service_name,
+                application_id=self.args.application_id,
+                application_version_id=self.args.application_version_id,
+            ),
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg.flink_application_id
+    def service__flink__list_application_deployments(self) -> None:
+        """List Flink application deployments"""
+        self.print_response(
+            self.client.flink_list_application_deployments(
+                project=self.args.project,
+                service=self.args.service_name,
+                application_id=self.args.application_id,
+            ),
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg.flink_application_id
+    @arg.flink_deployment_id
+    def service__flink__get_application_deployment(self) -> None:
+        """Get Flink application deployment"""
+        self.print_response(
+            self.client.flink_get_application_deployment(
+                project=self.args.project,
+                service=self.args.service_name,
+                application_id=self.args.application_id,
+                deployment_id=self.args.deployment_id,
+            ),
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg.flink_application_id
+    @arg.json_path_or_string("deployment_properties")
+    def service__flink__create_application_deployment(self) -> None:
+        """Create Flink application deployment"""
+        self.print_response(
+            self.client.flink_create_application_deployment(
+                project=self.args.project,
+                service=self.args.service_name,
+                application_id=self.args.application_id,
+                deployment_properties=self.args.deployment_properties,
+            ),
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg.flink_application_id
+    @arg.flink_deployment_id
+    def service__flink__delete_application_deployment(self) -> None:
+        """Delete Flink application deployment"""
+        self.print_response(
+            self.client.flink_delete_application_deployment(
+                project=self.args.project,
+                service=self.args.service_name,
+                application_id=self.args.application_id,
+                deployment_id=self.args.deployment_id,
+            ),
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg.flink_application_id
+    @arg.flink_deployment_id
+    def service__flink__stop_application_deployment(self) -> None:
+        """Stop Flink application deployment"""
+        self.print_response(
+            self.client.flink_stop_application_deployment(
+                project=self.args.project,
+                service=self.args.service_name,
+                application_id=self.args.application_id,
+                deployment_id=self.args.deployment_id,
+            ),
+        )
+
+    @arg.project
+    @arg.service_name
+    @arg.flink_application_id
+    @arg.flink_deployment_id
+    def service__flink__cancel_application_deployments(self) -> None:
+        """Cancel Flink application deployment"""
+        self.print_response(
+            self.client.flink_cancel_application_deployment(
+                project=self.args.project,
+                service=self.args.service_name,
+                application_id=self.args.application_id,
+                deployment_id=self.args.deployment_id,
+            ),
+        )
+
 
 if __name__ == "__main__":
     AivenCLI().main()

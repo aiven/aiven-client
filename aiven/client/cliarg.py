@@ -204,3 +204,7 @@ arg.target_cluster = arg("-t", "--target-cluster", required=True, help="Target c
 
 arg.billing_email = arg("--billing-email", action="append", help="Billing email address")
 arg.tech_email = arg("--tech-email", action="append", help="Tech email address")
+
+arg.flink_application_id = arg("--application-id", required=True, help="Flink application id")
+arg.flink_application_version_id = arg("--application-version-id", required=True, help="Flink application version id")
+arg.flink_deployment_id = arg("--deployment-id", required=True, help="Flink deployment id")

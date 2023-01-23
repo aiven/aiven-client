@@ -2134,3 +2134,334 @@ class AivenClient(AivenClientBase):
             self.delete,
             self.build_path("account", account_id, "oauth_client", client_id, "secret", secret_id),
         )
+
+    def flink_list_applications(
+        self,
+        *,
+        project: str,
+        service: str,
+    ) -> Mapping[Any, Any]:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "flink",
+                "application",
+            ),
+        )
+
+    def flink_create_application(
+        self,
+        *,
+        project: str,
+        service: str,
+        application_properties: Mapping[str, Any],
+    ) -> Mapping[Any, Any]:
+        return self.verify(
+            self.post,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "flink",
+                "application",
+            ),
+            body=application_properties,
+        )
+
+    def flink_get_application(
+        self,
+        *,
+        project: str,
+        service: str,
+        application_id: str,
+    ) -> Mapping[Any, Any]:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "flink",
+                "application",
+                application_id,
+            ),
+        )
+
+    def flink_update_application(
+        self,
+        *,
+        project: str,
+        service: str,
+        application_id: str,
+        application_properties: Mapping[str, str],
+    ) -> Mapping[Any, Any]:
+        return self.verify(
+            self.put,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "flink",
+                "application",
+                application_id,
+            ),
+            body=application_properties,
+        )
+
+    def flink_delete_application(
+        self,
+        *,
+        project: str,
+        service: str,
+        application_id: str,
+    ) -> Mapping[Any, Any]:
+        return self.verify(
+            self.delete,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "flink",
+                "application",
+                application_id,
+            ),
+        )
+
+    def flink_create_application_version(
+        self,
+        *,
+        project: str,
+        service: str,
+        application_id: str,
+        application_version_properties: Mapping[str, Any],
+    ) -> Mapping[Any, Any]:
+        return self.verify(
+            self.post,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "flink",
+                "application",
+                application_id,
+                "version",
+            ),
+            body=application_version_properties,
+        )
+
+    def flink_validate_application_version(
+        self,
+        *,
+        project: str,
+        service: str,
+        application_id: str,
+        application_version_properties: Mapping[str, Any],
+    ) -> Mapping[Any, Any]:
+        return self.verify(
+            self.post,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "flink",
+                "application",
+                application_id,
+                "version",
+                "validate",
+            ),
+            body=application_version_properties,
+        )
+
+    def flink_get_application_version(
+        self,
+        *,
+        project: str,
+        service: str,
+        application_id: str,
+        application_version_id: str,
+    ) -> Mapping[Any, Any]:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "flink",
+                "application",
+                application_id,
+                "version",
+                application_version_id,
+            ),
+        )
+
+    def flink_delete_application_version(
+        self,
+        *,
+        project: str,
+        service: str,
+        application_id: str,
+        application_version_id: str,
+    ) -> Mapping[Any, Any]:
+        return self.verify(
+            self.delete,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "flink",
+                "application",
+                application_id,
+                "version",
+                application_version_id,
+            ),
+        )
+
+    def flink_list_application_deployments(
+        self,
+        *,
+        project: str,
+        service: str,
+        application_id: str,
+    ) -> Mapping[Any, Any]:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "flink",
+                "application",
+                application_id,
+                "deployment",
+            ),
+        )
+
+    def flink_get_application_deployment(
+        self,
+        *,
+        project: str,
+        service: str,
+        application_id: str,
+        deployment_id: str,
+    ) -> Mapping[Any, Any]:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "flink",
+                "application",
+                application_id,
+                "deployment",
+                deployment_id,
+            ),
+        )
+
+    def flink_create_application_deployment(
+        self,
+        *,
+        project: str,
+        service: str,
+        application_id: str,
+        deployment_properties: Mapping[str, Any],
+    ) -> Mapping[Any, Any]:
+        return self.verify(
+            self.post,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "flink",
+                "application",
+                application_id,
+                "deployment",
+            ),
+            body=deployment_properties,
+        )
+
+    def flink_delete_application_deployment(
+        self,
+        *,
+        project: str,
+        service: str,
+        application_id: str,
+        deployment_id: str,
+    ) -> Mapping[Any, Any]:
+        return self.verify(
+            self.delete,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "flink",
+                "application",
+                application_id,
+                "deployment",
+                deployment_id,
+            ),
+        )
+
+    def flink_stop_application_deployment(
+        self,
+        *,
+        project: str,
+        service: str,
+        application_id: str,
+        deployment_id: str,
+    ) -> Mapping[Any, Any]:
+        return self.verify(
+            self.post,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "flink",
+                "application",
+                application_id,
+                "deployment",
+                deployment_id,
+                "stop",
+            ),
+        )
+
+    def flink_cancel_application_deployment(
+        self,
+        *,
+        project: str,
+        service: str,
+        application_id: str,
+        deployment_id: str,
+    ) -> Mapping[Any, Any]:
+        return self.verify(
+            self.post,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "flink",
+                "application",
+                application_id,
+                "deployment",
+                deployment_id,
+                "cancel",
+            ),
+        )
