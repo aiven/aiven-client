@@ -22,6 +22,8 @@ from typing import (
     TextIO,
     Tuple,
     Type,
+    TYPE_CHECKING,
+    TypeVar,
     Union,
 )
 
@@ -79,7 +81,10 @@ class UserError(Exception):
     """User error"""
 
 
-def arg(*args: Any, **kwargs: Any) -> Callable:
+F = TypeVar("F", bound=Callable)
+
+
+class Arg:  # pylint: disable=too-many-instance-attributes
     """Declares an argument of an CLI command.
 
     This decorator accepts the same arguments as `argparse.Parser::add_argument`.
@@ -97,18 +102,30 @@ def arg(*args: Any, **kwargs: Any) -> Callable:
                 print(self.args.n)
     """
 
-    def wrap(func: Callable) -> Callable:
-        arg_list = getattr(func, ARG_LIST_PROP, None)
-        if arg_list is None:
-            arg_list = []
-            setattr(func, ARG_LIST_PROP, arg_list)
+    def __call__(self, *args: Any, **kwargs: Any) -> Callable[[F], F]:
+        def wrap(func: F) -> F:
+            arg_list = getattr(func, ARG_LIST_PROP, None)
+            if arg_list is None:
+                arg_list = []
+                setattr(func, ARG_LIST_PROP, arg_list)
 
-        if args or kwargs:
-            arg_list.insert(0, (args, kwargs))
+            if args or kwargs:
+                arg_list.insert(0, (args, kwargs))
 
-        return func
+            return func
 
-    return wrap
+        return wrap
+
+    if TYPE_CHECKING:
+
+        def __getattr__(self, name: str) -> Callable:
+            ...
+
+        def __setattr__(self, name: str, value: Callable) -> None:
+            ...
+
+
+arg = Arg()
 
 
 def name_to_cmd_parts(name: str) -> List[str]:
