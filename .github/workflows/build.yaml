@@ -75,3 +75,33 @@ jobs:
           pip install -e .
           pytest -vv tests/
 
+  test-fedora:
+    runs-on: ubuntu-latest
+    container: 'fedora:37'
+    needs: lint
+    steps:
+      - id: dependencies
+        run: sudo dnf install -y git-core make
+
+      - id: checkout-code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # See: https://github.com/actions/runner-images/issues/6775#issuecomment-1377299658
+      - id: chown-container-working-directory
+        name: Change Owner of Container Working Directory
+        run: chown root:root .
+
+      - id: build-and-test
+        name: Build and test
+        run: |
+          make build-dep-fedora
+          make rpm
+
+      - id: install
+        name: Install
+        run: sudo dnf install -y rpms/noarch/*.rpm
+
+      # test step is not needed (tests run on a build)
