@@ -13,6 +13,7 @@ from aiven.client.connection_info.redis import RedisConnectionInfo
 from aiven.client.pretty import TableLayout
 from aiven.client.speller import suggest
 from argparse import ArgumentParser
+from ast import literal_eval
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
@@ -42,14 +43,14 @@ AUTHENTICATION_METHOD_COLUMNS = [
 EOL_ADVANCE_WARNING_TIME = timedelta(weeks=26)  # Give 6 months advance notice for EOL services
 
 
-def convert_str_to_value(schema: Mapping[str, Any], str_value: Optional[str]) -> Any:
-    if str_value is not None:
-        if "string" in schema["type"]:
-            return str_value
+def convert_str_to_value(schema: Mapping[str, Any], value: Optional[Any]) -> Any:
+    if value is not None:
+        if "string" in schema["type"] or "object" in schema["type"]:
+            return value
         elif "integer" in schema["type"]:
-            return int(str_value, 0)  # automatically convert from '123', '0x123', '0o644', etc.
+            return int(value, 0)  # automatically convert from '123', '0x123', '0o644', etc.
         elif "number" in schema["type"]:
-            return float(str_value)
+            return float(value)
         elif "boolean" in schema["type"]:
             values = {
                 "1": True,
@@ -58,13 +59,17 @@ def convert_str_to_value(schema: Mapping[str, Any], str_value: Optional[str]) ->
                 "false": False,
             }
             try:
-                return values[str_value]
+                return values[value]
             except KeyError as ex:
                 raise argx.UserError(
-                    "Invalid boolean value {!r}: expected one of {}".format(str_value, ", ".join(values))
+                    "Invalid boolean value {!r}: expected one of {}".format(value, ", ".join(values))
                 ) from ex
         elif "array" in schema["type"]:
-            return [convert_str_to_value(schema["items"], val) for val in str_value.split(",")]
+            evaluated_array = literal_eval(value)
+            values_array = []
+            for item in evaluated_array:
+                values_array.append(convert_str_to_value(schema["items"], item))
+            return values_array
         else:
             raise argx.UserError("Support for option value type(s) {!r} not implemented".format(schema["type"]))
 
@@ -2594,7 +2599,7 @@ ssl.truststore.type=JKS
                 ns_buffer_future_dur=self.args.ns_buffer_future_dur,
                 ns_buffer_past_dur=self.args.ns_buffer_past_dur,
                 ns_writes_to_commitlog=convert_str_to_value(
-                    schema={"type": ["boolean"]}, str_value=self.args.ns_writes_to_commitlog
+                    schema={"type": ["boolean"]}, value=self.args.ns_writes_to_commitlog
                 ),
             )
         except ValueError as ex:  # namespace argument validations
@@ -2624,7 +2629,7 @@ ssl.truststore.type=JKS
                 ns_buffer_future_dur=self.args.ns_buffer_future_dur,
                 ns_buffer_past_dur=self.args.ns_buffer_past_dur,
                 ns_writes_to_commitlog=convert_str_to_value(
-                    schema={"type": ["boolean"]}, str_value=self.args.ns_writes_to_commitlog
+                    schema={"type": ["boolean"]}, value=self.args.ns_writes_to_commitlog
                 ),
             )
         except (KeyError, ValueError) as ex:  # namespace does not exist, argument validations
@@ -4081,7 +4086,6 @@ ssl.truststore.type=JKS
         plan = self.args.plan or service["plan"]
         user_config_schema = self._get_service_type_user_config_schema(project=project, service_type=service["service_type"])
         user_config = self.create_user_config(user_config_schema)
-
         # If the user requests a version change, check EOL status
         service_type = service["service_type"]
         requested_version = self._extract_user_config_version(service_type, user_config)

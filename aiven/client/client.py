@@ -1323,7 +1323,6 @@ class AivenClient(AivenClientBase):
             body["termination_protection"] = termination_protection
         if schema_registry_authorization is not None:
             body["schema_registry_authz"] = schema_registry_authorization
-
         path = self.build_path("project", project, "service", service)
         return self.verify(self.put, path, body=body, result_key="service")
 
