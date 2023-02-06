@@ -1784,14 +1784,14 @@ class AivenCLI(argx.CommandLineTool):
     @arg.json
     def service__connection_pool_update(self) -> None:
         """Update a connection pool for a given PostgreSQL service"""
-        kwargs = dict(
-            project=self.get_project(),
-            service=self.args.service_name,
-            pool_name=self.args.pool_name,
-            dbname=self.args.dbname,
-            pool_size=self.args.pool_size,
-            pool_mode=self.args.pool_mode,
-        )
+        kwargs = {
+            "project": self.get_project(),
+            "service": self.args.service_name,
+            "pool_name": self.args.pool_name,
+            "dbname": self.args.dbname,
+            "pool_size": self.args.pool_size,
+            "pool_mode": self.args.pool_mode,
+        }
 
         if self.args.username is not None:
             kwargs["username"] = self.args.username if self.args.username != "" else None
