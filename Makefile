@@ -1,14 +1,7 @@
 short_ver = 2.18.0
-long_ver = $(shell git describe --long 2>/dev/null || echo $(short_ver)-0-unknown-g`git describe --always`)
-generated = aiven/client/version.py
+release = 1
 PYTHON ?= python3
 PYTHON_DIRS = aiven tests
-RPM=rpms/noarch/aiven-client-$(short_ver)-$(subst -,.,$(subst $(short_ver)-,,$(long_ver))).*.noarch.rpm
-
-all: $(generated)
-
-aiven/client/version.py: .git/index
-	$(PYTHON) version.py $@
 
 test: pytest
 lint: flake8 mypy pylint
@@ -39,7 +32,7 @@ pylint:
 pytest:
 	$(PYTHON) -m pytest -vv tests/
 
-coverage: $(generated)
+coverage:
 	$(PYTHON) -m coverage run --source aiven -m pytest $(PYTEST_ARG) tests/
 	$(PYTHON) -m coverage report --show-missing
 
@@ -50,6 +43,11 @@ build-dep-fedora:
 	sudo dnf install -y --best --allowerasing \
 		black \
 		python3-devel \
+		python3-certifi \
+		python3-hatch-vcs \
+		python3-hatchling \
+		python3-PyMySQL \
+		python3-wheel \
 		python3-flake8 \
 		python3-isort \
 		python3-mypy \
@@ -57,13 +55,11 @@ build-dep-fedora:
 		python3-pytest \
 		python3-requests \
 		python3-types-requests \
+		python3-setuptools_scm \
 		rpmdevtools \
 		tar
 
-.PHONY: rpm
-rpm: $(RPM)
-
-$(RPM): $(generated)
+rpm:
 	git archive --prefix=aiven-client/ HEAD -o rpm-src-aiven-client.tar
 	# add generated files to the tar, they're not in git repository
 	tar -r -f rpm-src-aiven-client.tar --transform=s,aiven/,aiven-client/aiven/, $(generated)
@@ -71,7 +67,7 @@ $(RPM): $(generated)
 		--define '_sourcedir $(CURDIR)' \
 		--define '_rpmdir $(PWD)/rpms' \
 		--define 'major_version $(short_ver)' \
-		--define 'minor_version $(subst -,.,$(subst $(short_ver)-,,$(long_ver)))'
+		--define 'minor_version $(release)'
 	$(RM) rpm-src-aiven-client.tar
 
 .PHONY: install-rpm
