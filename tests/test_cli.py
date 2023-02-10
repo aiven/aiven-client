@@ -90,6 +90,41 @@ def test_help() -> None:
     AivenCLI().run(args=["help"])
 
 
+def test_project_generate_sbom(caplog: LogCaptureFixture) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient(base_url=""))
+
+    # Call with unsupported output extension
+    assert (
+        build_aiven_cli(aiven_client).run(args=["project", "generate-sbom", "--project", "123foo", "--output", "bar"]) == 1
+    )
+    assert "unsupported output extension. please, use one from this list: ['csv', 'spdx']" in caplog.text.lower()
+    caplog.clear()
+
+    # Valid call, but the API doesn't return what we expect
+    aiven_client.get_project_sbom_download_url.return_value = {"foo": "bar"}
+    assert (
+        build_aiven_cli(aiven_client).run(args=["project", "generate-sbom", "--project", "123foo", "--output", "csv"]) == 1
+    )
+    assert "cannot retrieve a sbom download url from server" in caplog.text.lower()
+    caplog.clear()
+
+    # Valid call
+    aiven_client.get_project_sbom_download_url.return_value = {"download_url": "https://foo.bar"}
+    assert (
+        build_aiven_cli(aiven_client).run(args=["project", "generate-sbom", "--project", "123foo", "--output", "csv"])
+        is None
+    )
+    assert (
+        build_aiven_cli(aiven_client).run(args=["project", "generate-sbom", "--project", "123foo", "--output", "spdx"])
+        is None
+    )
+    assert not caplog.text
+    aiven_client.get_project_sbom_download_url.assert_called_with(
+        project="123foo",
+        output_format="spdx",
+    )
+
+
 def test_create_user_config() -> None:
     cli = AivenCLI()
     cli.args = Namespace(
