@@ -437,6 +437,14 @@ class AivenCLI(argx.CommandLineTool):
         message = self.client.expire_user_tokens()["message"]
         print(message)
 
+    @arg.verbose
+    def user__password_change(self) -> None:
+        """Change the password of the currently logged in user"""
+        current_password = getpass.getpass("Current password: ")
+        new_password = self.enter_password("New password: ", confirm=True)
+        self.client.change_user_password(current_password, new_password)
+        print("Password changed. Next, use 'avn user login' to log in again using your new password.")
+
     @arg("--description", required=True, help="Description of how the token will be used")
     @arg("--max-age-seconds", type=int, help="Maximum age of the token, if any")
     @arg(
