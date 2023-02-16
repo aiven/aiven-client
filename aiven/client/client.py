@@ -55,6 +55,7 @@ class AivenClientBase:  # pylint: disable=old-style-class
         http_handler.setFormatter(logging.Formatter("%(message)s"))
         self.http_log.addHandler(http_handler)
         self.http_log.propagate = False
+        self.http_log.setLevel(logging.INFO)
         if show_http:
             self.http_log.setLevel(logging.DEBUG)
 
