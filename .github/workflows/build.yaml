@@ -33,8 +33,7 @@ jobs:
 
       - id: dependencies
         run: |
-          pip install requests
-          pip install -r requirements.dev.txt
+          pip install -e .[dev]
 
       - id: validate-style
         run: make validate-style

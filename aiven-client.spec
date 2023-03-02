@@ -1,13 +1,24 @@
-Name:           aiven-client
+%global project aiven-client
+
+Name:           %{project}
 Version:        %{major_version}
 Release:        %{minor_version}%{?dist}
-Url:            https://aiven.io/
+Url:            https://github.com/aiven/%{project}
+Source0:        rpm-src-aiven-client.tar
 Summary:        Aiven Client
 License:        ASL 2.0
-Source0:        rpm-src-aiven-client.tar
 BuildArch:      noarch
-Requires:       python3-requests
-BuildRequires:  python3-devel, python3-flake8, python3-mypy, python3-pylint, python3-pytest
+BuildRequires:  python3-devel
+BuildRequires:  python3dist(wheel)
+BuildRequires:  python3dist(hatchling)
+BuildRequires:  python3dist(hatch-vcs)
+BuildRequires:  python3dist(flake8)
+BuildRequires:  python3dist(mypy)
+BuildRequires:  python3dist(pylint)
+BuildRequires:  python3dist(pytest)
+BuildRequires:  python3dist(requests)
+BuildRequires:  python3dist(pymysql)
+BuildRequires:  python3dist(certifi)
 
 
 %description
@@ -17,29 +28,31 @@ features at competitive price points.
 
 aiven-client (`avn`) is the official command-line client for Aiven.
 
-
 %prep
-%setup -q -n aiven-client
+%autosetup -n %{name}
 
+%generate_buildrequires
+export SETUPTOOLS_SCM_PRETEND_VERSION=%{version}+%{minor_version}
+%pyproject_buildrequires
+
+%build
+export SETUPTOOLS_SCM_PRETEND_VERSION=%{version}+%{minor_version}
+%pyproject_wheel
 
 %install
-%{__mkdir_p} %{buildroot}%{_bindir}
-%{__mkdir_p} %{buildroot}%{python3_sitelib}
-cp -a aiven %{buildroot}%{python3_sitelib}/
-cp scripts/avn %{buildroot}%{_bindir}/avn
-chmod 755 %{buildroot}%{_bindir}/avn
-
+%pyproject_install
+%pyproject_save_files aiven
+%{__cp} aiven/client/py.typed %{buildroot}%{python3_sitelib}/aiven/client/py.typed
 
 %check
-make test
+%pyproject_check_import
+%pytest
 
-
-%files
-%defattr(-,root,root,-)
-%doc LICENSE README.rst
-%{python3_sitelib}/aiven
+%files -n %{name} -f %{pyproject_files}
+%license LICENSE
+%doc README.rst
 %{_bindir}/avn
-
+%{python3_sitelib}/aiven/client/py.typed
 
 %changelog
 * Wed Dec 23 2015 Aiven Support <support@aiven.io>

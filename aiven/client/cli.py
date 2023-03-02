@@ -138,7 +138,6 @@ if (sys.version_info.major, sys.version_info.minor) >= (3, 8):
         def __call__(self, base_url: str, show_http: bool, request_timeout: Optional[int]) -> client.AivenClient:
             ...
 
-
 else:
     ClientFactory = Callable[..., client.AivenClient]  # type: ignore
 
