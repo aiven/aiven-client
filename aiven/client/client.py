@@ -299,6 +299,10 @@ class AivenClient(AivenClientBase):
         path = self.build_path("project", project, "service", service, "db", dbname)
         return self.verify(self.delete, path)
 
+    def list_databases(self, project: str, service: str) -> Mapping:
+        path = self.build_path("project", project, "service", service, "db")
+        return self.verify(self.get, path)
+
     def create_service_user(
         self, project: str, service: str, username: str, extra_params: Optional[Mapping[str, Any]] = None
     ) -> Mapping:

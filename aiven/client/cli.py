@@ -2361,9 +2361,10 @@ ssl.truststore.type=JKS
     @arg.json
     def service__database_list(self) -> None:
         """List service databases"""
-        service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
+        service = self.client.list_databases(project=self.get_project(), service=self.args.service_name)
+        database_names = [result["database_name"] for result in service["databases"]]
         layout = [["database"]]
-        self.print_response(service["databases"], json=self.args.json, table_layout=layout)
+        self.print_response(database_names, json=self.args.json, table_layout=layout)
 
     @arg.project
     @arg.service_name
