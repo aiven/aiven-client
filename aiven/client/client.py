@@ -1763,6 +1763,13 @@ class AivenClient(AivenClientBase):
     def expire_user_tokens(self) -> Mapping:
         return self.verify(self.post, "/me/expire_tokens")
 
+    def change_user_password(self, current_password: str, new_password: str) -> Mapping:
+        request = {
+            "password": current_password,
+            "new_password": new_password,
+        }
+        return self.verify(self.put, "/me/password", body=request)
+
     def get_service_logs(
         self, project: str, service: str, sort_order: Optional[str] = None, offset: Optional[str] = None, limit: int = 100
     ) -> Mapping:
