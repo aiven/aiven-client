@@ -5515,6 +5515,19 @@ server_encryption_options:
             ),
         )
 
+    @arg.json
+    def organization__list(self) -> None:
+        """Lists all current organizations"""
+        organizations = self.client.get_organizations()
+        layout = [
+            "organization_name",
+            "organization_id",
+            "account_id",
+            "create_time",
+            "update_time",
+        ]
+        self.print_response(organizations, json=self.args.json, table_layout=layout)
+
 
 if __name__ == "__main__":
     AivenCLI().main()

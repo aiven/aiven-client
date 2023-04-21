@@ -2480,3 +2480,6 @@ class AivenClient(AivenClientBase):
                 "cancel",
             ),
         )
+
+    def get_organizations(self) -> Sequence:
+        return self.verify(self.get, "/organizations", result_key="organizations")
