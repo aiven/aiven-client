@@ -5233,6 +5233,28 @@ server_encryption_options:
     @arg.json
     @arg.account_id
     @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
+    @arg("-n", "--name", required=True, help="OAuth2 application name")
+    @arg(
+        "-d",
+        "--description",
+        required=False,
+        help="App description",
+    )
+    def account__oauth2_client__update(self) -> None:
+        """Get an OAuth2 client configuration."""
+
+        oauth2_client = self.client.update_oauth2_client(
+            account_id=self.args.account_id,
+            client_id=self.args.oauth2_client_id,
+            name=self.args.name,
+            description=self.args.description,
+        )
+        table_layout = ["client_id", "name", "description"]
+        self.print_response(oauth2_client, json=self.args.json, single_item=True, table_layout=table_layout)
+
+    @arg.json
+    @arg.account_id
+    @arg("--oauth2-client-id", help="OAuth2 client id", required=True)
     def account__oauth2_client__delete(self) -> None:
         """Remove an OAuth2 client."""
 

@@ -2102,6 +2102,15 @@ class AivenClient(AivenClientBase):
             result_key="oauth2_clients",
         )
 
+    def update_oauth2_client(
+        self, account_id: str, client_id: str, name: Optional[str], description: Optional[str] = None
+    ) -> Dict:
+        return self.verify(
+            self.patch,
+            self.build_path("account", account_id, "oauth_client", client_id),
+            body={"name": name, "description": description},
+        )
+
     def get_oauth2_client(self, account_id: str, client_id: str) -> Mapping:
         return self.verify(
             self.get,

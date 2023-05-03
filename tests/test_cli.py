@@ -592,6 +592,28 @@ def test_oauth2_client_get() -> None:
     aiven_client.get_oauth2_client.assert_called_with("a2313127", oauth2_client_id)
 
 
+def test_oauth2_client_update() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    oauth2_client_id = str(uuid.uuid4())
+
+    aiven_client.update_oauth2_client.return_value = {
+        "client_id": oauth2_client_id,
+        "name": "dummy-client",
+        "description": "dummy client",
+    }
+
+    build_aiven_cli(aiven_client).run(
+        args=["account", "oauth2-client", "update", "a2313127", "--oauth2-client-id", oauth2_client_id, "--name", "new-name"]
+    )
+
+    aiven_client.update_oauth2_client.assert_called_with(
+        account_id="a2313127",
+        client_id=oauth2_client_id,
+        name="new-name",
+        description=None,
+    )
+
+
 def test_oauth2_client_remove() -> None:
     aiven_client = mock.Mock(spec_set=AivenClient)
     oauth2_client_id = str(uuid.uuid4())
