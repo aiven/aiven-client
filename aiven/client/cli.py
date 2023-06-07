@@ -5550,6 +5550,25 @@ server_encryption_options:
         ]
         self.print_response(organizations, json=self.args.json, table_layout=layout)
 
+    @arg.json
+    @arg.organization_id
+    def organization__user__list(self) -> None:
+        """Lists organization users"""
+        users = self.client.list_organization_users(self.args.organization_id)
+        layout = [
+            "user_info.user_email",
+            "user_info.real_name",
+            "user_info.state",
+        ]
+        self.print_response(users, json=self.args.json, table_layout=layout)
+
+    @arg.json
+    @arg.organization_id
+    @arg.email
+    def organization__user__invite(self) -> None:
+        """Invite user to join an organization"""
+        self.client.invite_organization_user(self.args.organization_id, self.args.email)
+
 
 if __name__ == "__main__":
     AivenCLI().main()

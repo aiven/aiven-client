@@ -13,6 +13,7 @@ disable=
     no-else-return,
     no-self-use,
     star-args,
+    too-few-public-methods,
     too-many-arguments,
     too-many-branches,
     too-many-lines,
