@@ -168,7 +168,7 @@ class AivenClientBase:  # pylint: disable=old-style-class
                 time.sleep(0.2)
 
         # Check API is actually returning data or not
-        if response.status_code == HTTPStatus.NO_CONTENT:
+        if response.status_code == HTTPStatus.NO_CONTENT or response.headers.get("Content-Length", "0") == "0":
             return {}
 
         result = response.json()
@@ -2492,3 +2492,17 @@ class AivenClient(AivenClientBase):
 
     def get_organizations(self) -> Sequence:
         return self.verify(self.get, "/organizations", result_key="organizations")
+
+    def list_organization_users(self, organization_id: str) -> Sequence[Dict[str, Any]]:
+        return self.verify(
+            self.get,
+            self.build_path("organization", organization_id, "user"),
+            result_key="users",
+        )
+
+    def invite_organization_user(self, organization_id: str, email: str) -> Mapping:
+        return self.verify(
+            self.post,
+            self.build_path("organization", organization_id, "invitation"),
+            body={"user_email": email},
+        )
