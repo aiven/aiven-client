@@ -161,7 +161,7 @@ def test_print_table_nested_dict() -> None:
 
     actual = get_output(rows, table_layout=["ip", "metric", "network"])
     expected = """
-IP            METRIC                 NETWORK       
+IP            METRIC                 NETWORK
 ============  =====================  ===============
 192.168.16.1  {"ping": 3, "qos": 1}  192.168.16.0/20
 10.0.0.1      {"ping": 100}          10.0.0.0/16
@@ -170,7 +170,7 @@ IP            METRIC                 NETWORK
 
     actual = get_output(rows, table_layout=["ip", "metric.qos", "network"])
     expected = """
-IP            METRIC.QOS  NETWORK       
+IP            METRIC.QOS  NETWORK
 ============  ==========  ===============
 192.168.16.1  1           192.168.16.0/20
 10.0.0.1                  10.0.0.0/16
@@ -179,7 +179,7 @@ IP            METRIC.QOS  NETWORK
 
     actual = get_output(rows, drop_fields=["function1", "function2", "next_hop_ip", "next_hop_mac"])
     expected = """
-IP            METRIC.PING  METRIC.QOS  NETWORK        
+IP            METRIC.PING  METRIC.QOS  NETWORK
 ============  ===========  ==========  ===============
 192.168.16.1  3            1           192.168.16.0/20
 10.0.0.1      100                      10.0.0.0/16
