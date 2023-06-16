@@ -131,11 +131,16 @@ def yield_table(  # noqa
         for key, value in item.items():
             if key in drop_fields:
                 continue  # field will not be printed
+            got_value_for_key = False
             for subkey, subvalue in iter_values(key, value):
                 if table_layout is not None and subkey not in flattened_table_layout:
                     continue  # table_layout has been specified but this field will not be printed
+                got_value_for_key = True
                 formatted_row[subkey] = format_item(subkey, subvalue)
                 widths[subkey] = max(len(subkey), len(formatted_row[subkey]), widths.get(subkey, 1))
+            if not got_value_for_key and (table_layout is None or key in flattened_table_layout):
+                formatted_row[key] = format_item(key, value)
+                widths[key] = max(len(key), len(formatted_row[key]), widths.get(key, 1))
 
     # default table layout is one row per item with sorted field names
     if table_layout is None:
