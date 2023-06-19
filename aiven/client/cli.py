@@ -5559,6 +5559,7 @@ server_encryption_options:
             "user_info.user_email",
             "user_info.real_name",
             "user_info.state",
+            "last_activity_time",
         ]
         self.print_response(users, json=self.args.json, table_layout=layout)
 
