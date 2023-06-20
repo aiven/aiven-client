@@ -94,6 +94,36 @@ def flatten_list(complex_list: Optional[TableLayout]) -> Collection[str]:
     return flattened_list
 
 
+def _flattened_dict(key: str, value: Any, requested_keys: Collection[str] = ()) -> Iterator[Tuple[str, Any]]:
+    """
+    Flatten nested dicts into a single dict with keys as dotted paths.
+
+    eg. flattened_dict({"ip": "192.168.0.1", "metric": {"ping": 3, "qos": 1}} will yield:
+        * ("ip", "192.168.0.1")
+        * ("metric.ping", 3)
+        * ("metric.qos", 1)
+
+    If the key to a dict value is present in requested_keys, it is also emitted.
+
+    eg. If `request_keys` contained `"metric"` it would yield:
+        * ("ip", "192.168.0.1")
+        * ("metric", {"ping": 3, "qos": 1})
+        * ("metric.ping", 3)
+        * ("metric.qos", 1)
+
+    """
+    is_dict = isinstance(value, dict)
+
+    # Leaves and keys of interest
+    if not is_dict or key in requested_keys:
+        yield key, value
+
+    # Recurse as necessary
+    if is_dict:
+        for subkey, subvalue in value.items():
+            yield from _flattened_dict((key + "." if key else "") + subkey, subvalue)
+
+
 def yield_table(  # noqa
     result: ResultType,
     drop_fields: Optional[Collection[str]] = None,
@@ -113,14 +143,6 @@ def yield_table(  # noqa
     """
     drop_fields = set(drop_fields or [])
 
-    def iter_values(key: str, value: Any) -> Iterator[Tuple[str, Any]]:
-        if not isinstance(value, dict):
-            yield key, value
-            return
-        for subkey, subvalue in value.items():
-            for kv in iter_values((key + "." if key else "") + subkey, subvalue):
-                yield kv
-
     # format all fields and collect their widths
     widths: Dict[str, int] = {}
     formatted_values: List[Dict[str, str]] = []
@@ -131,7 +153,7 @@ def yield_table(  # noqa
         for key, value in item.items():
             if key in drop_fields:
                 continue  # field will not be printed
-            for subkey, subvalue in iter_values(key, value):
+            for subkey, subvalue in _flattened_dict(key, value, flattened_table_layout):
                 if table_layout is not None and subkey not in flattened_table_layout:
                     continue  # table_layout has been specified but this field will not be printed
                 formatted_row[subkey] = format_item(subkey, subvalue)
