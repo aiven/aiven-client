@@ -121,6 +121,72 @@ IP            NETWORK          METRIC
         get_output(rows)
 
 
+def test_print_table_nested_dict() -> None:
+    """Print table, ensure we don't try to format non-visible field"""
+    rows = []
+    rows.append(
+        {
+            "ip": ipaddress.IPv4Address("192.168.16.1"),
+            "network": ipaddress.IPv4Network("192.168.16.0/20"),
+            "metric": {"qos": 1, "ping": 3},
+            "next_hop_ip": ipaddress.IPv4Address("192.168.16.2"),
+            "next_hop_mac": "0c:d0:f8:a3:04:31",
+            "function1": test_print_table,
+        }
+    )
+    rows.append(
+        {
+            "ip": ipaddress.IPv4Address("10.0.0.1"),
+            "network": ipaddress.IPv4Network("10.0.0.0/16"),
+            "metric": {"ping": 100},
+            "function2": test_print_table,
+        }
+    )
+
+    def get_output(
+        rows: Optional[ResultType],
+        *,
+        drop_fields: Optional[Collection[str]] = None,
+        table_layout: Optional[TableLayout] = None,
+    ) -> str:
+        temp_io = io.StringIO()
+        print_table(rows, drop_fields=drop_fields, table_layout=table_layout, file=temp_io)
+        temp_io.seek(0)
+        return temp_io.read()
+
+    def fuzzy_compare_assert(actual: str, expected: str) -> None:
+        cleanup_actual = re.sub(r" +$", "", actual.strip(), flags=re.MULTILINE)
+        cleanup_expected = re.sub(r" +$", "", expected.strip(), flags=re.MULTILINE)
+        assert cleanup_actual == cleanup_expected
+
+    actual = get_output(rows, table_layout=["ip", "metric", "network"])
+    expected = """
+IP            METRIC                 NETWORK
+============  =====================  ===============
+192.168.16.1  {"ping": 3, "qos": 1}  192.168.16.0/20
+10.0.0.1      {"ping": 100}          10.0.0.0/16
+"""
+    fuzzy_compare_assert(actual, expected)
+
+    actual = get_output(rows, table_layout=["ip", "metric.qos", "network"])
+    expected = """
+IP            METRIC.QOS  NETWORK
+============  ==========  ===============
+192.168.16.1  1           192.168.16.0/20
+10.0.0.1                  10.0.0.0/16
+"""
+    fuzzy_compare_assert(actual, expected)
+
+    actual = get_output(rows, drop_fields=["function1", "function2", "next_hop_ip", "next_hop_mac"])
+    expected = """
+IP            METRIC.PING  METRIC.QOS  NETWORK
+============  ===========  ==========  ===============
+192.168.16.1  3            1           192.168.16.0/20
+10.0.0.1      100                      10.0.0.0/16
+"""
+    fuzzy_compare_assert(actual, expected)
+
+
 def test_yield_table() -> None:
     rows = [
         {
