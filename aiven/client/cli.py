@@ -1418,11 +1418,9 @@ class AivenCLI(argx.CommandLineTool):
         self.print_response(backups, json=self.args.json, table_layout=layout)
 
     def _get_project_ca(self) -> str:
-
         return self.client.get_project_ca(project=self.get_project())["certificate"]
 
     def _get_store_from_args(self) -> Store:
-
         if self.args.overwrite:
             store = Store.overwrite
         elif self.args.write:
@@ -5536,6 +5534,32 @@ server_encryption_options:
                 deployment_id=self.args.deployment_id,
             ),
         )
+
+    @arg.json
+    @arg("name", help="Name of the organization to create")
+    @arg.force
+    def organization__create(self) -> None:
+        """Create new organization"""
+        if not self.args.force:
+            confirmation_result = self.confirm(
+                "Settings like billing details and authentication methods \
+    cannot be shared across multiple organizations.\
+    \nWhen you create a new organization, you must configure each of these settings manually.\
+    \n\nTo use your current settings, create an organizational unit within this organization instead.\
+    \n\nI understand and want to create a new organization (y/N)? "
+            )
+
+            if not confirmation_result:
+                raise argx.UserError("Aborted")
+
+        organizations = self.client.create_account(self.args.name)
+        layout = [
+            "organization_id",
+            "account_id",
+            "create_time",
+            "update_time",
+        ]
+        self.print_response(organizations, json=self.args.json, table_layout=layout, single_item=True)
 
     @arg.json
     def organization__list(self) -> None:
