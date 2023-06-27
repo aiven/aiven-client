@@ -2493,6 +2493,10 @@ class AivenClient(AivenClientBase):
     def get_organizations(self) -> Sequence:
         return self.verify(self.get, "/organizations", result_key="organizations")
 
+    def delete_organization(self, organization_id: str) -> None:
+        organization = self.verify(self.get, self.build_path("organization", organization_id))
+        self.delete_account(account_id=organization["account_id"])
+
     def list_organization_users(self, organization_id: str) -> Sequence[Dict[str, Any]]:
         return self.verify(
             self.get,

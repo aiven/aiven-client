@@ -132,6 +132,7 @@ arg.min_insync_replicas = arg(
     help="Minimum required nodes In Sync Replicas (ISR) to produce to a partition (default: 1)",
 )
 arg.organization_id = arg("--organization_id", help="Organization identifier")
+arg.positional_organization_id = arg("organization_id", help="Organization identifier")
 arg.partitions = arg("--partitions", type=int, required=True, help="Number of partitions")
 arg.project = arg(
     "--project",
