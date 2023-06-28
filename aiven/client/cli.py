@@ -5550,6 +5550,23 @@ server_encryption_options:
         ]
         self.print_response(organizations, json=self.args.json, table_layout=layout)
 
+    @arg.positional_organization_id
+    @arg.force
+    def organization__delete(self) -> None:
+        """Delete an organization"""
+        if not self.args.force:
+            self.print_boxed(
+                [
+                    "Deleting organization cannot be undone and all data in the organization will be lost!",
+                ]
+            )
+
+        if not self.confirm("Confirm delete (y/N)?"):
+            raise argx.UserError("Aborted")
+
+        self.client.delete_organization(self.args.organization_id)
+        print("Deleted")
+
     @arg.json
     @arg.organization_id
     def organization__user__list(self) -> None:
