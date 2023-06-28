@@ -34,7 +34,10 @@ class SubCLI(CommandLineTool):
 
     @arg()
     def bbb(self) -> None:
-        """2"""
+        """2
+
+        With more explaining
+        """
 
     @arg()
     def ddd(self) -> None:
@@ -67,6 +70,19 @@ def test_extended_commands_remain_alphabetically_ordered() -> None:
 
     action_order = [item.dest for item in cli.subparsers._choices_actions]  # pylint: disable=protected-access
     assert action_order == ["aaa", "bbb", "bbc", "ccc", "ddd", "dde", "xxx", "yyy", "yyz"]
+
+
+def test_extended_command_has_function_help() -> None:
+    cli = TestCLI("testcli")
+    cli.extend_commands(cli)  # Force the CLI to have its full arg set at execution
+
+    sl = SubCLI("subcli")
+
+    cli.extend_commands(sl)
+
+    help = cli.subparsers.choices[sl.bbb.__name__].format_help()
+    assert sl.bbb.__doc__ is not None
+    assert sl.bbb.__doc__ in help
 
 
 class DescriptorCLI(CommandLineTool):

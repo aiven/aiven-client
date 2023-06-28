@@ -207,7 +207,7 @@ class CommandLineTool:  # pylint: disable=old-style-class
                 self._cats[cat] = parser.add_subparsers()
             subparsers = self._cats[cat]
 
-        parser = subparsers.add_parser(cmd, help=func.__doc__, formatter_class=CustomFormatter)
+        parser = subparsers.add_parser(cmd, help=func.__doc__, description=func.__doc__, formatter_class=CustomFormatter)
         parser.set_defaults(func=func)
 
         for arg_prop in getattr(func, ARG_LIST_PROP, []):
