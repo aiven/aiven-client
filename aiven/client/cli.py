@@ -40,6 +40,11 @@ AUTHENTICATION_METHOD_COLUMNS = [
     "create_time",
     "update_time",
 ]
+USER_GROUP_COLUMNS = [
+    "user_group_name",
+    "user_group_id",
+    "description",
+]
 EOL_ADVANCE_WARNING_TIME = timedelta(weeks=26)  # Give 6 months advance notice for EOL services
 
 
@@ -5575,7 +5580,7 @@ server_encryption_options:
         self.print_response(organizations, json=self.args.json, table_layout=layout)
 
     @arg.json
-    @arg.positional_organization_id
+    @arg.organization_id_positional
     @arg("-n", "--name", required=True, help="New name for the organization")
     def organization__update(self) -> None:
         """Update an organization"""
@@ -5589,7 +5594,7 @@ server_encryption_options:
         organization = self.client.update_organization(self.args.organization_id, self.args.name)
         self.print_response(organization, json=self.args.json, single_item=True, table_layout=layout)
 
-    @arg.positional_organization_id
+    @arg.organization_id_positional
     @arg.force
     def organization__delete(self) -> None:
         """Delete an organization"""
@@ -5625,6 +5630,83 @@ server_encryption_options:
     def organization__user__invite(self) -> None:
         """Invite user to join an organization"""
         self.client.invite_organization_user(self.args.organization_id, self.args.email)
+
+    @arg.json
+    @arg.organization_id
+    def organization__group__list(self) -> None:
+        """List user groups in an organization"""
+        groups = self.client.list_user_groups(self.args.organization_id)
+        layout = [
+            "user_group_name",
+            "user_group_id",
+            "member_count",
+            "description",
+        ]
+        self.print_response(groups, json=self.args.json, table_layout=layout)
+
+    @arg.json
+    @arg.organization_id
+    @arg.group_id_positional
+    def organization__group__show(self) -> None:
+        """Show the user group details"""
+        members = self.client.get_user_group(self.args.organization_id, self.args.group_id)
+        layout = [
+            "user_info.user_email",
+            "user_info.real_name",
+            "last_activity_time",
+            "user_info.state",
+        ]
+        self.print_response(members, json=self.args.json, table_layout=layout)
+
+    @arg.json
+    @arg.organization_id
+    @arg("name", help="Name of the organization user group to create")
+    @arg("--description", help="Description for the organization user group")
+    def organization__group__create(self) -> None:
+        """Create a user group in an organization"""
+        group = self.client.create_user_group(
+            organization_id=self.args.organization_id,
+            group_name=self.args.name,
+            props={
+                "description": self.args.description or "",
+            },
+        )
+        self.print_response(group, json=self.args.json, table_layout=USER_GROUP_COLUMNS, single_item=True)
+
+    @arg.json
+    @arg.organization_id
+    @arg.group_id_positional
+    @arg("--name", help="Name for the organization user group")
+    @arg("--description", help="Description for the organization user group")
+    def organization__group__update(self) -> None:
+        """Update properties of an organization user group"""
+        group = self.client.update_user_group(
+            organization_id=self.args.organization_id,
+            group_id=self.args.group_id,
+            props={
+                "user_group_name": self.args.name,
+                "description": self.args.description,
+            },
+        )
+        self.print_response(group, json=self.args.json, table_layout=USER_GROUP_COLUMNS, single_item=True)
+
+    @arg.force
+    @arg.organization_id
+    @arg.group_id_positional
+    def organization__group__delete(self) -> None:
+        """Delete organization user group"""
+        if not self.args.force:
+            self.print_boxed(
+                [
+                    "Deleting the user group cannot be undone and all data in the group will be lost!",
+                ]
+            )
+
+        if not self.confirm("Confirm delete (y/N)?"):
+            raise argx.UserError("Aborted")
+
+        self.client.delete_user_group(self.args.organization_id, self.args.group_id)
+        print("Deleted")
 
 
 if __name__ == "__main__":

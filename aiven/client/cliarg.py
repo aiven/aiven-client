@@ -124,6 +124,7 @@ arg.force = arg(
     action="store_true",
     default=False,
 )
+arg.group_id_positional = arg("group_id", help="Organization user group identifier")
 arg.index_name = arg("index_name", help="Index name")
 arg.json = arg("--json", help="Raw json output", action="store_true", default=False)
 arg.min_insync_replicas = arg(
@@ -131,8 +132,8 @@ arg.min_insync_replicas = arg(
     type=int,
     help="Minimum required nodes In Sync Replicas (ISR) to produce to a partition (default: 1)",
 )
-arg.organization_id = arg("--organization-id", help="Organization identifier")
-arg.positional_organization_id = arg("organization-id", help="Organization identifier")
+arg.organization_id = arg("--organization-id", required=True, help="Organization identifier")
+arg.organization_id_positional = arg("organization_id", help="Organization identifier")
 arg.partitions = arg("--partitions", type=int, required=True, help="Number of partitions")
 arg.project = arg(
     "--project",
