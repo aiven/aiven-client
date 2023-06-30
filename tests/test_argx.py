@@ -80,9 +80,9 @@ def test_extended_command_has_function_help() -> None:
 
     cli.extend_commands(sl)
 
-    help = cli.subparsers.choices[sl.bbb.__name__].format_help()
+    help_text = cli.subparsers.choices[sl.bbb.__name__].format_help()
     assert sl.bbb.__doc__ is not None
-    assert sl.bbb.__doc__ in help
+    assert sl.bbb.__doc__ in help_text
 
 
 class DescriptorCLI(CommandLineTool):
