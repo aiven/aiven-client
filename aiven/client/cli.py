@@ -5574,6 +5574,21 @@ server_encryption_options:
         ]
         self.print_response(organizations, json=self.args.json, table_layout=layout)
 
+    @arg.json
+    @arg.positional_organization_id
+    @arg("-n", "--name", required=True, help="New name for the organization")
+    def organization__update(self) -> None:
+        """Update an organization"""
+        layout = [
+            "organization_name",
+            "organization_id",
+            "account_id",
+            "create_time",
+            "update_time",
+        ]
+        organization = self.client.update_organization(self.args.organization_id, self.args.name)
+        self.print_response(organization, json=self.args.json, single_item=True, table_layout=layout)
+
     @arg.positional_organization_id
     @arg.force
     def organization__delete(self) -> None:
