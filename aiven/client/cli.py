@@ -4795,7 +4795,14 @@ server_encryption_options:
     @arg("--update-project", help="Assign card to project")
     def card__add(self) -> None:
         """Add a credit card"""
-        stripe_key = self.client.get_stripe_key()["stripe_key"]
+        self.print_boxed(
+            [
+                "avn card add has been deprecated and will be removed in the next major release.",
+                "Please use `avn organization --organization-id organization_id card create`",
+            ]
+        )
+
+        stripe_key = self.client.get_stripe_key()
         stripe_token = self._card_get_stripe_token(
             stripe_key,
             self.args.name,
@@ -5706,6 +5713,89 @@ server_encryption_options:
             raise argx.UserError("Aborted")
 
         self.client.delete_user_group(self.args.organization_id, self.args.group_id)
+
+    def _get_stripe_payment_method_id(self, name: str, number: str, exp_month: int, exp_year: int, cvc: str) -> str:
+        """Obtains payment method identifier from Stripe"""
+        stripe_key = self.client.get_stripe_key()
+        raw_client_secret = self.client.create_payment_method_setup_intent()
+
+        request_payload = {
+            "client_secret": raw_client_secret,
+            "payment_method_data[billing_details][name]": name,
+            "payment_method_data[card][number]": number,
+            "payment_method_data[card][cvc]": cvc,
+            "payment_method_data[card][exp_month]": exp_month,
+            "payment_method_data[card][exp_year]": exp_year,
+            "payment_method_data[type]": "card",
+        }
+
+        client_secret_url_part = "_".join(raw_client_secret.split("_")[:2])
+        response = requests.post(
+            f"https://api.stripe.com/v1/setup_intents/{client_secret_url_part}/confirm",
+            data=request_payload,
+            auth=(stripe_key, ""),
+            timeout=30,
+        )
+
+        if not response.ok:
+            response.raise_for_status()
+        return response.json()["payment_method"]
+
+    @arg.json
+    @arg.organization_id
+    def organization__card__list(self) -> None:
+        """List organization cards"""
+        cards = self.client.list_payment_methods(self.args.organization_id)
+        for card in cards:
+            card["expiration"] = f"{card['exp_month']:02d}/{card['exp_year']}"
+            card["number"] = f"**** **** **** {card['last4']}"
+
+        layout = [
+            "card_id",
+            "name",
+            "number",
+            "expiration",
+        ]
+        self.print_response(cards, json=self.args.json, table_layout=layout)
+
+    @arg.json
+    @arg.organization_id
+    @arg("--cvc", help="Credit card security code", required=True)
+    @arg("--exp-month", help="Card expiration month (1-12)", type=int, required=True)
+    @arg("--exp-year", help="Card expiration year", type=int, required=True)
+    @arg("--name", help="Name on card", required=True)
+    @arg("--number", help="Credit card number", type=int, required=True)
+    def organization__card__create(self) -> None:
+        """Add a credit card"""
+
+        payment_method_id = self._get_stripe_payment_method_id(
+            self.args.name,
+            self.args.number,
+            self.args.exp_month,
+            self.args.exp_year,
+            self.args.cvc,
+        )
+        card = self.client.attach_payment_method(self.args.organization_id, payment_method_id)
+
+        card["expiration"] = f"{card['exp_month']:02d}/{card['exp_year']}"
+        card["number"] = f"**** **** **** {card['last4']}"
+        layout = [
+            "card_id",
+            "name",
+            "number",
+            "expiration",
+        ]
+        self.print_response(card, json=self.args.json, table_layout=layout, single_item=True)
+
+    @arg.json
+    @arg.force
+    @arg.organization_id
+    @arg("card_id", help="Credit card identifier")
+    def organization__card__delete(self) -> None:
+        """Delete organization card"""
+        if not self.confirm("Confirm delete (y/N)?"):
+            raise argx.UserError("Aborted")
+        self.client.delete_organization_card(self.args.organization_id, self.args.card_id)
         print("Deleted")
 
 
