@@ -1825,8 +1825,8 @@ class AivenClient(AivenClientBase):
     def remove_card(self, card_id: str) -> Mapping:
         return self.verify(self.delete, self.build_path("card", card_id))
 
-    def get_stripe_key(self) -> Mapping:
-        return self.verify(self.get, self.build_path("config", "stripe_key"))
+    def get_stripe_key(self) -> str:
+        return self.verify(self.get, self.build_path("config", "stripe_key"), result_key="stripe_key")
 
     def list_project_credits(self, project: str) -> Sequence[Dict[str, Any]]:
         return self.verify(
@@ -2548,3 +2548,28 @@ class AivenClient(AivenClientBase):
             self.delete,
             self.build_path("organization", organization_id, "user-groups", group_id),
         )
+
+    def create_payment_method_setup_intent(self) -> str:
+        return self.verify(self.get, self.build_path("create_payment_method_setup_intent"), result_key="client_secret")
+
+    def list_payment_methods(self, organization_id: str) -> Sequence[Dict[str, Any]]:
+        organization = self.verify(self.get, self.build_path("organization", organization_id))
+        return self.verify(
+            self.get, self.build_path("account", organization["account_id"], "payment_methods"), result_key="cards"
+        )
+
+    def attach_payment_method(self, organization_id: str, payment_method_id: str) -> Dict[str, Any]:
+        organization = self.verify(self.get, self.build_path("organization", organization_id))
+        request = {
+            "payment_method_id": payment_method_id,
+        }
+        return self.verify(
+            self.post,
+            self.build_path("account", organization["account_id"], "payment_methods"),
+            body=request,
+            result_key="card",
+        )
+
+    def delete_organization_card(self, organization_id: str, card_id: str) -> None:
+        organization = self.verify(self.get, self.build_path("organization", organization_id))
+        self.verify(self.delete, self.build_path("account", organization["account_id"], "payment_method", card_id))
