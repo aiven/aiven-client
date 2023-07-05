@@ -2515,3 +2515,36 @@ class AivenClient(AivenClientBase):
             self.build_path("organization", organization_id, "invitation"),
             body={"user_email": email},
         )
+
+    def list_user_groups(self, organization_id: str) -> Sequence[Dict[str, Any]]:
+        return self.verify(
+            self.get, self.build_path("organization", organization_id, "user-groups"), result_key="user_groups"
+        )
+
+    def get_user_group(self, organization_id: str, group_id: str) -> Sequence[Dict[str, Any]]:
+        return self.verify(
+            self.get,
+            self.build_path("organization", organization_id, "user-groups", group_id, "members"),
+            result_key="members",
+        )
+
+    def create_user_group(self, organization_id: str, group_name: str, props: Dict[str, Any]) -> Dict[str, Any]:
+        props["user_group_name"] = group_name
+        return self.verify(
+            self.post,
+            self.build_path("organization", organization_id, "user-groups"),
+            body={k: v for (k, v) in props.items() if v is not None},
+        )
+
+    def update_user_group(self, organization_id: str, group_id: str, props: Dict[str, Any]) -> Dict[str, Any]:
+        return self.verify(
+            self.patch,
+            self.build_path("organization", organization_id, "user-groups", group_id),
+            body={k: v for (k, v) in props.items() if v is not None},
+        )
+
+    def delete_user_group(self, organization_id: str, group_id: str) -> None:
+        self.verify(
+            self.delete,
+            self.build_path("organization", organization_id, "user-groups", group_id),
+        )
