@@ -13,13 +13,12 @@ authors = [
 ]
 description="Aiven.io client library / command-line client"
 readme = "README.rst"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 classifiers=[
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Libraries",
     "License :: OSI Approved :: Apache Software License",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -66,7 +65,7 @@ version-file = "aiven/client/version.py"
 
 [tool.black]
 line-length = 125
-target-version = ['py37', 'py38', 'py39']  # 'py310' is not yet available on Fedora 34
+target-version = ['py38', 'py39']  # 'py310' is not yet available on Fedora 34
 include = '\.pyi?$'
 exclude = '''
 /(

@@ -2,12 +2,8 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
-try:
-    from functools import cached_property  # type: ignore
-except ImportError:
-    cached_property = None
-
 from aiven.client.argx import arg, CommandLineTool
+from functools import cached_property
 from typing import Callable, List, NoReturn
 
 
