@@ -457,6 +457,16 @@ To use completions in bash, add following line to ``~/.bashrc``::
 
 For more information (including completions usage in other shells) see https://kislyuk.github.io/argcomplete/.
 
+avn also suports shtab. A slightly more lightweight option that can provide autocompletion within the Aiven CLI.
+
+  $ python3 -m pip install shtab
+
+To generate bash completion, you can run::
+
+  eval $(avn --print-completion zsh)
+
+For more information, check out https://pypi.org/project/shtab/
+
 Auth Helpers
 ------------
 
