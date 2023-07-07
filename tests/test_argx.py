@@ -2,9 +2,11 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
+from __future__ import annotations
+
 from aiven.client.argx import arg, CommandLineTool
 from functools import cached_property
-from typing import Callable, List, NoReturn
+from typing import Callable, NoReturn
 
 
 class TestCLI(CommandLineTool):
@@ -64,7 +66,7 @@ def test_extended_commands_remain_alphabetically_ordered() -> None:
     cli.extend_commands(sl2)
     cli.extend_commands(sl)
 
-    action_order = [item.dest for item in cli.subparsers._choices_actions]  # pylint: disable=protected-access
+    action_order = [item.dest for item in cli.subparsers._choices_actions]
     assert action_order == ["aaa", "bbb", "bbc", "ccc", "ddd", "dde", "xxx", "yyy", "yyz"]
 
 
@@ -99,6 +101,6 @@ class DescriptorCLI(CommandLineTool):
 
 def test_descriptors_are_not_eagerly_evaluated() -> None:
     cli = DescriptorCLI("DescriptorCLI")
-    calls: List[Callable] = []
+    calls: list[Callable] = []
     cli.add_cmds(calls.append)
     assert calls == [cli.example_command]

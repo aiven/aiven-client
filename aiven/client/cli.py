@@ -2,7 +2,9 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
-from . import argx, client
+from __future__ import annotations
+
+from . import argx, client, units
 from aiven.client import AivenClient, envdefault
 from aiven.client.cliarg import arg
 from aiven.client.client import Tag
@@ -18,7 +20,8 @@ from ast import literal_eval
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
-from typing import Any, Callable, Dict, IO, List, Mapping, Optional, Sequence, Tuple, Union
+from http import HTTPStatus
+from typing import Any, Callable, Final, IO, Mapping, Protocol, Sequence
 from urllib.parse import urlparse
 
 import errno
@@ -49,7 +52,7 @@ USER_GROUP_COLUMNS = [
 EOL_ADVANCE_WARNING_TIME = timedelta(weeks=26)  # Give 6 months advance notice for EOL services
 
 
-def convert_str_to_value(schema: Mapping[str, Any], value: Optional[Any]) -> Any:
+def convert_str_to_value(schema: Mapping[str, Any], value: Any | None) -> Any:
     if value is not None:
         if "string" in schema["type"] or "object" in schema["type"]:
             return value
@@ -137,15 +140,9 @@ def get_current_date() -> datetime:
     return datetime.now(timezone.utc)
 
 
-if (sys.version_info.major, sys.version_info.minor) >= (3, 8):
-    from typing import Protocol  # pylint: disable=no-name-in-module
-
-    class ClientFactory(Protocol):  # pylint: disable=too-few-public-methods
-        def __call__(self, base_url: str, show_http: bool, request_timeout: Optional[int]) -> client.AivenClient:
-            ...
-
-else:
-    ClientFactory = Callable[..., client.AivenClient]  # type: ignore
+class ClientFactory(Protocol):
+    def __call__(self, base_url: str, show_http: bool, request_timeout: int | None) -> client.AivenClient:
+        ...
 
 
 class AivenCLI(argx.CommandLineTool):
@@ -180,9 +177,7 @@ class AivenCLI(argx.CommandLineTool):
             help="Wait for up to N seconds for a response to a request (default: infinite)",
         )
 
-    def collect_user_config_options(
-        self, obj_def: Mapping[str, Any], prefixes: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+    def collect_user_config_options(self, obj_def: Mapping[str, Any], prefixes: list[str] | None = None) -> dict[str, Any]:
         opts = {}
         for prop, spec in sorted(obj_def.get("properties", {}).items()):
             full_prop = prefixes + [prop] if prefixes else [prop]
@@ -212,7 +207,7 @@ class AivenCLI(argx.CommandLineTool):
                 opts[full_name] = dict(spec, property_parts=full_prop, title=title)
         return opts
 
-    def create_user_config(self, user_config_schema: Mapping[str, Any]) -> Dict[str, Any]:
+    def create_user_config(self, user_config_schema: Mapping[str, Any]) -> dict[str, Any]:
         """Convert a list of ["foo.bar='baz'"] to {"foo": {"bar": "baz"}}"""
         user_option_remove = []
         if hasattr(self.args, "user_option_remove"):
@@ -221,7 +216,7 @@ class AivenCLI(argx.CommandLineTool):
             return {}
 
         options = self.collect_user_config_options(user_config_schema)
-        user_config: Dict[str, Any] = {}
+        user_config: dict[str, Any] = {}
         for key_value in self.args.user_config:
             try:
                 key, value = key_value.split("=", 1)
@@ -266,8 +261,8 @@ class AivenCLI(argx.CommandLineTool):
 
     @classmethod
     def get_leaf_config_and_key(
-        cls, *, config: Dict[str, Any], key: str, opt_schema: Mapping[str, Any]
-    ) -> Tuple[Dict[str, Any], str]:
+        cls, *, config: dict[str, Any], key: str, opt_schema: Mapping[str, Any]
+    ) -> tuple[dict[str, Any], str]:
         key_suffix = key
         for part in opt_schema["property_parts"][:-1]:
             prefix = "{}.".format(part)
@@ -291,7 +286,7 @@ class AivenCLI(argx.CommandLineTool):
 
         return password
 
-    def print_boxed(self, lines: List[str]) -> None:
+    def print_boxed(self, lines: list[str]) -> None:
         longest = max(len(line) for line in lines)
 
         print("*" * longest)
@@ -395,7 +390,7 @@ class AivenCLI(argx.CommandLineTool):
             try:
                 result = self.client.authenticate_user(email=email, password=password, tenant_id=self.args.tenant)
             except client.Error as ex:
-                if ex.status == 510:  # NOT_EXTENDED
+                if ex.status == HTTPStatus.NOT_EXTENDED:
                     # Two-factor auth OTP required
                     otp = input("Two-factor authentication OTP: ")
                     result = self.client.authenticate_user(email=email, password=password, otp=otp)
@@ -543,7 +538,8 @@ class AivenCLI(argx.CommandLineTool):
     @arg("-f", "--follow", action="store_true", default=False)
     def service__logs(self) -> None:
         """View project logs"""
-        previous_offset: Optional[str] = None
+        previous_offset: str | None = None
+        consecutive_errors_limit: Final = 10
         consecutive_errors = 0
         while True:
             try:
@@ -558,7 +554,7 @@ class AivenCLI(argx.CommandLineTool):
                 if not self.args.follow:
                     raise ex
                 consecutive_errors += 1
-                if consecutive_errors > 10:
+                if consecutive_errors > consecutive_errors_limit:
                     raise argx.UserError("Fetching logs failed repeatedly, aborting.")
                 sys.stderr.write("Fetching log messages failed with {}. Retrying after 10s\n".format(ex))
                 time.sleep(10.0)
@@ -611,24 +607,24 @@ class AivenCLI(argx.CommandLineTool):
         "Dual-1 (4 CPU, 1 GB RAM, 9 GB disk) high availability pair"
         "Quad-2 (4 CPU, 2 GB RAM, 9 GB disk) 4-node high availability set"
         """
-        if plan["node_memory_mb"] < 1024:
+        if plan["node_memory_mb"] < units.MIB_IN_GIB:
             ram_amount = "{} MB".format(plan["node_memory_mb"])
         else:
-            ram_amount = "{:.0f} GB".format(plan["node_memory_mb"] / 1024.0)
+            ram_amount = "{:.0f} GB".format(units.convert_mib_to_gib(plan["node_memory_mb"]))
 
         if plan["disk_space_mb"]:
             if plan.get("disk_space_cap_mb"):
                 disk_desc = ", {:.0f}-{:.0f} GB disk".format(
-                    plan["disk_space_mb"] / 1024.0, plan["disk_space_cap_mb"] / 1024.0
+                    units.convert_mib_to_gib(plan["disk_space_mb"]), units.convert_mib_to_gib(plan["disk_space_cap_mb"])
                 )
             else:
-                disk_desc = ", {:.0f} GB disk".format(plan["disk_space_mb"] / 1024.0)
+                disk_desc = ", {:.0f} GB disk".format(units.convert_mib_to_gib(plan["disk_space_mb"]))
         else:
             disk_desc = ""
 
-        if node_count == 2:
+        if node_count == 2:  # noqa: PLR2004
             plan_qual = " high availability pair"
-        elif node_count > 2:
+        elif node_count > 2:  # noqa: PLR2004
             plan_qual = " {}-node high availability set".format(node_count)
         else:
             plan_qual = ""
@@ -682,7 +678,7 @@ class AivenCLI(argx.CommandLineTool):
             name, filename = name_and_value.split("=", 1)
             if not os.path.isfile(filename):
                 raise argx.UserError("No such file {!r}".format(filename))
-            with open(filename, "rt", encoding="utf-8") as fob:
+            with open(filename, encoding="utf-8") as fob:
                 value = fob.read()
             options[name] = value
         return options
@@ -895,11 +891,7 @@ class AivenCLI(argx.CommandLineTool):
             entry["service_type"] = service_type
             output.append(entry)
 
-        if self.args.monthly:
-            dformat = Decimal("0")
-        else:
-            dformat = Decimal("0.000")
-
+        dformat = Decimal("0") if self.args.monthly else Decimal("0.000")
         for info in sorted(output, key=lambda s: s["description"]):
             print("{} Plans:\n".format(info["description"]))
             for plan in info["service_plans"]:
@@ -1007,7 +999,7 @@ class AivenCLI(argx.CommandLineTool):
         if self.args.service_name:
             services = [s for s in services if s["service_name"] in self.args.service_name]
 
-        layout: List[Any] = self.SERVICE_LAYOUT[:]
+        layout: list[Any] = self.SERVICE_LAYOUT[:]
         if self.args.verbose:
             layout.extend(self.EXT_SERVICE_LAYOUT)
 
@@ -1344,7 +1336,7 @@ class AivenCLI(argx.CommandLineTool):
         # Format service notifications
         service["notifications"] = self._format_service_notifications(service)
 
-        layout: List = self.SERVICE_LAYOUT[:]
+        layout: list = self.SERVICE_LAYOUT[:]
         if self.args.verbose:
             ext_layout = list(self.EXT_SERVICE_LAYOUT)
             if service["service_type"] == "kafka":
@@ -1551,7 +1543,7 @@ class AivenCLI(argx.CommandLineTool):
             usage = self.args.usage
         return usage
 
-    def _get_privatelink_connection_id_from_args(self) -> Union[object, str]:
+    def _get_privatelink_connection_id_from_args(self) -> object | str:
         privatelink_connection_id = self.args.privatelink_connection_id
         if privatelink_connection_id is None:
             return UNDEFINED
@@ -1688,12 +1680,12 @@ class AivenCLI(argx.CommandLineTool):
 
         try:
             os.execvpe(command, [command] + params + self.args.arg, dict(os.environ, **env))
-        except EnvironmentError as e:
+        except OSError as e:
             if e.errno != errno.ENOENT:
                 raise
             raise argx.UserError("Executable '{}' is not available, cannot launch {} client".format(command, service_type))
 
-    def _build_influx_start_info(self, url: str) -> Tuple[str, List, Mapping]:
+    def _build_influx_start_info(self, url: str) -> tuple[str, list, Mapping]:
         info = urlparse(url)
         params = [
             "-host",
@@ -1708,13 +1700,13 @@ class AivenCLI(argx.CommandLineTool):
         ]
         return "influx", params, {"INFLUX_PASSWORD": info.password}
 
-    def _build_psql_start_info(self, url: str) -> Tuple[str, List, Mapping]:
+    def _build_psql_start_info(self, url: str) -> tuple[str, list, Mapping]:
         pw_pattern = "([a-z\\+]+://[^:]+):([^@]+)@(.*)"
         match = re.match(pw_pattern, url)
         connect_info = re.sub(pw_pattern, "\\1@\\3", url)
         return "psql", [connect_info], {"PGPASSWORD": match.group(2) if match else None}
 
-    def _build_redis_start_info(self, url: str) -> Tuple[str, List, Mapping]:
+    def _build_redis_start_info(self, url: str) -> tuple[str, list, Mapping]:
         info = urlparse(url)
         params = [
             "--tls",
@@ -1735,7 +1727,7 @@ class AivenCLI(argx.CommandLineTool):
     def service__credentials_reset(self) -> None:
         """Reset service credentials"""
         service = self.client.reset_service_credentials(project=self.get_project(), service=self.args.service_name)
-        layout: List = [
+        layout: list = [
             [
                 "service_name",
                 "service_type",
@@ -1884,7 +1876,7 @@ class AivenCLI(argx.CommandLineTool):
         arg_vars = vars(self.args)
         result = {
             key: arg_vars[key].split()
-            for key in {"redis_acl_keys", "redis_acl_commands", "redis_acl_categories", "redis_acl_channels"}
+            for key in ["redis_acl_keys", "redis_acl_commands", "redis_acl_categories", "redis_acl_channels"]
             if arg_vars[key] is not None
         }
         for key in ["m3_group"]:
@@ -2236,7 +2228,7 @@ ssl.truststore.type=JKS
     def service__integration_endpoint_list(self) -> None:
         """List service integration endpoints"""
         service_integration_endpoints = self.client.get_service_integration_endpoints(project=self.get_project())
-        layout: List = [["endpoint_id", "endpoint_name", "endpoint_type"]]
+        layout: list = [["endpoint_id", "endpoint_name", "endpoint_type"]]
         if self.args.verbose:
             layout.extend(["user_config"])
         self.print_response(
@@ -2348,7 +2340,7 @@ ssl.truststore.type=JKS
             item["source"] = item["source_service"] or item["source_endpoint_id"]
             item["dest"] = item["dest_service"] or item["dest_endpoint_id"]
 
-        layout: List = [
+        layout: list = [
             [
                 "service_integration_id",
                 "source",
@@ -2396,7 +2388,7 @@ ssl.truststore.type=JKS
     def service__current_queries(self) -> None:
         """List current service connections/queries"""
         queries = self.client.get_service_current_queries(project=self.get_project(), service=self.args.service_name)
-        layout: List = [["pid", "query", "query_duration", "client_addr", "application_name"]]
+        layout: list = [["pid", "query", "query_duration", "client_addr", "application_name"]]
         if self.args.verbose:
             layout.extend(
                 [
@@ -2434,7 +2426,7 @@ ssl.truststore.type=JKS
         service = self.args.service_name
         service_type = self.client.get_service(project, service)["service_type"]
         queries = self.client.get_service_query_stats(project=project, service=service, service_type=service_type)
-        layout: List = (
+        layout: list = (
             [
                 [
                     "query",
@@ -2555,7 +2547,7 @@ ssl.truststore.type=JKS
         ]
         if not self.args.json:
             # Fix optional fields, flatten for output
-            def _f(ns: Dict[str, Any]) -> Dict[str, str]:
+            def _f(ns: dict[str, Any]) -> dict[str, str]:
                 o = ns.get("options", {})
                 ro = o.get("retention_options", {})
                 return {
@@ -2858,7 +2850,7 @@ ssl.truststore.type=JKS
 
         new_tags = list(map(parse_tag_str, self.args.topic_option_tag or []))
         untags = list(map(parse_untag_str, self.args.topic_option_untag or []))
-        keys: List = list(map(lambda d: d.get("key"), new_tags))
+        keys: list = list(map(lambda d: d.get("key"), new_tags))
         tag_keys = keys + untags
         repeated_keys = [key for key, count in Counter(tag_keys).items() if count > 1]
         if len(repeated_keys) > 0:
@@ -3414,12 +3406,12 @@ ssl.truststore.type=JKS
     @arg.project
     @arg("service", nargs="+", help="Service to wait for")
     @arg.timeout
-    def service__wait(self) -> Optional[int]:  # pylint: disable=inconsistent-return-statements
+    def service__wait(self) -> int | None:
         """Wait service to reach the 'RUNNING' state"""
         start_time = time.time()
         report_interval = 30.0
         next_report = start_time + report_interval
-        last: Dict = {}
+        last: dict = {}
         while True:
             all_running = True
             for service in self.args.service:
@@ -3629,11 +3621,11 @@ ssl.truststore.type=JKS
 
     def _vpc_peering_connection_create(
         self,
-        peer_region: Optional[str],
-        peer_resource_group: Optional[str],
-        peer_azure_app_id: Optional[str],
-        peer_azure_tenant_id: Optional[str],
-        user_peer_network_cidrs: Optional[Sequence[str]],
+        peer_region: str | None,
+        peer_resource_group: str | None,
+        peer_azure_app_id: str | None,
+        peer_azure_tenant_id: str | None,
+        user_peer_network_cidrs: Sequence[str] | None,
     ) -> None:
         """Helper method for vpc__peering_connection__create and vpc__peering_connection__request"""
         project_name = self.get_project()
@@ -3748,7 +3740,7 @@ ssl.truststore.type=JKS
                 " or --no-project-vpc to use the public internet"
             )
 
-    def _get_service_project_vpc_id(self) -> Optional[Union[object, str]]:
+    def _get_service_project_vpc_id(self) -> object | str | None:
         """Utility method for service_create and service_update"""
         if self.args.project_vpc_id is None:
             self._validate_using_cloud_vpc()
@@ -3794,6 +3786,17 @@ ssl.truststore.type=JKS
             project_vpc_id=self.args.project_vpc_id,
             delete=self.args.cidrs,
         )
+
+    def _get_service_type(self) -> str:
+        return self.args.service_type.partition(":")[0]
+
+    def _get_plan(self) -> str:
+        maybe_plan = self.args.service_type.partition(":")[2]
+        if maybe_plan:
+            return maybe_plan
+        elif self.args.plan:
+            return self.args.plan
+        raise argx.UserError("No subscription plan given")
 
     @arg.project
     @arg.service_name
@@ -3845,16 +3848,8 @@ ssl.truststore.type=JKS
     @arg.force
     def service__create(self) -> None:
         """Create a service"""
-        service_type_info = self.args.service_type.split(":")
-        service_type = service_type_info[0]
-
-        plan = None
-        if len(service_type_info) == 2:
-            plan = service_type_info[1]
-        elif self.args.plan:
-            plan = self.args.plan
-        if not plan:
-            raise argx.UserError("No subscription plan given")
+        service_type = self._get_service_type()
+        plan = self._get_plan()
         if self.args.group_name:
             self.log.warning("--group-name parameter is deprecated and has no effect")
 
@@ -3904,12 +3899,12 @@ ssl.truststore.type=JKS
             )
         except client.Error as ex:
             print(ex.response)
-            if not self.args.no_fail_if_exists or ex.response.status_code != 409:
+            if not self.args.no_fail_if_exists or ex.response.status_code != HTTPStatus.CONFLICT:
                 raise
 
             self.log.info("service '%s/%s' already exists", project, self.args.service_name)
 
-    def _get_powered(self) -> Optional[bool]:
+    def _get_powered(self) -> bool | None:
         if self.args.power_on and self.args.power_off:
             raise argx.UserError("Only one of --power-on or --power-off can be specified")
         elif self.args.power_on:
@@ -3953,7 +3948,7 @@ ssl.truststore.type=JKS
         # No match was found
         raise argx.UserError(f"{service_type} v{version} is not available")
 
-    def _extract_user_config_version(self, service_type: str, user_config: dict) -> Optional[str]:
+    def _extract_user_config_version(self, service_type: str, user_config: dict) -> str | None:
         """Extracts version specified in the user config.
 
         This handles the special case for M3 components which also accept
@@ -4026,6 +4021,14 @@ ssl.truststore.type=JKS
                     option=integration_type_name,
                 )
             ) from ex
+
+    def _get_maintainance(self) -> Mapping[str, str] | None:
+        maintenance = {}
+        if self.args.maintenance_dow:
+            maintenance["dow"] = self.args.maintenance_dow
+        if self.args.maintenance_time:
+            maintenance["time"] = self.args.maintenance_time
+        return maintenance or None
 
     @arg.project
     @arg.service_name
@@ -4112,11 +4115,7 @@ ssl.truststore.type=JKS
         if requested_version:
             self._do_version_eol_check(service_type, requested_version)
 
-        maintenance = {}
-        if self.args.maintenance_dow:
-            maintenance["dow"] = self.args.maintenance_dow
-        if self.args.maintenance_time:
-            maintenance["time"] = self.args.maintenance_time
+        maintenance = self._get_maintainance()
         project_vpc_id = self._get_service_project_vpc_id()
         termination_protection = None
         if self.args.enable_termination_protection and self.args.disable_termination_protection:
@@ -4143,7 +4142,7 @@ ssl.truststore.type=JKS
         try:
             self.client.update_service(
                 cloud=self.args.cloud,
-                maintenance=maintenance or None,
+                maintenance=maintenance,
                 plan=plan,
                 disk_space_mb=self.args.disk_space_mb,
                 karapace=karapace,
@@ -4193,11 +4192,11 @@ ssl.truststore.type=JKS
 
         return "{}/{}".format(project["card_info"]["user_email"], project["card_info"]["card_id"])
 
-    def _show_projects(self, projects: Sequence[Dict[str, Any]], verbose: bool = True) -> None:
+    def _show_projects(self, projects: Sequence[dict[str, Any]], verbose: bool = True) -> None:
         for project in projects:
             project["credit_card"] = self._format_card_info(project)
         if verbose:
-            layout: List = [
+            layout: list = [
                 ["project_name", "default_cloud", "billing_currency", "vat_id"],
                 "credit_card",
                 "billing_address",
@@ -4262,7 +4261,7 @@ ssl.truststore.type=JKS
                 use_source_project_billing_group=self.args.use_source_project_billing_group,
             )
         except client.Error as ex:
-            if not self.args.no_fail_if_exists or ex.response.status_code != 409:
+            if not self.args.no_fail_if_exists or ex.response.status_code != HTTPStatus.CONFLICT:
                 raise
 
             self.log.info("Project '%s' already exists", self.args.project_name)
@@ -4619,14 +4618,14 @@ server_encryption_options:
         )
 
     @staticmethod
-    def _parse_tag_arg(tag: str) -> Tuple[str, str]:
+    def _parse_tag_arg(tag: str) -> tuple[str, str]:
         if "=" not in tag:
             raise argx.UserError(f"Invalid tag key-value pair '{tag}', expected '<KEY>=<VALUE>'")
         key, value = tag.split("=", maxsplit=1)
         return key, value
 
-    def _tag_update_body_from_args(self) -> Mapping[str, Optional[str]]:
-        tag_updates: Dict[str, Optional[str]] = {key: None for key in self.args.remove_tag}
+    def _tag_update_body_from_args(self) -> Mapping[str, str | None]:
+        tag_updates: dict[str, str | None] = {key: None for key in self.args.remove_tag}
         tag_updates.update(dict(self._parse_tag_arg(tag) for tag in self.args.add_tag))
         return tag_updates
 
@@ -4709,11 +4708,10 @@ server_encryption_options:
         self.log.info("Aiven credentials written to: %s", aiven_credentials_filename)
 
     def _open_auth_token_file(self, mode: str = "r") -> IO:
-        # pylint: disable=consider-using-with
         auth_token_file_path = self._get_auth_token_file_name()
         try:
             return open(auth_token_file_path, mode, encoding="utf-8")
-        except IOError as ex:
+        except OSError as ex:
             if ex.errno == errno.ENOENT and mode == "w":
                 aiven_dir = os.path.dirname(auth_token_file_path)
                 os.makedirs(aiven_dir)
@@ -4731,7 +4729,7 @@ server_encryption_options:
         default_token_file_path = os.path.join(envdefault.AIVEN_CONFIG_DIR, "aiven-credentials.json")
         return os.environ.get("AIVEN_CREDENTIALS_FILE") or default_token_file_path
 
-    def _get_auth_token(self) -> Optional[str]:
+    def _get_auth_token(self) -> str | None:
         token = self.args.auth_token
         if token:
             return token
@@ -4739,12 +4737,12 @@ server_encryption_options:
         try:
             with self._open_auth_token_file() as fp:
                 return jsonlib.load(fp)["auth_token"]
-        except IOError as ex:
+        except OSError as ex:
             if ex.errno == errno.ENOENT:
                 return None
             raise
 
-    def pre_run(self, func: Callable[[], Optional[int]]) -> None:
+    def pre_run(self, func: Callable[[], int | None]) -> None:
         self.client = self.client_factory(
             base_url=self.args.url,
             show_http=self.args.show_http,
@@ -4753,7 +4751,7 @@ server_encryption_options:
         # Always set CA if we have anything set at the command line or in the env
         if self.args.auth_ca is not None:
             self.client.set_ca(self.args.auth_ca)
-        if func == self.user__create:  # pylint: disable=comparison-with-callable
+        if func == self.user__create:
             # "user create" doesn't use authentication (yet)
             return
 
@@ -4865,11 +4863,11 @@ server_encryption_options:
         if self.args.json:
             self.print_response(result, json=True)
 
-    def _print_billing_groups(self, billing_groups: Sequence[Dict[str, Any]]) -> None:
+    def _print_billing_groups(self, billing_groups: Sequence[dict[str, Any]]) -> None:
         for billing_group in billing_groups:
             billing_group["credit_card"] = self._format_card_info(billing_group)
             billing_group["billing_emails"] = [item["email"] for item in billing_group["billing_emails"]]
-        layout: List = [
+        layout: list = [
             [
                 "billing_group_id",
                 "billing_group_name",
@@ -5050,7 +5048,7 @@ server_encryption_options:
     def billing_group__invoice_list(self) -> None:
         """List billing group invoices"""
         result = self.client.list_billing_group_invoices(billing_group=self.args.id, sort=self.args.sort)
-        layout: List = [
+        layout: list = [
             [
                 "invoice_number",
                 "period_begin",

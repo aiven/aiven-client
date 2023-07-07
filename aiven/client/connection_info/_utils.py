@@ -1,7 +1,9 @@
 # Copyright (c) 2021 Aiven, Helsinki, Finland. https://aiven.io/
+from __future__ import annotations
+
 from .common import ConnectionInfoError
 from aiven.client.common import UNDEFINED
-from typing import Any, Mapping, Optional, Sequence, TypeVar, Union
+from typing import Any, Mapping, Sequence, TypeVar
 
 import ipaddress
 import urllib.parse
@@ -9,7 +11,7 @@ import urllib.parse
 T = TypeVar("T")
 
 
-def find_component(items: Sequence[Mapping[str, T]], **filters: Union[object, str]) -> Mapping[str, T]:
+def find_component(items: Sequence[Mapping[str, T]], **filters: object | str) -> Mapping[str, T]:
     for item in items:
         if all(key in item and item[key] == value for key, value in filters.items() if value is not UNDEFINED):
             return item
@@ -27,13 +29,13 @@ def find_user(service: Mapping[str, Any], username: str) -> Mapping[str, Any]:
 def format_uri(
     *,
     scheme: str,
-    username: Optional[str] = None,
-    password: Optional[str] = None,
-    host: Optional[str] = None,
-    port: Optional[int] = None,
-    netloc: Optional[str] = None,
+    username: str | None = None,
+    password: str | None = None,
+    host: str | None = None,
+    port: int | None = None,
+    netloc: str | None = None,
     path: str = "",
-    query: Optional[Mapping[str, Any]] = None,
+    query: Mapping[str, Any] | None = None,
     fragment: str = "",
 ) -> str:
     if netloc is None:
@@ -52,9 +54,9 @@ def format_uri(
                 # host not parseable as an IP address -> probably DNS name
                 pass
             else:
-                if ip.version == 4:
+                if ip.version == 4:  # noqa: PLR2004
                     host = f"{ip}"
-                elif ip.version == 6:
+                elif ip.version == 6:  # noqa: PLR2004
                     host = f"[{ip}]"
                 else:
                     raise NotImplementedError(ip.version)

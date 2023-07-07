@@ -2,19 +2,18 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
+from __future__ import annotations
 
 from aiven.client import AivenClient
 from http import HTTPStatus
-from typing import Any, Dict, Optional
+from typing import Any
 from unittest import mock
 
 import pytest
 
 
 class MockResponse:
-    def __init__(
-        self, status_code: int, json_data: Optional[Dict[str, Any]] = None, headers: Optional[Dict[str, str]] = None
-    ):
+    def __init__(self, status_code: int, json_data: dict[str, Any] | None = None, headers: dict[str, str] | None = None):
         self.status_code = status_code
         self.json_data = json_data
         self.headers = {} if headers is None else headers

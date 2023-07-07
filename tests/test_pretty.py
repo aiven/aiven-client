@@ -2,8 +2,10 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
+from __future__ import annotations
+
 from aiven.client.pretty import flatten_list, format_item, print_table, ResultType, TableLayout, yield_table
-from typing import Any, Collection, Optional
+from typing import Any, Collection
 
 import datetime
 import decimal
@@ -72,10 +74,10 @@ def test_print_table() -> None:
     )
 
     def get_output(
-        rows: Optional[ResultType],
+        rows: ResultType | None,
         *,
-        drop_fields: Optional[Collection[str]] = None,
-        table_layout: Optional[TableLayout] = None,
+        drop_fields: Collection[str] | None = None,
+        table_layout: TableLayout | None = None,
     ) -> str:
         temp_io = io.StringIO()
         print_table(rows, drop_fields=drop_fields, table_layout=table_layout, file=temp_io)
@@ -144,10 +146,10 @@ def test_print_table_nested_dict() -> None:
     )
 
     def get_output(
-        rows: Optional[ResultType],
+        rows: ResultType | None,
         *,
-        drop_fields: Optional[Collection[str]] = None,
-        table_layout: Optional[TableLayout] = None,
+        drop_fields: Collection[str] | None = None,
+        table_layout: TableLayout | None = None,
     ) -> str:
         temp_io = io.StringIO()
         print_table(rows, drop_fields=drop_fields, table_layout=table_layout, file=temp_io)

@@ -2,9 +2,11 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
+from __future__ import annotations
+
 from .argx import arg, CommandLineTool, UserError
 from functools import wraps
-from typing import Any, Callable, Dict, TypeVar
+from typing import Any, Callable, TypeVar
 
 import json as jsonlib
 import os
@@ -17,13 +19,13 @@ __all__ = [
 ]
 
 
-def get_json_config(path_or_string: str) -> Dict[str, Any]:
+def get_json_config(path_or_string: str) -> dict[str, Any]:
     # If parameter is empty, return an empty dict
     if not path_or_string:
         return {}
     if path_or_string.startswith("@"):
         filepath = path_or_string[1:]
-        with open(filepath, "r", encoding="utf-8") as config_file:
+        with open(filepath, encoding="utf-8") as config_file:
             return jsonlib.load(config_file)
 
     return jsonlib.loads(path_or_string)

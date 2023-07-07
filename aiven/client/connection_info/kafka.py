@@ -4,13 +4,13 @@ from __future__ import annotations
 from ._utils import find_component, find_user
 from .common import ConnectionInfoError, Store
 from dataclasses import dataclass
-from typing import Any, Callable, Mapping, Sequence, Union
+from typing import Any, Callable, Mapping, Sequence
 
 import warnings
 
 
 @dataclass
-class KafkaConnectionInfo:  # pylint: disable=too-few-public-methods
+class KafkaConnectionInfo:
     host: str
     port: int
 
@@ -61,7 +61,7 @@ class KafkaCertificateConnectionInfo(KafkaConnectionInfo):
         service: Mapping[str, Any],
         *,
         route: str,
-        privatelink_connection_id: Union[object, str],
+        privatelink_connection_id: object | str,
         username: str,
     ) -> KafkaCertificateConnectionInfo:
         if service["service_type"] != "kafka":
@@ -105,7 +105,7 @@ class KafkaSASLConnectionInfo(KafkaConnectionInfo):
         service: Mapping[str, Any],
         *,
         route: str,
-        privatelink_connection_id: Union[object, str],
+        privatelink_connection_id: object | str,
         username: str,
     ) -> KafkaSASLConnectionInfo:
         if service["service_type"] != "kafka":

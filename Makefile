@@ -4,7 +4,7 @@ PYTHON ?= python3
 PYTHON_DIRS = aiven tests
 
 test: pytest
-lint: flake8 mypy pylint
+lint: ruff flake8 mypy
 
 reformat:
 	$(PYTHON) -m isort $(PYTHON_DIRS)
@@ -26,8 +26,8 @@ flake8:
 mypy:
 	$(PYTHON) -m mypy $(PYTHON_DIRS)
 
-pylint:
-	$(PYTHON) -m pylint $(PYTHON_DIRS)
+ruff:
+	$(PYTHON) -m ruff $(PYTHON_DIRS)
 
 pytest:
 	$(PYTHON) -m pytest -vv tests/
@@ -51,7 +51,6 @@ build-dep-fedora:
 		python3-flake8 \
 		python3-isort \
 		python3-mypy \
-		python3-pylint \
 		python3-pytest \
 		python3-requests \
 		python3-types-requests \
@@ -74,4 +73,4 @@ rpm:
 install-rpm: $(RPM)
 	sudo dnf install $<
 
-.PHONY: build-dep-fedora clean coverage pytest mypy pylint flake8 reformat test validate-style
+.PHONY: build-dep-fedora clean coverage pytest mypy flake8 reformat test validate-style ruff

@@ -2,12 +2,13 @@
 #
 # Copyright (c) 2007-2016 Peter Norvig
 # MIT license: www.opensource.org/licenses/mit-license.php
+from __future__ import annotations
 
-from typing import Container, Iterable, Iterator, Optional
+from typing import Container, Iterable, Iterator
 
 
-def suggest(word_to_check: str, known_words: Container[str]) -> Optional[str]:
-    def get_correction(word: str) -> Optional[str]:
+def suggest(word_to_check: str, known_words: Container[str]) -> str | None:
+    def get_correction(word: str) -> str | None:
         """Most probable spelling correction for word."""
         candidates = get_candidates(word)
         return next(iter(candidates)) if candidates else None

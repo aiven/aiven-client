@@ -1,10 +1,11 @@
 # Copyright 2015, Aiven, https://aiven.io/
-# coding=utf-8
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
 """Pretty-print JSON objects and lists as tables"""
-from typing import Any, cast, Collection, Dict, Iterator, List, Mapping, Optional, TextIO, Tuple, Union
+from __future__ import annotations
+
+from typing import Any, cast, Collection, Iterator, List, Mapping, TextIO, Tuple, Union
 
 import datetime
 import decimal
@@ -14,18 +15,12 @@ import itertools
 import json
 import sys
 
-# string type checking must work on python 2.x and 3.x
-try:
-    basestring  # pylint: disable=used-before-assignment
-except NameError:
-    basestring = str  # pylint: disable=redefined-builtin
-
 ResultType = Collection[Mapping[str, Any]]
 TableLayout = Collection[Union[List[str], Tuple[str], str]]
 
 
 class CustomJsonEncoder(json.JSONEncoder):
-    def default(self, o: Any) -> str:  # pylint:disable=E0202
+    def default(self, o: Any) -> str:
         if isinstance(o, (datetime.datetime, datetime.date)):
             return o.isoformat()
         if isinstance(o, datetime.timedelta):
@@ -48,12 +43,12 @@ class CustomJsonEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-def format_item(key: Optional[str], value: Any) -> str:
+def format_item(key: str | None, value: Any) -> str:
     if isinstance(value, list):
         formatted = ", ".join(format_item(None, entry) for entry in value)
     elif isinstance(value, dict):
         formatted = json.dumps(value, sort_keys=True, cls=CustomJsonEncoder)
-    elif isinstance(value, basestring):
+    elif isinstance(value, str):
         if key and key.endswith("_time") and value.endswith("Z") and "." in value:
             # drop microseconds from timestamps
             value = value.split(".", 1)[0] + "Z"
@@ -81,11 +76,11 @@ def format_item(key: Optional[str], value: Any) -> str:
     return formatted
 
 
-def flatten_list(complex_list: Optional[TableLayout]) -> Collection[str]:
+def flatten_list(complex_list: TableLayout | None) -> Collection[str]:
     """Flatten a multi-dimensional list to 1D list"""
     if complex_list is None:
         return []
-    flattened_list: List[str] = []
+    flattened_list: list[str] = []
     for level1 in complex_list:
         if isinstance(level1, (list, tuple)):
             flattened_list.extend(flatten_list(level1))
@@ -94,7 +89,7 @@ def flatten_list(complex_list: Optional[TableLayout]) -> Collection[str]:
     return flattened_list
 
 
-def _flattened_dict(key: str, value: Any, requested_keys: Collection[str] = ()) -> Iterator[Tuple[str, Any]]:
+def _flattened_dict(key: str, value: Any, requested_keys: Collection[str] = ()) -> Iterator[tuple[str, Any]]:
     """
     Flatten nested dicts into a single dict with keys as dotted paths.
 
@@ -126,8 +121,8 @@ def _flattened_dict(key: str, value: Any, requested_keys: Collection[str] = ()) 
 
 def yield_table(  # noqa
     result: ResultType,
-    drop_fields: Optional[Collection[str]] = None,
-    table_layout: Optional[TableLayout] = None,
+    drop_fields: Collection[str] | None = None,
+    table_layout: TableLayout | None = None,
     header: bool = True,
 ) -> Iterator[str]:
     """
@@ -144,11 +139,11 @@ def yield_table(  # noqa
     drop_fields = set(drop_fields or [])
 
     # format all fields and collect their widths
-    widths: Dict[str, int] = {}
-    formatted_values: List[Dict[str, str]] = []
+    widths: dict[str, int] = {}
+    formatted_values: list[dict[str, str]] = []
     flattened_table_layout = flatten_list(table_layout)
     for item in result:
-        formatted_row: Dict[str, str] = {}
+        formatted_row: dict[str, str] = {}
         formatted_values.append(formatted_row)
         for key, value in item.items():
             if key in drop_fields:
@@ -176,7 +171,7 @@ def yield_table(  # noqa
         # The main, horizontal, line
         yield "  ".join(formatted_row.get(f, "").ljust(widths[f]) for f in horizontal_fields).strip()
         # And the rest of the fields, one per field
-        fields_to_print: List[Tuple[str, str]] = []
+        fields_to_print: list[tuple[str, str]] = []
         vertical_fields = cast(Iterator[str], itertools.islice(table_layout, 1, None))
         for vertical_field in vertical_fields:
             if vertical_field.endswith(".*"):
@@ -194,12 +189,12 @@ def yield_table(  # noqa
 
 
 def print_table(
-    result: Optional[Union[Collection[Any], ResultType]],
-    drop_fields: Optional[Collection[str]] = None,
-    table_layout: Optional[TableLayout] = None,
+    result: Collection[Any] | ResultType | None,
+    drop_fields: Collection[str] | None = None,
+    table_layout: TableLayout | None = None,
     header: bool = True,
-    file: Optional[TextIO] = None,
-) -> None:  # pylint: disable=redefined-builtin
+    file: TextIO | None = None,
+) -> None:
     """print a list of dicts in a nicer table format"""
 
     def yield_rows() -> Iterator[str]:

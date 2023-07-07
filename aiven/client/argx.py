@@ -8,24 +8,7 @@ from .pretty import TableLayout
 from aiven.client import envdefault, pretty
 from argparse import Action, Namespace
 from os import PathLike
-from typing import (
-    Any,
-    Callable,
-    cast,
-    Collection,
-    Dict,
-    List,
-    Mapping,
-    NoReturn,
-    Optional,
-    Sequence,
-    TextIO,
-    Tuple,
-    Type,
-    TYPE_CHECKING,
-    TypeVar,
-    Union,
-)
+from typing import Any, Callable, cast, Collection, Mapping, NoReturn, Sequence, TextIO, TYPE_CHECKING, TypeVar
 
 import aiven.client.client
 import argparse
@@ -40,14 +23,14 @@ import sys
 
 # Optional shell completions
 try:
-    import argcomplete  # type: ignore # pylint: disable=import-error
+    import argcomplete  # type: ignore
 
     ARGCOMPLETE_INSTALLED = True
 except ImportError:
     ARGCOMPLETE_INSTALLED = False
 
 try:
-    from .version import __version__  # pylint: disable=no-name-in-module
+    from .version import __version__
 except ImportError:
     __version__ = "UNKNOWN"
 
@@ -80,7 +63,7 @@ class UserError(Exception):
 F = TypeVar("F", bound=Callable)
 
 
-class Arg:  # pylint: disable=too-many-instance-attributes
+class Arg:
     """Declares an argument of an CLI command.
 
     This decorator accepts the same arguments as `argparse.Parser::add_argument`.
@@ -124,7 +107,7 @@ class Arg:  # pylint: disable=too-many-instance-attributes
 arg = Arg()
 
 
-def name_to_cmd_parts(name: str) -> List[str]:
+def name_to_cmd_parts(name: str) -> list[str]:
     if "__" in name:
         # allow multi-level commands, separating each level with double underscores
         cmd_parts = name.split("__")
@@ -146,7 +129,7 @@ class Config(dict):
         try:
             with open(self.file_path, encoding="utf-8") as fp:
                 self.update(jsonlib.load(fp))
-        except IOError as ex:
+        except OSError as ex:
             if ex.errno == errno.ENOENT:
                 return
 
@@ -167,13 +150,13 @@ class Config(dict):
             jsonlib.dump(self, fp, sort_keys=True, indent=4)
 
 
-class CommandLineTool:  # pylint: disable=old-style-class
+class CommandLineTool:
     config: Config
 
-    def __init__(self, name: str, parser: Optional[argparse.ArgumentParser] = None):
+    def __init__(self, name: str, parser: argparse.ArgumentParser | None = None):
         self.log = logging.getLogger(name)
-        self._cats: Dict[Tuple[str, ...], argparse._SubParsersAction] = {}
-        self._extensions: List[CommandLineTool] = []
+        self._cats: dict[tuple[str, ...], argparse._SubParsersAction] = {}
+        self._extensions: list[CommandLineTool] = []
         self.parser = parser or argparse.ArgumentParser(prog=name, formatter_class=CustomFormatter)
         self.parser.add_argument(
             "--config",
@@ -210,7 +193,7 @@ class CommandLineTool:  # pylint: disable=old-style-class
             parser.add_argument(*arg_prop[0], **arg_prop[1])
 
         # Ensure the list of actions remains sorted as we append to to it.
-        self.subparsers._choices_actions.sort(key=lambda item: item.dest)  # pylint: disable=protected-access
+        self.subparsers._choices_actions.sort(key=lambda item: item.dest)
 
     def add_args(self, parser: argparse.ArgumentParser) -> None:
         pass  # override in sub-class
@@ -233,7 +216,7 @@ class CommandLineTool:  # pylint: disable=old-style-class
                 assert callable(func)
                 add_func(func)
 
-    def parse_args(self, args: Optional[Sequence[str]] = None) -> None:
+    def parse_args(self, args: Sequence[str] | None = None) -> None:
         self.extend_commands(self)
 
         if ARGCOMPLETE_INSTALLED:
@@ -246,11 +229,11 @@ class CommandLineTool:  # pylint: disable=old-style-class
     def pre_run(self, func: Callable) -> None:
         """Override in sub-class"""
 
-    def expected_errors(self) -> Sequence[Type[BaseException]]:
+    def expected_errors(self) -> Sequence[type[BaseException]]:
         return []
 
     def _to_mapping_collection(
-        self, obj: Union[Mapping[str, Any], Collection[Mapping[str, Any]]], single_item: bool = False
+        self, obj: Mapping[str, Any] | Collection[Mapping[str, Any]], single_item: bool = False
     ) -> Collection[Mapping[str, Any]]:
         if single_item:
             assert isinstance(obj, Mapping)
@@ -261,16 +244,16 @@ class CommandLineTool:  # pylint: disable=old-style-class
 
     def print_response(
         self,
-        result: Union[Mapping[str, Any], Collection[Mapping[str, Any]]],
+        result: Mapping[str, Any] | Collection[Mapping[str, Any]],
         json: bool = True,
-        format: Optional[str] = None,  # pylint: disable=redefined-builtin
-        drop_fields: Optional[Collection[str]] = None,
-        table_layout: Optional[TableLayout] = None,
+        format: str | None = None,
+        drop_fields: Collection[str] | None = None,
+        table_layout: TableLayout | None = None,
         single_item: bool = False,
         header: bool = True,
         csv: bool = False,
-        file: Optional[TextIO] = None,
-    ) -> None:  # pylint: disable=redefined-builtin
+        file: TextIO | None = None,
+    ) -> None:
         """print request response in chosen format"""
         if file is None:
             file = sys.stdout
@@ -307,7 +290,7 @@ class CommandLineTool:  # pylint: disable=old-style-class
                 file=file,
             )
 
-    def run(self, args: Optional[Sequence[str]] = None) -> Optional[int]:
+    def run(self, args: Sequence[str] | None = None) -> int | None:
         args = args or sys.argv[1:]
         if not args:
             args = ["--help"]
@@ -315,7 +298,7 @@ class CommandLineTool:  # pylint: disable=old-style-class
         self.parse_args(args=args)
         assert self.args is not None and hasattr(self.args, "config")
         self.config = Config(self.args.config)
-        expected_errors: List[Type[BaseException]] = [
+        expected_errors: list[type[BaseException]] = [
             requests.exceptions.ConnectionError,
             UserError,
             aiven.client.client.Error,
@@ -325,7 +308,7 @@ class CommandLineTool:  # pylint: disable=old-style-class
             ext.config = self.config
         try:
             return self.run_actual(args)
-        except tuple(expected_errors) as ex:  # pylint: disable=catching-non-exception
+        except tuple(expected_errors) as ex:
             # nicer output on "expected" errors
             err = "command failed: {0.__class__.__name__}: {0}".format(ex)
             self.log.error(err)
@@ -339,16 +322,16 @@ class CommandLineTool:  # pylint: disable=old-style-class
             self.log.error("*** terminated by keyboard ***")
             return 2  # SIGINT
 
-    def run_actual(self, args_for_help: Sequence[str]) -> Optional[int]:
+    def run_actual(self, args_for_help: Sequence[str]) -> int | None:
         func = getattr(self.args, "func", None)
         if not func:
             self.parser.parse_args(list(args_for_help) + ["--help"])
             return 1
 
         self.pre_run(func)
-        return func()  # pylint: disable=not-callable
+        return func()
 
-    def main(self, args: Optional[Sequence[str]] = None) -> NoReturn:
+    def main(self, args: Sequence[str] | None = None) -> NoReturn:
         # TODO: configurable log level
         logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
         logging.getLogger("requests").setLevel(logging.WARNING)

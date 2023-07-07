@@ -2,8 +2,9 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
+from __future__ import annotations
 
-from aiven.client import AivenClient
+from aiven.client import AivenClient, argx
 from aiven.client.argx import UserError
 from aiven.client.cli import AivenCLI, ClientFactory, convert_str_to_value, EOL_ADVANCE_WARNING_TIME
 from aiven.client.common import UNDEFINED
@@ -11,7 +12,7 @@ from argparse import Namespace
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pytest import CaptureFixture, LogCaptureFixture
-from typing import Any, cast, Iterator, Mapping, Optional, Union
+from typing import Any, cast, Iterator, Mapping
 from unittest import mock
 
 import pytest
@@ -213,7 +214,7 @@ def test_create_user_config() -> None:
         ("false", "boolean", False),
     ],
 )
-def test_convert_str_to_value(user_config_args: str, config_type: str, expected_value: Union[str, dict]) -> None:
+def test_convert_str_to_value(user_config_args: str, config_type: str, expected_value: str | dict) -> None:
     cli = AivenCLI()
     cli.args = Namespace()
     schema = {
@@ -290,7 +291,7 @@ def patched_get_auth_token() -> str:
 
 def build_aiven_cli(client: AivenClient) -> AivenCLI:
     cli = AivenCLI(client_factory=mock.Mock(spec_set=ClientFactory, return_value=client))
-    cli._get_auth_token = patched_get_auth_token  # type: ignore # pylint: disable=protected-access
+    cli._get_auth_token = patched_get_auth_token  # type: ignore
     return cli
 
 
@@ -386,12 +387,12 @@ def test_version_eol_check() -> None:
 
     # Test current time < EOL_WARNING time
     with mock.patch("aiven.client.cli.get_current_date", return_value=fake_time_safe):
-        cli._do_version_eol_check(service_type, service_version)  # pylint: disable=protected-access
+        cli._do_version_eol_check(service_type, service_version)
         cli.confirm.assert_not_called()  # No confirmation should have been asked
 
     # Test current time > EOL_WARNING
     with mock.patch("aiven.client.cli.get_current_date", return_value=fake_time_soon):
-        cli._do_version_eol_check(service_type, service_version)  # pylint: disable=protected-access
+        cli._do_version_eol_check(service_type, service_version)
         cli.confirm.assert_called()  # Confirmation should have been asked
 
 
@@ -742,9 +743,7 @@ def test_create_oauth2_client() -> None:
 
     created_client_id = None
 
-    def _create_client(
-        account_id: str, name: str, description: Optional[str] = None  # pylint: disable=unused-argument
-    ) -> Mapping:
+    def _create_client(account_id: str, name: str, description: str | None = None) -> Mapping:
         nonlocal created_client_id
 
         created_client_id = str(uuid.uuid4())
@@ -755,7 +754,7 @@ def test_create_oauth2_client() -> None:
             "description": description,
         }
 
-    def _create_redirect(account_id: str, client_id: str, uri: str) -> Mapping:  # pylint: disable=unused-argument
+    def _create_redirect(account_id: str, client_id: str, uri: str) -> Mapping:
         return {
             "redirect_id": 127,
             "redirect_uri": uri,
@@ -817,11 +816,11 @@ def test_static_ips_list(capsys: CaptureFixture[str]) -> None:
     assert "10.0.0.69" in stdout
 
 
-def dummy_client_for_vpc_tests(cloud_with_vpc: Optional[str] = None) -> AivenCLI:
+def dummy_client_for_vpc_tests(cloud_with_vpc: str | None = None) -> AivenCLI:
     cli = AivenCLI()
 
-    class Client:  # pylint: disable=too-few-public-methods
-        def list_project_vpcs(self, project: str) -> dict:  # pylint: disable=unused-argument
+    class Client:
+        def list_project_vpcs(self, project: str) -> dict:
             if cloud_with_vpc:
                 return {"vpcs": [{"cloud_name": cloud_with_vpc}]}
             else:
@@ -835,7 +834,7 @@ def test_cloud_has_vpc_user_said_nothing() -> None:
     cli = dummy_client_for_vpc_tests("my-cloud")
     cli.parse_args(["service", "create", "--project=my-name", "--cloud=my-cloud", "--service-type=pg", "service-name"])
     with pytest.raises(UserError) as excinfo:
-        cli._get_service_project_vpc_id()  # pylint: disable=protected-access
+        cli._get_service_project_vpc_id()
     assert str(excinfo.value).startswith("Cloud my-cloud has a VPC")
 
 
@@ -846,7 +845,7 @@ def test_cloud_has_vpc_user_said_nothing_and_no_cloud_switch() -> None:
     """
     cli = dummy_client_for_vpc_tests("my-cloud")
     cli.parse_args(["service", "create", "--project=my-name", "--service-type=pg", "service-name"])
-    vpc_id = cli._get_service_project_vpc_id()  # pylint: disable=protected-access
+    vpc_id = cli._get_service_project_vpc_id()
     assert vpc_id is UNDEFINED
 
 
@@ -863,7 +862,7 @@ def test_cloud_has_vpc_user_said_no_vpc() -> None:
             "service-name",
         ]
     )
-    vpc_id = cli._get_service_project_vpc_id()  # pylint: disable=protected-access
+    vpc_id = cli._get_service_project_vpc_id()
     assert vpc_id is None
 
 
@@ -880,7 +879,7 @@ def test_cloud_has_vpc_user_gave_vpc_id() -> None:
             "service-name",
         ]
     )
-    vpc_id = cli._get_service_project_vpc_id()  # pylint: disable=protected-access
+    vpc_id = cli._get_service_project_vpc_id()
     assert vpc_id == "27"
 
 
@@ -899,14 +898,14 @@ def test_cloud_has_vpc_user_gave_both_switches() -> None:
         ]
     )
     with pytest.raises(UserError) as excinfo:
-        cli._get_service_project_vpc_id()  # pylint: disable=protected-access
+        cli._get_service_project_vpc_id()
     assert str(excinfo.value).startswith("Only one of --project-vpc-id")
 
 
 def test_cloud_has_no_vpc_user_said_nothing() -> None:
     cli = dummy_client_for_vpc_tests()
     cli.parse_args(["service", "create", "--project=my-name", "--cloud=my-cloud", "--service-type=pg", "service-name"])
-    vpc_id = cli._get_service_project_vpc_id()  # pylint: disable=protected-access
+    vpc_id = cli._get_service_project_vpc_id()
     assert vpc_id is UNDEFINED
 
 
@@ -923,7 +922,7 @@ def test_cloud_has_no_vpc_user_said_no_vpc() -> None:
             "service-name",
         ]
     )
-    vpc_id = cli._get_service_project_vpc_id()  # pylint: disable=protected-access
+    vpc_id = cli._get_service_project_vpc_id()
     assert vpc_id is None
 
 
@@ -940,7 +939,7 @@ def test_cloud_has_no_vpc_user_gave_vpc_id() -> None:
             "service-name",
         ]
     )
-    vpc_id = cli._get_service_project_vpc_id()  # pylint: disable=protected-access
+    vpc_id = cli._get_service_project_vpc_id()
     assert vpc_id == "27"
 
 
@@ -959,5 +958,81 @@ def test_cloud_has_no_vpc_user_gave_both_switches() -> None:
         ]
     )
     with pytest.raises(UserError) as excinfo:
-        cli._get_service_project_vpc_id()  # pylint: disable=protected-access
+        cli._get_service_project_vpc_id()
     assert str(excinfo.value).startswith("Only one of --project-vpc-id")
+
+
+def test_get_service_type() -> None:
+    cli = AivenCLI()
+    cli.parse_args(
+        [
+            "service",
+            "create",
+            "--cloud",
+            "my-cloud",
+            "--service-type",
+            "pg",
+            "--plan",
+            "business-4",
+            "service-name",
+        ]
+    )
+    assert cli._get_service_type() == "pg"
+    cli = AivenCLI()
+    cli.parse_args(
+        [
+            "service",
+            "create",
+            "--cloud",
+            "my-cloud",
+            "--service-type",
+            "pg:business-4",
+            "service-name",
+        ]
+    )
+    assert cli._get_service_type() == "pg"
+
+
+def test_get_service_plan() -> None:
+    cli = AivenCLI()
+    cli.parse_args(
+        [
+            "service",
+            "create",
+            "--cloud",
+            "my-cloud",
+            "--service-type",
+            "pg",
+            "--plan",
+            "business-4",
+            "service-name",
+        ]
+    )
+    assert cli._get_plan() == "business-4"
+    cli = AivenCLI()
+    cli.parse_args(
+        [
+            "service",
+            "create",
+            "--cloud",
+            "my-cloud",
+            "--service-type",
+            "pg:business-4",
+            "service-name",
+        ]
+    )
+    assert cli._get_plan() == "business-4"
+    with pytest.raises(argx.UserError, match="No subscription plan given"):
+        cli = AivenCLI()
+        cli.parse_args(
+            [
+                "service",
+                "create",
+                "--cloud",
+                "my-cloud",
+                "--service-type",
+                "pg",
+                "service-name",
+            ]
+        )
+        cli._get_plan()

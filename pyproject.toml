@@ -40,12 +40,11 @@ dev = [
     "mypy>=0.991,<1.0",
     # Lock types-requests to the same major version used in downstream build environments
     "types-requests>=2.26.1,<3.0",
-    # Lock pylint to the same major version used in downstream build environments
-    "pylint>=2.15.5,<3.0",
     "pytest",
     # Lock isort to the same major version used in downstream build environments
     "isort>=5.10.1,<6.0",
     "click",
+    "ruff",
 ]
 
 
@@ -80,3 +79,15 @@ line_length = 125
 no_sections = true  # This breaks the python convention...
 # The below settings are specifically required for Black compatibility
 profile = "black"
+
+[tool.ruff]
+line-length = 125
+src = ["aiven", "tests"]
+extend-select = [
+  "PL",  # Enable pylint rules
+  "UP",  # Enable pyupgrade rules
+]
+ignore = [
+  "PLR0913",  # It is too difficult to avoid "Too many arguments" error in the codebase
+  "UP032",  # Downstream has different rules for f-strings
+]

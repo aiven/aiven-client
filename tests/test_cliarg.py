@@ -2,6 +2,7 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
+from __future__ import annotations
 
 from _pytest.logging import LogCaptureFixture
 from aiven.client.argx import CommandLineTool
