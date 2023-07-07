@@ -1,4 +1,6 @@
 # Copyright (c) 2021 Aiven, Helsinki, Finland. https://aiven.io/
+from __future__ import annotations
+
 from aiven.client.argx import UserError
 from enum import Enum
 from typing import Callable

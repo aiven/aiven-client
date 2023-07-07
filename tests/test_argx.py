@@ -2,9 +2,11 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
+from __future__ import annotations
+
 from aiven.client.argx import arg, CommandLineTool
 from functools import cached_property
-from typing import Callable, List, NoReturn
+from typing import Callable, NoReturn
 
 
 class TestCLI(CommandLineTool):
@@ -99,6 +101,6 @@ class DescriptorCLI(CommandLineTool):
 
 def test_descriptors_are_not_eagerly_evaluated() -> None:
     cli = DescriptorCLI("DescriptorCLI")
-    calls: List[Callable] = []
+    calls: list[Callable] = []
     cli.add_cmds(calls.append)
     assert calls == [cli.example_command]

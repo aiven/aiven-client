@@ -2,6 +2,7 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
+from __future__ import annotations
 
 from aiven.client import AivenClient
 from aiven.client.argx import UserError
@@ -11,7 +12,7 @@ from argparse import Namespace
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pytest import CaptureFixture, LogCaptureFixture
-from typing import Any, cast, Iterator, Mapping, Optional, Union
+from typing import Any, cast, Iterator, Mapping
 from unittest import mock
 
 import pytest
@@ -213,7 +214,7 @@ def test_create_user_config() -> None:
         ("false", "boolean", False),
     ],
 )
-def test_convert_str_to_value(user_config_args: str, config_type: str, expected_value: Union[str, dict]) -> None:
+def test_convert_str_to_value(user_config_args: str, config_type: str, expected_value: str | dict) -> None:
     cli = AivenCLI()
     cli.args = Namespace()
     schema = {
@@ -743,7 +744,7 @@ def test_create_oauth2_client() -> None:
     created_client_id = None
 
     def _create_client(
-        account_id: str, name: str, description: Optional[str] = None  # pylint: disable=unused-argument
+        account_id: str, name: str, description: str | None = None  # pylint: disable=unused-argument
     ) -> Mapping:
         nonlocal created_client_id
 
@@ -817,7 +818,7 @@ def test_static_ips_list(capsys: CaptureFixture[str]) -> None:
     assert "10.0.0.69" in stdout
 
 
-def dummy_client_for_vpc_tests(cloud_with_vpc: Optional[str] = None) -> AivenCLI:
+def dummy_client_for_vpc_tests(cloud_with_vpc: str | None = None) -> AivenCLI:
     cli = AivenCLI()
 
     class Client:  # pylint: disable=too-few-public-methods

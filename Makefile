@@ -4,7 +4,7 @@ PYTHON ?= python3
 PYTHON_DIRS = aiven tests
 
 test: pytest
-lint: flake8 mypy pylint
+lint: ruff flake8 mypy pylint
 
 reformat:
 	$(PYTHON) -m isort $(PYTHON_DIRS)
@@ -28,6 +28,9 @@ mypy:
 
 pylint:
 	$(PYTHON) -m pylint $(PYTHON_DIRS)
+
+ruff:
+	$(PYTHON) -m ruff $(PYTHON_DIRS)
 
 pytest:
 	$(PYTHON) -m pytest -vv tests/
@@ -74,4 +77,4 @@ rpm:
 install-rpm: $(RPM)
 	sudo dnf install $<
 
-.PHONY: build-dep-fedora clean coverage pytest mypy pylint flake8 reformat test validate-style
+.PHONY: build-dep-fedora clean coverage pytest mypy pylint flake8 reformat test validate-style ruff

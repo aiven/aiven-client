@@ -2,6 +2,7 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
+from __future__ import annotations
 
 # pylint: disable=no-member
 from aiven.client.session import AivenClientAdapter, get_requests_session

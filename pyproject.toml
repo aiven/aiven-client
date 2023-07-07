@@ -46,6 +46,7 @@ dev = [
     # Lock isort to the same major version used in downstream build environments
     "isort>=5.10.1,<6.0",
     "click",
+    "ruff",
 ]
 
 
@@ -80,3 +81,13 @@ line_length = 125
 no_sections = true  # This breaks the python convention...
 # The below settings are specifically required for Black compatibility
 profile = "black"
+
+[tool.ruff]
+line-length = 125
+src = ["aiven", "tests"]
+extend-select = [
+  "UP",  # Enable pyupgrade rules
+]
+ignore = [
+  "UP032",  # Downstream has different rules for f-strings
+]

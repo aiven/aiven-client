@@ -38,6 +38,9 @@ jobs:
       - id: validate-style
         run: make validate-style
 
+      - id: ruff
+        run: make ruff
+
       - id: flake8
         run: make flake8
 

@@ -2,8 +2,10 @@
 #
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
+from __future__ import annotations
+
 from aiven.client.speller import suggest
-from typing import Container, Optional
+from typing import Container
 
 import pytest
 
@@ -38,5 +40,5 @@ SERVICE_TYPES = [
         ("asdf", SERVICE_TYPES, None),
     ],
 )
-def test_suggest(word_to_check: str, known_words: Container[str], suggestion: Optional[str]) -> None:
+def test_suggest(word_to_check: str, known_words: Container[str], suggestion: str | None) -> None:
     assert suggest(word_to_check=word_to_check, known_words=known_words) == suggestion
