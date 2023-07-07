@@ -21,7 +21,7 @@ from collections import Counter
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from http import HTTPStatus
-from typing import Any, Callable, Final, IO, Mapping, Sequence
+from typing import Any, Callable, Final, IO, Mapping, Protocol, Sequence
 from urllib.parse import urlparse
 
 import errno
@@ -140,15 +140,9 @@ def get_current_date() -> datetime:
     return datetime.now(timezone.utc)
 
 
-if (sys.version_info.major, sys.version_info.minor) >= (3, 8):
-    from typing import Protocol
-
-    class ClientFactory(Protocol):
-        def __call__(self, base_url: str, show_http: bool, request_timeout: int | None) -> client.AivenClient:
-            ...
-
-else:
-    ClientFactory = Callable[..., client.AivenClient]  # type: ignore
+class ClientFactory(Protocol):
+    def __call__(self, base_url: str, show_http: bool, request_timeout: int | None) -> client.AivenClient:
+        ...
 
 
 class AivenCLI(argx.CommandLineTool):
