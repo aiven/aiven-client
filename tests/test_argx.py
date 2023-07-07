@@ -66,7 +66,7 @@ def test_extended_commands_remain_alphabetically_ordered() -> None:
     cli.extend_commands(sl2)
     cli.extend_commands(sl)
 
-    action_order = [item.dest for item in cli.subparsers._choices_actions]  # pylint: disable=protected-access
+    action_order = [item.dest for item in cli.subparsers._choices_actions]
     assert action_order == ["aaa", "bbb", "bbc", "ccc", "ddd", "dde", "xxx", "yyy", "yyz"]
 
 

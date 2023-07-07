@@ -47,9 +47,6 @@ jobs:
       - id: mypy
         run: make mypy
 
-      - id: pyLint
-        run: make pylint
-
   test:
     runs-on: ${{ matrix.os }}
     needs: lint

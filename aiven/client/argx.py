@@ -23,14 +23,14 @@ import sys
 
 # Optional shell completions
 try:
-    import argcomplete  # type: ignore # pylint: disable=import-error
+    import argcomplete  # type: ignore
 
     ARGCOMPLETE_INSTALLED = True
 except ImportError:
     ARGCOMPLETE_INSTALLED = False
 
 try:
-    from .version import __version__  # pylint: disable=no-name-in-module
+    from .version import __version__
 except ImportError:
     __version__ = "UNKNOWN"
 
@@ -63,7 +63,7 @@ class UserError(Exception):
 F = TypeVar("F", bound=Callable)
 
 
-class Arg:  # pylint: disable=too-many-instance-attributes
+class Arg:
     """Declares an argument of an CLI command.
 
     This decorator accepts the same arguments as `argparse.Parser::add_argument`.
@@ -150,7 +150,7 @@ class Config(dict):
             jsonlib.dump(self, fp, sort_keys=True, indent=4)
 
 
-class CommandLineTool:  # pylint: disable=old-style-class
+class CommandLineTool:
     config: Config
 
     def __init__(self, name: str, parser: argparse.ArgumentParser | None = None):
@@ -193,7 +193,7 @@ class CommandLineTool:  # pylint: disable=old-style-class
             parser.add_argument(*arg_prop[0], **arg_prop[1])
 
         # Ensure the list of actions remains sorted as we append to to it.
-        self.subparsers._choices_actions.sort(key=lambda item: item.dest)  # pylint: disable=protected-access
+        self.subparsers._choices_actions.sort(key=lambda item: item.dest)
 
     def add_args(self, parser: argparse.ArgumentParser) -> None:
         pass  # override in sub-class
@@ -246,14 +246,14 @@ class CommandLineTool:  # pylint: disable=old-style-class
         self,
         result: Mapping[str, Any] | Collection[Mapping[str, Any]],
         json: bool = True,
-        format: str | None = None,  # pylint: disable=redefined-builtin
+        format: str | None = None,
         drop_fields: Collection[str] | None = None,
         table_layout: TableLayout | None = None,
         single_item: bool = False,
         header: bool = True,
         csv: bool = False,
         file: TextIO | None = None,
-    ) -> None:  # pylint: disable=redefined-builtin
+    ) -> None:
         """print request response in chosen format"""
         if file is None:
             file = sys.stdout
@@ -308,7 +308,7 @@ class CommandLineTool:  # pylint: disable=old-style-class
             ext.config = self.config
         try:
             return self.run_actual(args)
-        except tuple(expected_errors) as ex:  # pylint: disable=catching-non-exception
+        except tuple(expected_errors) as ex:
             # nicer output on "expected" errors
             err = "command failed: {0.__class__.__name__}: {0}".format(ex)
             self.log.error(err)
@@ -329,7 +329,7 @@ class CommandLineTool:  # pylint: disable=old-style-class
             return 1
 
         self.pre_run(func)
-        return func()  # pylint: disable=not-callable
+        return func()
 
     def main(self, args: Sequence[str] | None = None) -> NoReturn:
         # TODO: configurable log level

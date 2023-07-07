@@ -15,18 +15,12 @@ import itertools
 import json
 import sys
 
-# string type checking must work on python 2.x and 3.x
-try:
-    basestring  # pylint: disable=used-before-assignment
-except NameError:
-    basestring = str  # pylint: disable=redefined-builtin
-
 ResultType = Collection[Mapping[str, Any]]
 TableLayout = Collection[Union[List[str], Tuple[str], str]]
 
 
 class CustomJsonEncoder(json.JSONEncoder):
-    def default(self, o: Any) -> str:  # pylint:disable=E0202
+    def default(self, o: Any) -> str:
         if isinstance(o, (datetime.datetime, datetime.date)):
             return o.isoformat()
         if isinstance(o, datetime.timedelta):
@@ -54,7 +48,7 @@ def format_item(key: str | None, value: Any) -> str:
         formatted = ", ".join(format_item(None, entry) for entry in value)
     elif isinstance(value, dict):
         formatted = json.dumps(value, sort_keys=True, cls=CustomJsonEncoder)
-    elif isinstance(value, basestring):
+    elif isinstance(value, str):
         if key and key.endswith("_time") and value.endswith("Z") and "." in value:
             # drop microseconds from timestamps
             value = value.split(".", 1)[0] + "Z"
@@ -200,7 +194,7 @@ def print_table(
     table_layout: TableLayout | None = None,
     header: bool = True,
     file: TextIO | None = None,
-) -> None:  # pylint: disable=redefined-builtin
+) -> None:
     """print a list of dicts in a nicer table format"""
 
     def yield_rows() -> Iterator[str]:

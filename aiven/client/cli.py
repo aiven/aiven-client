@@ -141,9 +141,9 @@ def get_current_date() -> datetime:
 
 
 if (sys.version_info.major, sys.version_info.minor) >= (3, 8):
-    from typing import Protocol  # pylint: disable=no-name-in-module
+    from typing import Protocol
 
-    class ClientFactory(Protocol):  # pylint: disable=too-few-public-methods
+    class ClientFactory(Protocol):
         def __call__(self, base_url: str, show_http: bool, request_timeout: int | None) -> client.AivenClient:
             ...
 
@@ -3412,7 +3412,7 @@ ssl.truststore.type=JKS
     @arg.project
     @arg("service", nargs="+", help="Service to wait for")
     @arg.timeout
-    def service__wait(self) -> int | None:  # pylint: disable=inconsistent-return-statements
+    def service__wait(self) -> int | None:
         """Wait service to reach the 'RUNNING' state"""
         start_time = time.time()
         report_interval = 30.0
@@ -4714,7 +4714,6 @@ server_encryption_options:
         self.log.info("Aiven credentials written to: %s", aiven_credentials_filename)
 
     def _open_auth_token_file(self, mode: str = "r") -> IO:
-        # pylint: disable=consider-using-with
         auth_token_file_path = self._get_auth_token_file_name()
         try:
             return open(auth_token_file_path, mode, encoding="utf-8")
@@ -4758,7 +4757,7 @@ server_encryption_options:
         # Always set CA if we have anything set at the command line or in the env
         if self.args.auth_ca is not None:
             self.client.set_ca(self.args.auth_ca)
-        if func == self.user__create:  # pylint: disable=comparison-with-callable
+        if func == self.user__create:
             # "user create" doesn't use authentication (yet)
             return
 

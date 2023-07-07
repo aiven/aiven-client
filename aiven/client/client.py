@@ -19,7 +19,7 @@ import time
 import warnings
 
 try:
-    from .version import __version__  # pylint: disable=no-name-in-module
+    from .version import __version__
 except ImportError:
     __version__ = "UNKNOWN"
 
@@ -44,7 +44,7 @@ class Tag(TypedDict):
     value: str
 
 
-class AivenClientBase:  # pylint: disable=old-style-class
+class AivenClientBase:
     """Aiven Client with low-level HTTP operations"""
 
     def __init__(self, base_url: str, show_http: bool = False, request_timeout: int | None = None) -> None:
@@ -146,7 +146,7 @@ class AivenClientBase:  # pylint: disable=old-style-class
         retry: int | None = None,
     ) -> Any:
         # Retry GET operations by default
-        if retry is None and op == self.get:  # pylint: disable=comparison-with-callable
+        if retry is None and op == self.get:
             attempts = 3
         else:
             attempts = 1 + (retry or 0)
@@ -1189,7 +1189,6 @@ class AivenClient(AivenClientBase):
     ) -> dict:
         vpc = self.get_project_vpc(project=project, project_vpc_id=project_vpc_id)
         for peering_connection in vpc["peering_connections"]:
-            # pylint: disable=too-many-boolean-expressions
             if (
                 peering_connection["peer_cloud_account"] == peer_cloud_account
                 and peering_connection["peer_vpc"] == peer_vpc

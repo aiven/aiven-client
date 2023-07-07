@@ -10,7 +10,7 @@ import warnings
 
 
 @dataclass
-class KafkaConnectionInfo:  # pylint: disable=too-few-public-methods
+class KafkaConnectionInfo:
     host: str
     port: int
 
