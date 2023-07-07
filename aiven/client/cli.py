@@ -4,7 +4,7 @@
 # See the file `LICENSE` for details.
 from __future__ import annotations
 
-from . import argx, client
+from . import argx, client, units
 from aiven.client import AivenClient, envdefault
 from aiven.client.cliarg import arg
 from aiven.client.client import Tag
@@ -20,7 +20,8 @@ from ast import literal_eval
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
-from typing import Any, Callable, IO, Mapping, Sequence
+from http import HTTPStatus
+from typing import Any, Callable, Final, IO, Mapping, Sequence
 from urllib.parse import urlparse
 
 import errno
@@ -395,7 +396,7 @@ class AivenCLI(argx.CommandLineTool):
             try:
                 result = self.client.authenticate_user(email=email, password=password, tenant_id=self.args.tenant)
             except client.Error as ex:
-                if ex.status == 510:  # NOT_EXTENDED
+                if ex.status == HTTPStatus.NOT_EXTENDED:
                     # Two-factor auth OTP required
                     otp = input("Two-factor authentication OTP: ")
                     result = self.client.authenticate_user(email=email, password=password, otp=otp)
@@ -544,6 +545,7 @@ class AivenCLI(argx.CommandLineTool):
     def service__logs(self) -> None:
         """View project logs"""
         previous_offset: str | None = None
+        consecutive_errors_limit: Final = 10
         consecutive_errors = 0
         while True:
             try:
@@ -558,7 +560,7 @@ class AivenCLI(argx.CommandLineTool):
                 if not self.args.follow:
                     raise ex
                 consecutive_errors += 1
-                if consecutive_errors > 10:
+                if consecutive_errors > consecutive_errors_limit:
                     raise argx.UserError("Fetching logs failed repeatedly, aborting.")
                 sys.stderr.write("Fetching log messages failed with {}. Retrying after 10s\n".format(ex))
                 time.sleep(10.0)
@@ -611,24 +613,24 @@ class AivenCLI(argx.CommandLineTool):
         "Dual-1 (4 CPU, 1 GB RAM, 9 GB disk) high availability pair"
         "Quad-2 (4 CPU, 2 GB RAM, 9 GB disk) 4-node high availability set"
         """
-        if plan["node_memory_mb"] < 1024:
+        if plan["node_memory_mb"] < units.MIB_IN_GIB:
             ram_amount = "{} MB".format(plan["node_memory_mb"])
         else:
-            ram_amount = "{:.0f} GB".format(plan["node_memory_mb"] / 1024.0)
+            ram_amount = "{:.0f} GB".format(units.convert_mib_to_gib(plan["node_memory_mb"]))
 
         if plan["disk_space_mb"]:
             if plan.get("disk_space_cap_mb"):
                 disk_desc = ", {:.0f}-{:.0f} GB disk".format(
-                    plan["disk_space_mb"] / 1024.0, plan["disk_space_cap_mb"] / 1024.0
+                    units.convert_mib_to_gib(plan["disk_space_mb"]), units.convert_mib_to_gib(plan["disk_space_cap_mb"])
                 )
             else:
-                disk_desc = ", {:.0f} GB disk".format(plan["disk_space_mb"] / 1024.0)
+                disk_desc = ", {:.0f} GB disk".format(units.convert_mib_to_gib(plan["disk_space_mb"]))
         else:
             disk_desc = ""
 
-        if node_count == 2:
+        if node_count == 2:  # noqa: PLR2004
             plan_qual = " high availability pair"
-        elif node_count > 2:
+        elif node_count > 2:  # noqa: PLR2004
             plan_qual = " {}-node high availability set".format(node_count)
         else:
             plan_qual = ""
@@ -895,11 +897,7 @@ class AivenCLI(argx.CommandLineTool):
             entry["service_type"] = service_type
             output.append(entry)
 
-        if self.args.monthly:
-            dformat = Decimal("0")
-        else:
-            dformat = Decimal("0.000")
-
+        dformat = Decimal("0") if self.args.monthly else Decimal("0.000")
         for info in sorted(output, key=lambda s: s["description"]):
             print("{} Plans:\n".format(info["description"]))
             for plan in info["service_plans"]:
@@ -1884,7 +1882,7 @@ class AivenCLI(argx.CommandLineTool):
         arg_vars = vars(self.args)
         result = {
             key: arg_vars[key].split()
-            for key in {"redis_acl_keys", "redis_acl_commands", "redis_acl_categories", "redis_acl_channels"}
+            for key in ["redis_acl_keys", "redis_acl_commands", "redis_acl_categories", "redis_acl_channels"]
             if arg_vars[key] is not None
         }
         for key in ["m3_group"]:
@@ -3795,6 +3793,17 @@ ssl.truststore.type=JKS
             delete=self.args.cidrs,
         )
 
+    def _get_service_type(self) -> str:
+        return self.args.service_type.partition(":")[0]
+
+    def _get_plan(self) -> str:
+        maybe_plan = self.args.service_type.partition(":")[2]
+        if maybe_plan:
+            return maybe_plan
+        elif self.args.plan:
+            return self.args.plan
+        raise argx.UserError("No subscription plan given")
+
     @arg.project
     @arg.service_name
     @arg("--group-name", help="service group (deprecated)")
@@ -3845,16 +3854,8 @@ ssl.truststore.type=JKS
     @arg.force
     def service__create(self) -> None:
         """Create a service"""
-        service_type_info = self.args.service_type.split(":")
-        service_type = service_type_info[0]
-
-        plan = None
-        if len(service_type_info) == 2:
-            plan = service_type_info[1]
-        elif self.args.plan:
-            plan = self.args.plan
-        if not plan:
-            raise argx.UserError("No subscription plan given")
+        service_type = self._get_service_type()
+        plan = self._get_plan()
         if self.args.group_name:
             self.log.warning("--group-name parameter is deprecated and has no effect")
 
@@ -3904,7 +3905,7 @@ ssl.truststore.type=JKS
             )
         except client.Error as ex:
             print(ex.response)
-            if not self.args.no_fail_if_exists or ex.response.status_code != 409:
+            if not self.args.no_fail_if_exists or ex.response.status_code != HTTPStatus.CONFLICT:
                 raise
 
             self.log.info("service '%s/%s' already exists", project, self.args.service_name)
@@ -4027,6 +4028,14 @@ ssl.truststore.type=JKS
                 )
             ) from ex
 
+    def _get_maintainance(self) -> Mapping[str, str] | None:
+        maintenance = {}
+        if self.args.maintenance_dow:
+            maintenance["dow"] = self.args.maintenance_dow
+        if self.args.maintenance_time:
+            maintenance["time"] = self.args.maintenance_time
+        return maintenance or None
+
     @arg.project
     @arg.service_name
     @arg("--group-name", help="New service group (deprecated)")
@@ -4112,11 +4121,7 @@ ssl.truststore.type=JKS
         if requested_version:
             self._do_version_eol_check(service_type, requested_version)
 
-        maintenance = {}
-        if self.args.maintenance_dow:
-            maintenance["dow"] = self.args.maintenance_dow
-        if self.args.maintenance_time:
-            maintenance["time"] = self.args.maintenance_time
+        maintenance = self._get_maintainance()
         project_vpc_id = self._get_service_project_vpc_id()
         termination_protection = None
         if self.args.enable_termination_protection and self.args.disable_termination_protection:
@@ -4143,7 +4148,7 @@ ssl.truststore.type=JKS
         try:
             self.client.update_service(
                 cloud=self.args.cloud,
-                maintenance=maintenance or None,
+                maintenance=maintenance,
                 plan=plan,
                 disk_space_mb=self.args.disk_space_mb,
                 karapace=karapace,
@@ -4262,7 +4267,7 @@ ssl.truststore.type=JKS
                 use_source_project_billing_group=self.args.use_source_project_billing_group,
             )
         except client.Error as ex:
-            if not self.args.no_fail_if_exists or ex.response.status_code != 409:
+            if not self.args.no_fail_if_exists or ex.response.status_code != HTTPStatus.CONFLICT:
                 raise
 
             self.log.info("Project '%s' already exists", self.args.project_name)

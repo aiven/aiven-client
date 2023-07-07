@@ -54,9 +54,9 @@ def format_uri(
                 # host not parseable as an IP address -> probably DNS name
                 pass
             else:
-                if ip.version == 4:
+                if ip.version == 4:  # noqa: PLR2004
                     host = f"{ip}"
-                elif ip.version == 6:
+                elif ip.version == 6:  # noqa: PLR2004
                     host = f"[{ip}]"
                 else:
                     raise NotImplementedError(ip.version)

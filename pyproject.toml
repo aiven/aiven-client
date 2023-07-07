@@ -86,8 +86,10 @@ profile = "black"
 line-length = 125
 src = ["aiven", "tests"]
 extend-select = [
+  "PL",  # Enable pylint rules
   "UP",  # Enable pyupgrade rules
 ]
 ignore = [
+  "PLR0913",  # It is too difficult to avoid "Too many arguments" error in the codebase
   "UP032",  # Downstream has different rules for f-strings
 ]

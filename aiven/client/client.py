@@ -1902,7 +1902,7 @@ class AivenClient(AivenClientBase):
     def get_billing_group_projects(self, billing_group: str) -> Sequence[dict[str, Any]]:
         return self.verify(self.get, self.build_path("billing-group", billing_group, "projects"), result_key="projects")
 
-    def update_billing_group(
+    def update_billing_group(  # noqa: PLR0912
         self,
         billing_group: str,
         *,

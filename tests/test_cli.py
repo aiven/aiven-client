@@ -4,7 +4,7 @@
 # See the file `LICENSE` for details.
 from __future__ import annotations
 
-from aiven.client import AivenClient
+from aiven.client import AivenClient, argx
 from aiven.client.argx import UserError
 from aiven.client.cli import AivenCLI, ClientFactory, convert_str_to_value, EOL_ADVANCE_WARNING_TIME
 from aiven.client.common import UNDEFINED
@@ -962,3 +962,79 @@ def test_cloud_has_no_vpc_user_gave_both_switches() -> None:
     with pytest.raises(UserError) as excinfo:
         cli._get_service_project_vpc_id()  # pylint: disable=protected-access
     assert str(excinfo.value).startswith("Only one of --project-vpc-id")
+
+
+def test_get_service_type() -> None:
+    cli = AivenCLI()
+    cli.parse_args(
+        [
+            "service",
+            "create",
+            "--cloud",
+            "my-cloud",
+            "--service-type",
+            "pg",
+            "--plan",
+            "business-4",
+            "service-name",
+        ]
+    )
+    assert cli._get_service_type() == "pg"  # pylint: disable=protected-access
+    cli = AivenCLI()
+    cli.parse_args(
+        [
+            "service",
+            "create",
+            "--cloud",
+            "my-cloud",
+            "--service-type",
+            "pg:business-4",
+            "service-name",
+        ]
+    )
+    assert cli._get_service_type() == "pg"  # pylint: disable=protected-access
+
+
+def test_get_service_plan() -> None:
+    cli = AivenCLI()
+    cli.parse_args(
+        [
+            "service",
+            "create",
+            "--cloud",
+            "my-cloud",
+            "--service-type",
+            "pg",
+            "--plan",
+            "business-4",
+            "service-name",
+        ]
+    )
+    assert cli._get_plan() == "business-4"  # pylint: disable=protected-access
+    cli = AivenCLI()
+    cli.parse_args(
+        [
+            "service",
+            "create",
+            "--cloud",
+            "my-cloud",
+            "--service-type",
+            "pg:business-4",
+            "service-name",
+        ]
+    )
+    assert cli._get_plan() == "business-4"  # pylint: disable=protected-access
+    with pytest.raises(argx.UserError, match="No subscription plan given"):
+        cli = AivenCLI()
+        cli.parse_args(
+            [
+                "service",
+                "create",
+                "--cloud",
+                "my-cloud",
+                "--service-type",
+                "pg",
+                "service-name",
+            ]
+        )
+        cli._get_plan()  # pylint: disable=protected-access
