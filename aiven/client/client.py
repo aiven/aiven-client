@@ -6,7 +6,7 @@ from .common import UNDEFINED
 from .session import get_requests_session
 from http import HTTPStatus
 from requests import Response
-from typing import Any, Callable, Collection, Dict, Mapping, Optional, Sequence, Set, Tuple, Type, Union
+from typing import Any, Callable, Collection, Dict, Mapping, Optional, Sequence, Set, Tuple, Type, TypedDict, Union
 from urllib.parse import quote
 
 import json
@@ -35,6 +35,11 @@ class Error(Exception):
 
 class ResponseError(Exception):
     """Server returned error message"""
+
+
+class Tag(TypedDict):
+    key: str
+    value: str
 
 
 class AivenClientBase:  # pylint: disable=old-style-class
@@ -601,7 +606,7 @@ class AivenClient(AivenClientBase):
         retention_bytes: int,
         retention_hours: int,
         cleanup_policy: str,
-        tags: Optional[Sequence[Mapping[str, str]]] = None,
+        tags: Optional[Sequence[Tag]] = None,
     ) -> Mapping:
         body: Dict[str, Any] = {
             "cleanup_policy": cleanup_policy,

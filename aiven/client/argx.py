@@ -51,11 +51,7 @@ try:
 except ImportError:
     __version__ = "UNKNOWN"
 
-# cached_property only exists since python 3.8
-SKIP_EVALUATION_TYPES = (property,)
-if (sys.version_info[:2] >= (3, 8)) and hasattr(functools, "cached_property"):
-    SKIP_EVALUATION_TYPES += (functools.cached_property,)  # pylint: disable=no-member
-
+SKIP_EVALUATION_TYPES = (property, functools.cached_property)
 ARG_LIST_PROP = "_arg_list"
 LOG_FORMAT = "%(levelname)s\t%(message)s"
 

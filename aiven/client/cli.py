@@ -5,6 +5,7 @@
 from . import argx, client
 from aiven.client import AivenClient, envdefault
 from aiven.client.cliarg import arg
+from aiven.client.client import Tag
 from aiven.client.common import UNDEFINED
 from aiven.client.connection_info.common import Store
 from aiven.client.connection_info.kafka import KafkaCertificateConnectionInfo, KafkaSASLConnectionInfo
@@ -88,7 +89,7 @@ tag_key_re = re.compile(r"[\w\-]+")
 tag_value_re = re.compile(r"[\w\-,. ]*")
 
 
-def parse_tag_str(kv: str) -> Mapping[str, str]:  # Can use TypedDict once moving to py >= 3.8
+def parse_tag_str(kv: str) -> Tag:
     k, v = (kv.split(sep="=", maxsplit=1) + [""])[:2]
 
     if not tag_key_re.fullmatch(k):
