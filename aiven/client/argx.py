@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from .pretty import TableLayout
 from aiven.client import envdefault, pretty
-from argparse import Action, Namespace
+from argparse import Action, ArgumentParser, Namespace
 from os import PathLike
 from typing import Any, Callable, cast, Collection, Mapping, NoReturn, Sequence, TextIO, TYPE_CHECKING, TypeVar
 
@@ -39,6 +39,48 @@ ARG_LIST_PROP = "_arg_list"
 LOG_FORMAT = "%(levelname)s\t%(message)s"
 
 
+class ArgumentDeprecationNotice(argparse.Action):
+    """Base class for creating deprecation notice for the arguments of avn CLI."""
+
+    log = logging.getLogger("deprecation-notice")
+    help_prefix = "(DEPRECATED)"
+    message = "Argument is deprecated: '%s'."
+
+    message_hint: str | None = None
+    help_hint: str | None = None
+    ignore_argument: bool = False
+    log_level = logging.WARNING
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        for k, v in kwargs.copy().items():
+            if k.startswith("deprecation_"):
+                setattr(self, "_".join(k.split("_")[1:]), v)
+                kwargs.pop(k)
+
+        super().__init__(*args, **kwargs)
+
+    def __call__(
+        self,
+        parser: ArgumentParser,
+        namespace: Namespace,
+        values: str | Sequence[Any] | None,
+        option_string: str | None = None,
+    ) -> None:
+        # default action is store
+        setattr(namespace, self.dest, values)
+
+        if values is not None:
+            msg = f"{self.message if self.message else ''}{' ' + self.message_hint if self.message_hint else ''}"
+            self.log.log(self.log_level, msg, ",".join(self.option_strings))
+
+        if self.ignore_argument:
+            delattr(namespace, self.dest)
+
+
+class NextReleaseDeprecationNotice(ArgumentDeprecationNotice):
+    message = "Argument `%s` is deprecated and will be removed in the next release."
+
+
 class CustomFormatter(argparse.RawDescriptionHelpFormatter):
     """Help formatter to display the default value only for integers and non-empty strings"""
 
@@ -53,6 +95,14 @@ class CustomFormatter(argparse.RawDescriptionHelpFormatter):
                     isinstance(action.default, str) and action.default
                 ):
                     help_text += " (default: %(default)s)"
+
+        if isinstance(action, ArgumentDeprecationNotice):
+            help_text = (
+                f"{action.help_prefix + ' ' if action.help_prefix else ''}"
+                f"{help_text}"
+                f"{'. ' + action.help_hint if action.help_hint else ''}"
+            )
+
         return help_text
 
 

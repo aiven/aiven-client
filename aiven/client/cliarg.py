@@ -136,6 +136,7 @@ arg.min_insync_replicas = arg(
 )
 arg.organization_id = arg("--organization-id", required=True, help="Organization identifier")
 arg.organization_id_positional = arg("organization_id", help="Organization identifier")
+arg.parent_id = arg("--parent-id", help="Organization or account identifier")
 arg.partitions = arg("--partitions", type=int, required=True, help="Number of partitions")
 arg.project = arg(
     "--project",
