@@ -4209,7 +4209,13 @@ ssl.truststore.type=JKS
         self.print_response(projects, json=getattr(self.args, "json", False), table_layout=layout)
 
     @arg("project_name", help="Project name")
-    @arg("--account-id", help="Account ID of the project")
+    @arg(
+        "--account-id",
+        help="Account ID of the project",
+        action=argx.NextReleaseDeprecationNotice,
+        deprecation_message_hint="Please use `--parent-id` instead, which will be mandatory in the next release.",
+        deprecation_help_hint="Will be replaced by `--parent-id` in the next release.",
+    )
     @arg("--billing-group-id", help="Billing group ID of the project")
     @arg.card_id
     @arg.cloud
@@ -4241,11 +4247,17 @@ ssl.truststore.type=JKS
     @arg.vat_id
     @arg.billing_email
     @arg.tech_email
+    @arg.parent_id
     def project__create(self) -> None:
         """Create a project"""
+
+        if self.args.parent_id is not None and self.args.account_id is not None:
+            raise argx.UserError("`--parent-id` and `--account-id` cannot be specified together.")
+
         try:
             project = self.client.create_project(
                 account_id=self.args.account_id,
+                parent_id=self.args.parent_id,
                 billing_address=self.args.billing_address,
                 billing_currency=self.args.billing_currency,
                 billing_extra_text=self.args.billing_extra_text,

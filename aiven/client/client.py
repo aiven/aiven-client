@@ -1608,6 +1608,7 @@ class AivenClient(AivenClientBase):
         self,
         project: str,
         account_id: str | None = None,
+        parent_id: str | None = None,
         billing_group_id: str | None = None,
         card_id: str | None = None,
         cloud: str | None = None,
@@ -1626,6 +1627,8 @@ class AivenClient(AivenClientBase):
             "cloud": cloud,
             "project": project,
         }
+        if parent_id is not None:
+            body["parent_id"] = parent_id
         if account_id is not None:
             body["account_id"] = account_id
         if billing_group_id is not None:
