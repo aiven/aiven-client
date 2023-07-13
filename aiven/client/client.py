@@ -1829,7 +1829,7 @@ class AivenClient(AivenClientBase):
     def remove_card(self, card_id: str) -> Mapping:
         return self.verify(self.delete, self.build_path("card", card_id))
 
-    def get_stripe_key(self) -> str:
+    def get_stripe_key(self) -> Mapping[str, str]:
         return self.verify(self.get, self.build_path("config", "stripe_key"), result_key="stripe_key")
 
     def list_project_credits(self, project: str) -> Sequence[dict[str, Any]]:

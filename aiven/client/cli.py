@@ -4801,7 +4801,7 @@ server_encryption_options:
             ]
         )
 
-        stripe_key = self.client.get_stripe_key()
+        stripe_key = self.client.get_stripe_key()["stripe_key"]
         stripe_token = self._card_get_stripe_token(
             stripe_key,
             self.args.name,
@@ -5715,7 +5715,7 @@ server_encryption_options:
 
     def _get_stripe_payment_method_id(self, name: str, number: str, exp_month: int, exp_year: int, cvc: str) -> str:
         """Obtains payment method identifier from Stripe"""
-        stripe_key = self.client.get_stripe_key()
+        stripe_key = self.client.get_stripe_key()["stripe_key"]
         raw_client_secret = self.client.create_payment_method_setup_intent()
 
         request_payload = {
