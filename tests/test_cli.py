@@ -1036,3 +1036,25 @@ def test_get_service_plan() -> None:
             ]
         )
         cli._get_plan()
+
+
+def test_organizations_list(capsys: CaptureFixture[str]) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+
+    aiven_client.get_organizations.return_value = [
+        {
+            "organization_id": "o2131231",
+            "organization_name": "My Org",
+            "account_id": "a23123",
+            "tier": "business",
+            "create_time": "2023-07-13T08:00:45Z",
+            "update_time": "2023-07-13T08:00:45Z",
+        }
+    ]
+
+    build_aiven_cli(aiven_client).run(args=["organization", "list"])
+    aiven_client.get_organizations.assert_called_with()
+
+    captured = capsys.readouterr()
+    assert "My Org" in captured.out
+    assert "business" in captured.out
