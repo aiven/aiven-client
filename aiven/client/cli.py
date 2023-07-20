@@ -5594,6 +5594,7 @@ server_encryption_options:
             "account_id",
             "create_time",
             "update_time",
+            "tier",
         ]
         self.print_response(organizations, json=self.args.json, table_layout=layout)
 
