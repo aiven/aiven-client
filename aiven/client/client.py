@@ -2166,6 +2166,18 @@ class AivenClient(AivenClientBase):
             self.build_path("account", account_id, "oauth_client", client_id, "secret", secret_id),
         )
 
+    def clickhouse_database_create(self, project: str, service: str, database: str) -> Mapping:
+        path = self.build_path("project", project, "service", service, "clickhouse", "db")
+        return self.verify(self.post, path, body={"database": database})
+
+    def clickhouse_database_delete(self, project: str, service: str, database: str) -> Mapping:
+        path = self.build_path("project", project, "service", service, "clickhouse", "db", database)
+        return self.verify(self.delete, path)
+
+    def clickhouse_database_list(self, project: str, service: str) -> Mapping:
+        path = self.build_path("project", project, "service", service, "clickhouse", "db")
+        return self.verify(self.get, path, result_key="databases")
+
     def flink_list_applications(
         self,
         *,
