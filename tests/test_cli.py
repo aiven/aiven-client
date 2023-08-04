@@ -797,6 +797,52 @@ def test_create_oauth2_client() -> None:
     )
 
 
+def test_clickhouse_database_create() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.clickhouse_database_create.return_value = {"message": "created"}
+    args = ["service", "clickhouse", "database", "create", "--project=myproj", "myservice", "mydatabase"]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.clickhouse_database_create.assert_called_with(project="myproj", service="myservice", database="mydatabase")
+
+
+def test_clickhouse_database_delete() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.clickhouse_database_delete.return_value = {"message": "deleting"}
+    args = ["service", "clickhouse", "database", "delete", "--project=myproj", "myservice", "mydatabase"]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.clickhouse_database_delete.assert_called_with(project="myproj", service="myservice", database="mydatabase")
+
+
+def test_clickhouse_database_list() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.clickhouse_database_list.return_value = [
+        {"name": "mydatabase", "engine": "Replicated", "state": "ok", "tables": []}
+    ]
+    args = ["service", "clickhouse", "database", "list", "--project=myproj", "myservice"]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.clickhouse_database_list.assert_called_with(project="myproj", service="myservice")
+
+
+def test_clickhouse_table_list() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    tables = [
+        {
+            "name": "mytable",
+            "uuid": str(uuid.UUID(int=0)),
+            "engine": "ReplicatedMergeTree",
+            "total_rows": 10,
+            "total_bytes": 100,
+            "state": "ok",
+        }
+    ]
+    aiven_client.clickhouse_database_list.return_value = [
+        {"name": "mydatabase", "engine": "Replicated", "state": "ok", "tables": tables}
+    ]
+    args = ["service", "clickhouse", "table", "list", "--project=myproj", "myservice", "mydatabase"]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.clickhouse_database_list.assert_called_with(project="myproj", service="myservice")
+
+
 def test_static_ips_list(capsys: CaptureFixture[str]) -> None:
     aiven_client = mock.Mock(spec_set=AivenClient)
     aiven_client.list_static_ip_addresses.return_value = [
