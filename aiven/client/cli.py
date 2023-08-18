@@ -177,11 +177,29 @@ class AivenCLI(argx.CommandLineTool):
             help="Wait for up to N seconds for a response to a request (default: infinite)",
         )
 
+    def _find_reference(self, obj_def: Mapping[str, Any], spec: Mapping[str, Any]) -> Mapping[str, Any] | None:
+        ref_prefix = "#/definitions/"
+
+        def traverse_obj(obj_def: Mapping[str, Any], spec: Mapping[str, Any]) -> Mapping[str, Any] | None:
+            if "definitions" not in obj_def:
+                return None
+            ref = spec["$ref"].removeprefix(ref_prefix)
+            return obj_def["definitions"][ref]
+
+        if "$ref" in spec:
+            return traverse_obj(obj_def, spec)
+        for entry in spec.get("allOf", []):
+            return traverse_obj(obj_def, entry)
+
     def collect_user_config_options(self, obj_def: Mapping[str, Any], prefixes: list[str] | None = None) -> dict[str, Any]:
         opts = {}
         for prop, spec in sorted(obj_def.get("properties", {}).items()):
             full_prop = prefixes + [prop] if prefixes else [prop]
             full_name = ".".join(full_prop)
+            if "type" not in spec:
+                # It is possible this is a reference, and if so we need to find the actual entry
+                if not (spec := self._find_reference(obj_def, spec)):
+                    continue
             types = spec["type"]
             if not isinstance(types, list):
                 types = [types]
