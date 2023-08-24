@@ -30,6 +30,7 @@ dynamic = ["version"]
 dependencies = [
     'requests>=2.2.1; sys_platform == "linux"',
     'requests>=2.9.1; sys_platform != "linux"',
+    "requests-toolbelt>=0.9.0",
     "certifi>=2015.11.20.1",
 ]
 [project.optional-dependencies]

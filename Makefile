@@ -53,6 +53,7 @@ build-dep-fedora:
 		python3-mypy \
 		python3-pytest \
 		python3-requests \
+		python3-requests-toolbelt \
 		python3-types-requests \
 		python3-setuptools_scm \
 		rpmdevtools \
