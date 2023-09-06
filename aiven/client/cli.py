@@ -2062,40 +2062,43 @@ ssl.truststore.type=JKS
 
         missing_user_items = []
         service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
-        for user in service["users"]:
-            if user["username"] == self.args.username:
-                cert = user.get("access_cert")
-                if cert is None:
-                    missing_user_items.append("certificate")
-                else:
-                    with open(os.path.join(self.args.target_directory, "service.cert"), "w", encoding="utf-8") as fp:
-                        fp.write(cert)
-                    downloaded_items.append("certificate")
+        matched_service_users = [s_user for s_user in service["users"] if s_user["username"] == self.args.username]
 
-                key = user.get("access_key")
-                if key is None:
-                    missing_user_items.append("key")
-                else:
-                    with open(os.path.join(self.args.target_directory, "service.key"), "w", encoding="utf-8") as fp:
-                        fp.write(key)
-                    downloaded_items.append("key")
-
-                break
-
-        if downloaded_items:
-            print("Downloaded to directory '{}': {}".format(self.args.target_directory, ", ".join(downloaded_items)))
-            print()
-
-        print("To get the user passwords type:")
-        print(
-            "avn service user-list --format '{{username}} {{password}}' --project {} {}".format(
-                project_name, self.args.service_name
+        if not matched_service_users:
+            error_messages.append(
+                "The value passed as argument --username does not match any service user,\n"
+                + "therefore the service certificate key pair cannot be obtained.\n\n"
+                + "To get the service users and their passwords, type:\n"
+                + "   avn service user-list --format '{{username}} {{password}}' --project {} {}".format(
+                    project_name, self.args.service_name
+                )
             )
-        )
 
-        if missing_user_items:
-            missing_items_str = " and ".join(missing_user_items)
-            error_messages.append("The user '{}' does not have {}".format(self.args.username, missing_items_str))
+        else:
+            user = matched_service_users[0]
+            cert = user.get("access_cert")
+            if cert is None:
+                missing_user_items.append("certificate")
+            else:
+                with open(os.path.join(self.args.target_directory, "service.cert"), "w", encoding="utf-8") as fp:
+                    fp.write(cert)
+                downloaded_items.append("certificate")
+
+            key = user.get("access_key")
+            if key is None:
+                missing_user_items.append("key")
+            else:
+                with open(os.path.join(self.args.target_directory, "service.key"), "w", encoding="utf-8") as fp:
+                    fp.write(key)
+                downloaded_items.append("key")
+
+            if downloaded_items:
+                print("Downloaded to directory '{}': {}".format(self.args.target_directory, ", ".join(downloaded_items)))
+                print()
+
+            if missing_user_items:
+                missing_items_str = " and ".join(missing_user_items)
+                error_messages.append("The user '{}' does not have {}".format(self.args.username, missing_items_str))
 
         if error_messages:
             print()
