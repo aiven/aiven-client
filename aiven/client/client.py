@@ -1620,7 +1620,7 @@ class AivenClient(AivenClientBase):
         vat_id: str | None = None,
         billing_emails: Sequence[str] | None = None,
         tech_emails: Sequence[str] | None = None,
-        use_source_project_billing_group: str | None = None,
+        use_source_project_billing_group: bool | None = None,
     ) -> Mapping:
         body: dict[str, Any] = {
             "card_id": card_id,
