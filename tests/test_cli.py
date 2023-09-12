@@ -12,9 +12,12 @@ from argparse import Namespace
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pytest import CaptureFixture, LogCaptureFixture
+from requests import Session
 from typing import Any, cast, Iterator, Mapping
 from unittest import mock
+from unittest.mock import ANY, MagicMock
 
+import json
 import pytest
 import random
 import string
@@ -43,48 +46,128 @@ def test_service_user_create() -> None:
     AivenCLI().run(args=["service", "user-create", "service", "--username", "username"])
 
 
-def test_service_topic_create() -> None:
-    AivenCLI().run(args=["service", "topic-create", "--partitions", "42", "--replication", "42", "service1", "topic1"])
-
-
-def test_service_topic_create_with_tags() -> None:
-    AivenCLI().run(
-        args=[
-            "service",
-            "topic-create",
-            "--partitions",
-            "42",
-            "--replication",
-            "42",
-            "--tag",
-            "key-_1=value1",
-            "--tag",
-            "key2=az,.0-9_",
-            "service1",
-            "topic1",
-        ]
+@pytest.mark.parametrize(
+    "command_line, expected_post_data",
+    [
+        (
+            "service topic-create --project project1 --partitions 42 --replication 4 service1 topic1",
+            {
+                "topic_name": "topic1",
+                "partitions": 42,
+                "replication": 4,
+                "cleanup_policy": "delete",
+                "min_insync_replicas": None,
+                "retention_bytes": None,
+                "retention_hours": None,
+                "tags": [],
+            },
+        ),
+        (
+            (
+                "service topic-create --project project1 --partitions 42 --replication 4 "
+                + "--tag key-_1=value1 --tag key2=az,.0-9_ service1 topic1"
+            ),
+            {
+                "topic_name": "topic1",
+                "partitions": 42,
+                "replication": 4,
+                "cleanup_policy": "delete",
+                "min_insync_replicas": None,
+                "retention_bytes": None,
+                "retention_hours": None,
+                "tags": [{"key": "key-_1", "value": "value1"}, {"key": "key2", "value": "az,.0-9_"}],
+            },
+        ),
+        (
+            (
+                "service topic-create --project project1 --partitions 42 --replication 4 "
+                + "--cleanup-policy compact --min-insync-replicas 3 "
+                + "--retention-bytes 1024 --retention 1 service1 topic1"
+            ),
+            {
+                "topic_name": "topic1",
+                "partitions": 42,
+                "replication": 4,
+                "cleanup_policy": "compact",
+                "min_insync_replicas": 3,
+                "retention_bytes": 1024,
+                "retention_hours": 1,
+                "tags": [],
+            },
+        ),
+    ],
+)
+def test_service_topic_create(command_line: str, expected_post_data: Mapping[str, str | int | None]) -> None:
+    client = AivenClient("")
+    session = MagicMock(spec=Session)
+    session.post.return_value = MagicMock(status_code=200, json=MagicMock(return_value={}))
+    client.session = session
+    cli = build_aiven_cli(client)
+    assert cli.run(args=command_line.split(" ")) is None
+    session.post.assert_called_once_with(
+        "/v1/project/project1/service/service1/topic",
+        headers=ANY,
+        params=ANY,
+        data=ANY,  # checked below
     )
+    data_dict = json.loads(session.post.call_args_list[0].kwargs["data"])
+    assert data_dict == expected_post_data
 
 
-def test_service_topic_update() -> None:
-    AivenCLI().run(
-        args=[
-            "service",
-            "topic-update",
-            "--partitions",
-            "42",
-            "--untag",
-            "key-_1",
-            "--untag",
-            "key123",
-            "--tag",
-            "key3=az,.0-9_",
-            "--tag",
-            "key234=foo",
-            "service1",
-            "topic1",
-        ]
+@pytest.mark.parametrize(
+    "command_line, expected_put_data",
+    [
+        (
+            (
+                "service topic-update --project project1 --partitions 42 --replication 3 "
+                + "--retention 11 --retention-bytes 500 service1 topic1"
+            ),
+            {
+                "min_insync_replicas": None,
+                "partitions": 42,
+                "replication": 3,
+                "retention_bytes": 500,
+                "retention_hours": 11,
+            },
+        ),
+        (
+            (
+                "service topic-update --project project1 --partitions 42 "
+                + "--untag key-_1 --untag key123 --tag key3=az,.0-9_ --tag key234=foo service1 topic1"
+            ),
+            {
+                "min_insync_replicas": None,
+                "partitions": 42,
+                "replication": None,
+                "retention_bytes": None,
+                "retention_hours": None,
+                "tags": [{"key": "key3", "value": "az,.0-9_"}, {"key": "key234", "value": "foo"}],
+            },
+        ),
+    ],
+)
+def test_service_topic_update(command_line: str, expected_put_data: Mapping[str, str | int | None]) -> None:
+    class TestAivenClient(AivenClient):
+        def __init__(self) -> None:
+            super().__init__("")
+
+        def get_service_topic(self, project: str, service: str, topic: str) -> Mapping:
+            return {}
+
+    client = TestAivenClient()
+    session = MagicMock(spec=Session)
+    session.put.return_value = MagicMock(status_code=200, json=MagicMock(return_value={"message": "updated"}))
+    client.session = session
+    cli = build_aiven_cli(client)
+    assert cli.run(args=command_line.split(" ")) is None
+    session.put.assert_called_once_with(
+        "/v1/project/project1/service/service1/topic/topic1",
+        headers=ANY,
+        params=ANY,
+        data=ANY,  # checked below
     )
+    data_dict = json.loads(session.put.call_args_list[0].kwargs["data"])
+    assert data_dict == expected_put_data
 
 
 def test_service_create_from_pitr() -> None:
