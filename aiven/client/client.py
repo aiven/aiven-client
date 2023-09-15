@@ -605,6 +605,7 @@ class AivenClient(AivenClientBase):
         min_insync_replicas: int,
         retention_bytes: int,
         retention_hours: int,
+        retention_ms: int | None,
         cleanup_policy: str,
         tags: Sequence[Tag] | None = None,
     ) -> Mapping:
@@ -617,6 +618,12 @@ class AivenClient(AivenClientBase):
             "retention_bytes": retention_bytes,
             "retention_hours": retention_hours,
         }
+        config = {}
+        if retention_ms is not None:
+            config["retention_ms"] = retention_ms
+        if config:
+            body["config"] = config
+
         if tags is not None:
             body.update({"tags": tags})
         return self.verify(
@@ -633,6 +640,7 @@ class AivenClient(AivenClientBase):
         partitions: int,
         retention_bytes: int,
         retention_hours: int,
+        retention_ms: int | None,
         min_insync_replicas: int,
         replication: int | None = None,
         tags: Sequence[str] | None = None,
@@ -644,6 +652,12 @@ class AivenClient(AivenClientBase):
             "retention_bytes": retention_bytes,
             "retention_hours": retention_hours,
         }
+        config = {}
+        if retention_ms is not None:
+            config["retention_ms"] = retention_ms
+        if config:
+            body["config"] = config
+
         if tags is not None:
             body.update({"tags": tags})
         return self.verify(

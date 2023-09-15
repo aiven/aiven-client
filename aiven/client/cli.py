@@ -2878,6 +2878,7 @@ ssl.truststore.type=JKS
     @arg.replication
     @arg.min_insync_replicas
     @arg.retention
+    @arg.retention_ms
     @arg.retention_bytes
     @arg.tag
     @arg(
@@ -2904,6 +2905,7 @@ ssl.truststore.type=JKS
             min_insync_replicas=self.args.min_insync_replicas,
             retention_bytes=self.args.retention_bytes,
             retention_hours=self.args.retention,
+            retention_ms=self.args.retention_ms,
             cleanup_policy=self.args.cleanup_policy,
             tags=tags,
         )
@@ -2915,6 +2917,7 @@ ssl.truststore.type=JKS
     @arg.partitions
     @arg.min_insync_replicas
     @arg.retention
+    @arg.retention_ms
     @arg.retention_bytes
     @arg.tagupdate
     @arg.untag
@@ -2948,6 +2951,7 @@ ssl.truststore.type=JKS
             replication=self.args.replication,
             retention_bytes=self.args.retention_bytes,
             retention_hours=self.args.retention,
+            retention_ms=self.args.retention_ms,
             tags=tags,
         )
         print(response["message"])

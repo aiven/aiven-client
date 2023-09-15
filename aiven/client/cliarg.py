@@ -144,7 +144,10 @@ arg.project = arg(
     default=os.environ.get("AIVEN_PROJECT"),
 )
 arg.replication = arg("--replication", type=int, required=True, help="Replication factor")
-arg.retention = arg("--retention", type=int, help="Retention period in hours (default: unlimited)")
+arg.retention = arg(
+    "--retention", type=int, help="Retention period in hours, superseded by --retention-ms (default: unlimited)"
+)
+arg.retention_ms = arg("--retention-ms", type=int, help="Retention period in milliseconds (default: unlimited)")
 arg.retention_bytes = arg("--retention-bytes", type=int, help="Retention limit in bytes (default: unlimited)")
 arg.tag = arg(
     "--tag", dest="topic_option_tag", metavar="KEY[=VALUE]", action="append", help="Tag to add into topic metadata"
