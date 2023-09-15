@@ -149,6 +149,18 @@ arg.retention = arg(
 )
 arg.retention_ms = arg("--retention-ms", type=int, help="Retention period in milliseconds (default: unlimited)")
 arg.retention_bytes = arg("--retention-bytes", type=int, help="Retention limit in bytes (default: unlimited)")
+arg.remote_storage_enable = arg("--remote-storage-enable", help="Enable tiered storage", action="store_true")
+arg.remote_storage_disable = arg("--remote-storage-disable", help="Disable tiered storage", action="store_true")
+arg.local_retention_ms = arg(
+    "--local-retention-ms",
+    type=int,
+    help="Local retention period in milliseconds in case of tiered storage (default: equals to total retention.ms)",
+)
+arg.local_retention_bytes = arg(
+    "--local-retention-bytes",
+    type=int,
+    help="Local retention limit in bytes in case of tiered storage (default: equals to total retention.bytes)",
+)
 arg.tag = arg(
     "--tag", dest="topic_option_tag", metavar="KEY[=VALUE]", action="append", help="Tag to add into topic metadata"
 )
