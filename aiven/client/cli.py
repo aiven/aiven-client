@@ -2880,6 +2880,10 @@ ssl.truststore.type=JKS
     @arg.retention
     @arg.retention_ms
     @arg.retention_bytes
+    @arg.remote_storage_enable
+    @arg.remote_storage_disable
+    @arg.local_retention_ms
+    @arg.local_retention_bytes
     @arg.tag
     @arg(
         "--cleanup-policy",
@@ -2907,6 +2911,9 @@ ssl.truststore.type=JKS
             retention_hours=self.args.retention,
             retention_ms=self.args.retention_ms,
             cleanup_policy=self.args.cleanup_policy,
+            remote_storage_enable=self._remote_storage_enable(),
+            local_retention_ms=self.args.local_retention_ms,
+            local_retention_bytes=self.args.local_retention_bytes,
             tags=tags,
         )
         print(response)
@@ -2919,6 +2926,10 @@ ssl.truststore.type=JKS
     @arg.retention
     @arg.retention_ms
     @arg.retention_bytes
+    @arg.remote_storage_enable
+    @arg.remote_storage_disable
+    @arg.local_retention_ms
+    @arg.local_retention_bytes
     @arg.tagupdate
     @arg.untag
     @arg("--replication", help="Replication factor", type=int, required=False)
@@ -2952,9 +2963,22 @@ ssl.truststore.type=JKS
             retention_bytes=self.args.retention_bytes,
             retention_hours=self.args.retention,
             retention_ms=self.args.retention_ms,
+            remote_storage_enable=self._remote_storage_enable(),
+            local_retention_ms=self.args.local_retention_ms,
+            local_retention_bytes=self.args.local_retention_bytes,
             tags=tags,
         )
         print(response["message"])
+
+    def _remote_storage_enable(self) -> bool | None:
+        if self.args.remote_storage_enable and self.args.remote_storage_disable:
+            raise argx.UserError("Only set at most one of --remote-storage-enable and --remote-storage-disable")
+        if self.args.remote_storage_enable:
+            return True
+        elif self.args.remote_storage_disable:
+            return False
+        else:
+            return None
 
     @arg.project
     @arg.service_name

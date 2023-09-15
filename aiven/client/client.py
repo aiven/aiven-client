@@ -607,6 +607,9 @@ class AivenClient(AivenClientBase):
         retention_hours: int,
         retention_ms: int | None,
         cleanup_policy: str,
+        remote_storage_enable: bool | None,
+        local_retention_ms: int | None,
+        local_retention_bytes: int | None,
         tags: Sequence[Tag] | None = None,
     ) -> Mapping:
         body: dict[str, Any] = {
@@ -621,6 +624,12 @@ class AivenClient(AivenClientBase):
         config = {}
         if retention_ms is not None:
             config["retention_ms"] = retention_ms
+        if remote_storage_enable is not None:
+            config["remote_storage_enable"] = remote_storage_enable
+        if local_retention_ms is not None:
+            config["local_retention_ms"] = local_retention_ms
+        if local_retention_bytes is not None:
+            config["local_retention_bytes"] = local_retention_bytes
         if config:
             body["config"] = config
 
@@ -642,6 +651,9 @@ class AivenClient(AivenClientBase):
         retention_hours: int,
         retention_ms: int | None,
         min_insync_replicas: int,
+        remote_storage_enable: bool | None,
+        local_retention_ms: int | None,
+        local_retention_bytes: int | None,
         replication: int | None = None,
         tags: Sequence[str] | None = None,
     ) -> Mapping:
@@ -655,6 +667,12 @@ class AivenClient(AivenClientBase):
         config = {}
         if retention_ms is not None:
             config["retention_ms"] = retention_ms
+        if remote_storage_enable is not None:
+            config["remote_storage_enable"] = remote_storage_enable
+        if local_retention_ms is not None:
+            config["local_retention_ms"] = local_retention_ms
+        if local_retention_bytes is not None:
+            config["local_retention_bytes"] = local_retention_bytes
         if config:
             body["config"] = config
 

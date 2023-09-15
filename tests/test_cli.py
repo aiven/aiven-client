@@ -112,6 +112,46 @@ def test_service_user_create() -> None:
                 "tags": [],
             },
         ),
+        (
+            (
+                "service topic-create --project project1 --partitions 1 --replication 2 "
+                + "--remote-storage-enable --local-retention-bytes 10 --local-retention-ms 100 service1 topic1"
+            ),
+            {
+                "topic_name": "topic1",
+                "cleanup_policy": "delete",
+                "partitions": 1,
+                "replication": 2,
+                "min_insync_replicas": None,
+                "retention_bytes": None,
+                "retention_hours": None,
+                "config": {
+                    "remote_storage_enable": True,
+                    "local_retention_bytes": 10,
+                    "local_retention_ms": 100,
+                },
+                "tags": [],
+            },
+        ),
+        (
+            (
+                "service topic-create --project project1 --partitions 1 --replication 2 "
+                + "--remote-storage-disable service1 topic1"
+            ),
+            {
+                "topic_name": "topic1",
+                "cleanup_policy": "delete",
+                "partitions": 1,
+                "replication": 2,
+                "min_insync_replicas": None,
+                "retention_bytes": None,
+                "retention_hours": None,
+                "config": {
+                    "remote_storage_enable": False,
+                },
+                "tags": [],
+            },
+        ),
     ],
 )
 def test_service_topic_create(command_line: str, expected_post_data: Mapping[str, str | int | None]) -> None:
@@ -170,6 +210,40 @@ def test_service_topic_create(command_line: str, expected_post_data: Mapping[str
                 "retention_bytes": None,
                 "retention_hours": 1,
                 "config": {"retention_ms": 123},
+            },
+        ),
+        (
+            (
+                "service topic-update --project project1 --partitions 1 --replication 2 "
+                + "--remote-storage-enable --local-retention-bytes 10 --local-retention-ms 100 service1 topic1"
+            ),
+            {
+                "partitions": 1,
+                "replication": 2,
+                "min_insync_replicas": None,
+                "retention_bytes": None,
+                "retention_hours": None,
+                "config": {
+                    "remote_storage_enable": True,
+                    "local_retention_bytes": 10,
+                    "local_retention_ms": 100,
+                },
+            },
+        ),
+        (
+            (
+                "service topic-update --project project1 --partitions 1 --replication 2 "
+                + "--remote-storage-disable service1 topic1"
+            ),
+            {
+                "partitions": 1,
+                "replication": 2,
+                "min_insync_replicas": None,
+                "retention_bytes": None,
+                "retention_hours": None,
+                "config": {
+                    "remote_storage_enable": False,
+                },
             },
         ),
     ],
