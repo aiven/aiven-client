@@ -4356,10 +4356,16 @@ ssl.truststore.type=JKS
         if self.args.parent_id is not None and self.args.account_id is not None:
             raise argx.UserError("`--parent-id` and `--account-id` cannot be specified together.")
 
+        account_id = self.args.parent_id or self.args.account_id
+
+        # If parent id was an organization id, resolve to root account id
+        if account_id.startswith("org"):
+            org_info = self.client.get_organization(self.args.parent_id)
+            account_id = org_info["account_id"]
+
         try:
             project = self.client.create_project(
-                account_id=self.args.account_id,
-                parent_id=self.args.parent_id,
+                account_id=account_id,
                 billing_address=self.args.billing_address,
                 billing_currency=self.args.billing_currency,
                 billing_extra_text=self.args.billing_extra_text,
