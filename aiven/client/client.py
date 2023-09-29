@@ -1640,7 +1640,6 @@ class AivenClient(AivenClientBase):
         self,
         project: str,
         account_id: str | None = None,
-        parent_id: str | None = None,
         billing_group_id: str | None = None,
         card_id: str | None = None,
         cloud: str | None = None,
@@ -1659,8 +1658,6 @@ class AivenClient(AivenClientBase):
             "cloud": cloud,
             "project": project,
         }
-        if parent_id is not None:
-            body["parent_id"] = parent_id
         if account_id is not None:
             body["account_id"] = account_id
         if billing_group_id is not None:
@@ -2540,6 +2537,9 @@ class AivenClient(AivenClientBase):
                 "cancel",
             ),
         )
+
+    def get_organization(self, organization_id: str) -> dict[str, Any]:
+        return self.verify(self.get, self.build_path("organization", organization_id))
 
     def get_organizations(self) -> Sequence:
         return self.verify(self.get, "/organizations", result_key="organizations")
