@@ -9,6 +9,7 @@ from http import HTTPStatus
 from typing import Any
 from unittest import mock
 
+import json
 import pytest
 
 
@@ -16,6 +17,10 @@ class MockResponse:
     def __init__(self, status_code: int, json_data: dict[str, Any] | None = None, headers: dict[str, str] | None = None):
         self.status_code = status_code
         self.json_data = json_data
+        if json_data is not None:
+            self.content = json.dumps(json_data).encode("utf-8")
+        else:
+            self.content = b""
         self.headers = {} if headers is None else headers
 
     def json(self) -> Any:
@@ -26,7 +31,7 @@ class MockResponse:
     "response",
     [
         MockResponse(status_code=HTTPStatus.NO_CONTENT),
-        MockResponse(status_code=HTTPStatus.CREATED, headers={"Content-Length": "0"}),
+        MockResponse(status_code=HTTPStatus.CREATED),
     ],
 )
 def test_no_content_returned_from_api(response: MockResponse) -> None:
