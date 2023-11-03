@@ -157,7 +157,7 @@ def test_service_user_create() -> None:
 def test_service_topic_create(command_line: str, expected_post_data: Mapping[str, str | int | None]) -> None:
     client = AivenClient("")
     session = MagicMock(spec=Session)
-    session.post.return_value = MagicMock(status_code=200, json=MagicMock(return_value={}))
+    session.post.return_value = MagicMock(status_code=200, json=MagicMock(return_value={}), content=b"{}", reason="OK")
     client.session = session
     cli = build_aiven_cli(client)
     assert cli.run(args=command_line.split(" ")) is None
@@ -258,7 +258,9 @@ def test_service_topic_update(command_line: str, expected_put_data: Mapping[str,
 
     client = TestAivenClient()
     session = MagicMock(spec=Session)
-    session.put.return_value = MagicMock(status_code=200, json=MagicMock(return_value={"message": "updated"}))
+    session.put.return_value = MagicMock(
+        status_code=200, json=MagicMock(return_value={"message": "updated"}), content=b'{"message":"updated"}', reason="OK"
+    )
     client.session = session
     cli = build_aiven_cli(client)
     assert cli.run(args=command_line.split(" ")) is None
