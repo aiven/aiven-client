@@ -175,7 +175,7 @@ class AivenClientBase:
                 time.sleep(0.2)
 
         # Check API is actually returning data or not
-        if response.status_code == HTTPStatus.NO_CONTENT or response.headers.get("Content-Length", "0") == "0":
+        if response.status_code == HTTPStatus.NO_CONTENT or len(response.content) == 0:
             return {}
 
         result = response.json()
