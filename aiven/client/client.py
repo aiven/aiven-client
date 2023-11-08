@@ -1833,34 +1833,6 @@ class AivenClient(AivenClientBase):
             result_key="events",
         )
 
-    def get_cards(self) -> Sequence[dict[str, Any]]:
-        return self.verify(self.get, "/card", result_key="cards")
-
-    def add_card(self, stripe_token: str) -> Mapping:
-        request = {
-            "stripe_token": stripe_token,
-        }
-        return self.verify(self.post, "/card", body=request, result_key="card")
-
-    def update_card(self, card_id: str, **kwargs: Any) -> Mapping:
-        keys = {"exp_month", "exp_year", "name"}
-        wrong = set(kwargs) - keys
-        assert not wrong, "invalid arguments to update_card: {!r}".format(wrong)
-        request: dict[str, Any] = {}
-        for key in keys:
-            value = kwargs.get(key)
-            if value is not None:
-                expected: type = int if key in {"exp_month", "exp_year"} else str
-
-                assert isinstance(value, expected), "expected '{}' type for argument '{}'".format(expected, key)
-
-                request[key] = value
-
-        return self.verify(self.put, self.build_path("card", card_id), body=request, result_key="card")
-
-    def remove_card(self, card_id: str) -> Mapping:
-        return self.verify(self.delete, self.build_path("card", card_id))
-
     def get_stripe_key(self) -> str:
         return self.verify(self.get, self.build_path("config", "stripe_key"), result_key="stripe_key")
 
