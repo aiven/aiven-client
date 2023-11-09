@@ -4295,19 +4295,14 @@ ssl.truststore.type=JKS
         return "{}/{}".format(project["card_info"]["user_email"], project["card_info"]["card_id"])
 
     def _show_projects(self, projects: Sequence[dict[str, Any]], verbose: bool = True) -> None:
-        for project in projects:
-            project["credit_card"] = self._format_card_info(project)
         if verbose:
             layout: list = [
-                ["project_name", "default_cloud", "billing_currency", "vat_id"],
-                "credit_card",
-                "billing_address",
-                "country_code",
+                ["project_name", "default_cloud"],
+                "billing_group_id",
+                "billing_group_name",
             ]
-            if any(project["billing_extra_text"] for project in projects):
-                layout.append("billing_extra_text")
         else:
-            layout = [["project_name", "default_cloud", "credit_card"]]
+            layout = [["project_name", "default_cloud"]]
         self.print_response(projects, json=getattr(self.args, "json", False), table_layout=layout)
 
     def _resolve_parent_id(self, parent_id: str) -> str:
