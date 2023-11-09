@@ -4295,14 +4295,19 @@ ssl.truststore.type=JKS
         return "{}/{}".format(project["card_info"]["user_email"], project["card_info"]["card_id"])
 
     def _show_projects(self, projects: Sequence[dict[str, Any]], verbose: bool = True) -> None:
+        for project in projects:
+            project["credit_card"] = self._format_card_info(project)
         if verbose:
             layout: list = [
-                ["project_name", "default_cloud"],
-                "billing_group_id",
-                "billing_group_name",
+                ["project_name", "default_cloud", "billing_currency", "vat_id"],
+                "credit_card",
+                "billing_address",
+                "country_code",
             ]
+            if any(project["billing_extra_text"] for project in projects):
+                layout.append("billing_extra_text")
         else:
-            layout = [["project_name", "default_cloud"]]
+            layout = [["project_name", "default_cloud", "credit_card"]]
         self.print_response(projects, json=getattr(self.args, "json", False), table_layout=layout)
 
     def _resolve_parent_id(self, parent_id: str) -> str:
@@ -4315,7 +4320,6 @@ ssl.truststore.type=JKS
 
     @arg("project_name", help="Project name")
     @arg("--billing-group-id", help="Billing group ID of the project")
-    @arg.card_id
     @arg.cloud
     @arg(
         "--no-fail-if-exists",
@@ -4338,12 +4342,6 @@ ssl.truststore.type=JKS
             "used by source project instead of creating a new one"
         ),
     )
-    @arg.country_code
-    @arg.billing_address
-    @arg.billing_extra_text
-    @arg.billing_currency
-    @arg.vat_id
-    @arg.billing_email
     @arg.tech_email
     @arg.parent_id_mandatory
     def project__create(self) -> None:
@@ -4351,17 +4349,10 @@ ssl.truststore.type=JKS
         try:
             project = self.client.create_project(
                 account_id=self._resolve_parent_id(self.args.parent_id),
-                billing_address=self.args.billing_address,
-                billing_currency=self.args.billing_currency,
-                billing_extra_text=self.args.billing_extra_text,
                 billing_group_id=self.args.billing_group_id,
-                card_id=self.args.card_id,
                 cloud=self.args.cloud,
                 copy_from_project=self.args.copy_from_project,
-                country_code=self.args.country_code,
                 project=self.args.project_name,
-                vat_id=self.args.vat_id,
-                billing_emails=self.args.billing_email,
                 tech_emails=self.args.tech_email,
                 use_source_project_billing_group=self.args.use_source_project_billing_group,
             )
@@ -4398,15 +4389,8 @@ ssl.truststore.type=JKS
 
     @arg.project
     @arg("--name", help="New project name")
-    @arg("--card-id", help="Card ID")
     @arg.parent_id
     @arg.cloud
-    @arg.country_code
-    @arg.billing_address
-    @arg.billing_extra_text
-    @arg.billing_currency
-    @arg.vat_id
-    @arg.billing_email
     @arg.tech_email
     def project__update(self) -> None:
         """Update a project"""
@@ -4415,15 +4399,8 @@ ssl.truststore.type=JKS
             project = self.client.update_project(
                 new_project_name=self.args.name,
                 account_id=self._resolve_parent_id(self.args.parent_id) if self.args.parent_id else None,
-                billing_address=self.args.billing_address,
-                billing_currency=self.args.billing_currency,
-                billing_extra_text=self.args.billing_extra_text,
-                card_id=self.args.card_id,
                 cloud=self.args.cloud,
-                country_code=self.args.country_code,
                 project=project_name,
-                vat_id=self.args.vat_id,
-                billing_emails=self.args.billing_email,
                 tech_emails=self.args.tech_email,
             )
         except client.Error as ex:

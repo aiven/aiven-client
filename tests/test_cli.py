@@ -1335,16 +1335,9 @@ def test_project_create__parent_id_requested_correctly() -> None:
     aiven_client.create_project.assert_called_with(
         account_id=account_id,
         project=project_name,
-        billing_address=None,
-        billing_currency=None,
-        billing_extra_text=None,
         billing_group_id=None,
-        card_id=None,
         cloud=None,
         copy_from_project=None,
-        country_code=None,
-        vat_id=None,
-        billing_emails=None,
         tech_emails=None,
         use_source_project_billing_group=False,
     )
@@ -1386,16 +1379,9 @@ def test_project_create__parent_id_as_org_id_requested_correctly() -> None:
     aiven_client.create_project.assert_called_with(
         account_id=account_id,
         project=project_name,
-        billing_address=None,
-        billing_currency=None,
-        billing_extra_text=None,
         billing_group_id=None,
-        card_id=None,
         cloud=None,
         copy_from_project=None,
-        country_code=None,
-        vat_id=None,
-        billing_emails=None,
         tech_emails=None,
         use_source_project_billing_group=False,
     )
@@ -1431,15 +1417,8 @@ def test_project_update__parent_id_requested_correctly() -> None:
     aiven_client.update_project.assert_called_with(
         new_project_name=new_project_name,
         account_id=account_id,
-        billing_address=None,
-        billing_currency=None,
-        billing_extra_text=None,
-        card_id=None,
         cloud=None,
-        country_code=None,
         project=project_name,
-        vat_id=None,
-        billing_emails=None,
         tech_emails=None,
     )
 
@@ -1484,14 +1463,7 @@ def test_project_update__parent_id_as_org_id_requested_correctly() -> None:
     aiven_client.update_project.assert_called_with(
         new_project_name=new_project_name,
         account_id=account_id,
-        billing_address=None,
-        billing_currency=None,
-        billing_extra_text=None,
-        card_id=None,
         cloud=None,
-        country_code=None,
         project=project_name,
-        vat_id=None,
-        billing_emails=None,
         tech_emails=None,
     )

@@ -1641,20 +1641,12 @@ class AivenClient(AivenClientBase):
         project: str,
         account_id: str,
         billing_group_id: str | None = None,
-        card_id: str | None = None,
         cloud: str | None = None,
         copy_from_project: str | None = None,
-        country_code: str | None = None,
-        billing_address: str | None = None,
-        billing_currency: str | None = None,
-        billing_extra_text: str | None = None,
-        vat_id: str | None = None,
-        billing_emails: Sequence[str] | None = None,
         tech_emails: Sequence[str] | None = None,
         use_source_project_billing_group: bool | None = None,
     ) -> Mapping:
         body: dict[str, Any] = {
-            "card_id": card_id,
             "cloud": cloud,
             "project": project,
             "account_id": account_id,
@@ -1663,18 +1655,6 @@ class AivenClient(AivenClientBase):
             body["billing_group_id"] = billing_group_id
         if copy_from_project is not None:
             body["copy_from_project"] = copy_from_project
-        if country_code is not None:
-            body["country_code"] = country_code
-        if billing_address is not None:
-            body["billing_address"] = billing_address
-        if billing_currency is not None:
-            body["billing_currency"] = billing_currency
-        if billing_extra_text is not None:
-            body["billing_extra_text"] = billing_extra_text
-        if vat_id is not None:
-            body["vat_id"] = vat_id
-        if billing_emails is not None:
-            body["billing_emails"] = [{"email": email} for email in billing_emails]
         if tech_emails is not None:
             body["tech_emails"] = [{"email": email} for email in tech_emails]
         if use_source_project_billing_group is not None:
@@ -1696,14 +1676,7 @@ class AivenClient(AivenClientBase):
         project: str,
         new_project_name: str | None = None,
         account_id: str | None = None,
-        card_id: str | None = None,
         cloud: str | None = None,
-        country_code: str | None = None,
-        billing_address: str | None = None,
-        billing_currency: str | None = None,
-        billing_extra_text: str | None = None,
-        vat_id: str | None = None,
-        billing_emails: Sequence[str] | None = None,
         tech_emails: Sequence[str] | None = None,
     ) -> Mapping:
         body: dict[str, Any] = {}
@@ -1711,22 +1684,8 @@ class AivenClient(AivenClientBase):
             body["project_name"] = new_project_name
         if account_id is not None:
             body["account_id"] = account_id
-        if card_id is not None:
-            body["card_id"] = card_id
         if cloud is not None:
             body["cloud"] = cloud
-        if country_code is not None:
-            body["country_code"] = country_code
-        if billing_address is not None:
-            body["billing_address"] = billing_address
-        if billing_currency is not None:
-            body["billing_currency"] = billing_currency
-        if billing_extra_text is not None:
-            body["billing_extra_text"] = billing_extra_text
-        if vat_id is not None:
-            body["vat_id"] = vat_id
-        if billing_emails is not None:
-            body["billing_emails"] = [{"email": email} for email in billing_emails]
         if tech_emails is not None:
             body["tech_emails"] = [{"email": email} for email in tech_emails]
 
