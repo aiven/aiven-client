@@ -4310,14 +4310,15 @@ ssl.truststore.type=JKS
             layout = [["project_name", "default_cloud", "credit_card"]]
         self.print_response(projects, json=getattr(self.args, "json", False), table_layout=layout)
 
+    def _resolve_parent_id(self, parent_id: str) -> str:
+        """Resolves parent id to an account id, if parent id was an organization id"""
+
+        if parent_id.startswith("org"):
+            org_info = self.client.get_organization(parent_id)
+            return org_info["account_id"]
+        return parent_id
+
     @arg("project_name", help="Project name")
-    @arg(
-        "--account-id",
-        help="Account ID of the project",
-        action=argx.NextReleaseDeprecationNotice,
-        deprecation_message_hint="Please use `--parent-id` instead, which will be mandatory in the next release.",
-        deprecation_help_hint="Will be replaced by `--parent-id` in the next release.",
-    )
     @arg("--billing-group-id", help="Billing group ID of the project")
     @arg.card_id
     @arg.cloud
@@ -4349,23 +4350,12 @@ ssl.truststore.type=JKS
     @arg.vat_id
     @arg.billing_email
     @arg.tech_email
-    @arg.parent_id
+    @arg.parent_id_mandatory
     def project__create(self) -> None:
         """Create a project"""
-
-        if self.args.parent_id is not None and self.args.account_id is not None:
-            raise argx.UserError("`--parent-id` and `--account-id` cannot be specified together.")
-
-        account_id = self.args.parent_id or self.args.account_id
-
-        # If parent id was an organization id, resolve to root account id
-        if account_id.startswith("org"):
-            org_info = self.client.get_organization(self.args.parent_id)
-            account_id = org_info["account_id"]
-
         try:
             project = self.client.create_project(
-                account_id=account_id,
+                account_id=self._resolve_parent_id(self.args.parent_id),
                 billing_address=self.args.billing_address,
                 billing_currency=self.args.billing_currency,
                 billing_extra_text=self.args.billing_extra_text,
@@ -4413,8 +4403,8 @@ ssl.truststore.type=JKS
 
     @arg.project
     @arg("--name", help="New project name")
-    @arg("--account-id", help="Account ID of the project")
     @arg("--card-id", help="Card ID")
+    @arg.parent_id
     @arg.cloud
     @arg.country_code
     @arg.billing_address
@@ -4429,7 +4419,7 @@ ssl.truststore.type=JKS
         try:
             project = self.client.update_project(
                 new_project_name=self.args.name,
-                account_id=self.args.account_id,
+                account_id=self._resolve_parent_id(self.args.parent_id) if self.args.parent_id else None,
                 billing_address=self.args.billing_address,
                 billing_currency=self.args.billing_currency,
                 billing_extra_text=self.args.billing_extra_text,

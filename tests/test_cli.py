@@ -23,6 +23,8 @@ import random
 import string
 import uuid
 
+EXIT_CODE_INVALID_USAGE = 2
+
 
 def test_cli() -> None:
     with pytest.raises(SystemExit) as excinfo:
@@ -1291,3 +1293,205 @@ def test_organizations_list(capsys: CaptureFixture[str]) -> None:
     captured = capsys.readouterr()
     assert "My Org" in captured.out
     assert "business" in captured.out
+
+
+def test_project_create__parent_id_required() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+
+    with pytest.raises(SystemExit) as excinfo:
+        build_aiven_cli(aiven_client).run(
+            args=[
+                "project",
+                "create",
+                "new-project",
+            ]
+        )
+    assert excinfo.value.code == EXIT_CODE_INVALID_USAGE
+
+
+def test_project_create__parent_id_requested_correctly() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    account_id = "a1231231"
+    project_name = "new-project"
+
+    aiven_client.create_project.return_value = {
+        "project_id": "p123123124",
+        "project_name": project_name,
+        "default_cloud": "my-default-cloud",
+        "billing_currency": "USD",
+        "vat_id": "",
+        "billing_extra_text": "",
+    }
+
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "project",
+            "create",
+            "--parent-id",
+            account_id,
+            project_name,
+        ]
+    )
+    aiven_client.create_project.assert_called_with(
+        account_id=account_id,
+        project=project_name,
+        billing_address=None,
+        billing_currency=None,
+        billing_extra_text=None,
+        billing_group_id=None,
+        card_id=None,
+        cloud=None,
+        copy_from_project=None,
+        country_code=None,
+        vat_id=None,
+        billing_emails=None,
+        tech_emails=None,
+        use_source_project_billing_group=False,
+    )
+
+
+def test_project_create__parent_id_as_org_id_requested_correctly() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    organization_id = "org2131231"
+    account_id = "a1231231"
+    project_name = "new-project-name"
+
+    aiven_client.get_organization.return_value = {
+        "organization_id": organization_id,
+        "organization_name": "My Org",
+        "account_id": account_id,
+        "tier": "business",
+        "create_time": "2023-07-13T08:00:45Z",
+        "update_time": "2023-07-13T08:00:45Z",
+    }
+
+    aiven_client.create_project.return_value = {
+        "project_id": "p123123124",
+        "project_name": project_name,
+        "default_cloud": "my-default-cloud",
+        "billing_currency": "USD",
+        "vat_id": "",
+        "billing_extra_text": "",
+    }
+
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "project",
+            "create",
+            "--parent-id",
+            organization_id,
+            project_name,
+        ]
+    )
+    aiven_client.create_project.assert_called_with(
+        account_id=account_id,
+        project=project_name,
+        billing_address=None,
+        billing_currency=None,
+        billing_extra_text=None,
+        billing_group_id=None,
+        card_id=None,
+        cloud=None,
+        copy_from_project=None,
+        country_code=None,
+        vat_id=None,
+        billing_emails=None,
+        tech_emails=None,
+        use_source_project_billing_group=False,
+    )
+
+
+def test_project_update__parent_id_requested_correctly() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    account_id = "a1231231"
+    project_name = "my-project-name"
+    new_project_name = "new-project-name"
+
+    aiven_client.update_project.return_value = {
+        "project_id": "p123123124",
+        "project_name": new_project_name,
+        "default_cloud": "my-default-cloud",
+        "billing_currency": "USD",
+        "vat_id": "",
+        "billing_extra_text": "",
+    }
+
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "project",
+            "update",
+            "--project",
+            project_name,
+            "--parent-id",
+            account_id,
+            "--name",
+            new_project_name,
+        ]
+    )
+    aiven_client.update_project.assert_called_with(
+        new_project_name=new_project_name,
+        account_id=account_id,
+        billing_address=None,
+        billing_currency=None,
+        billing_extra_text=None,
+        card_id=None,
+        cloud=None,
+        country_code=None,
+        project=project_name,
+        vat_id=None,
+        billing_emails=None,
+        tech_emails=None,
+    )
+
+
+def test_project_update__parent_id_as_org_id_requested_correctly() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    organization_id = "org2131231"
+    account_id = "a1231231"
+    project_name = "my-project-name"
+    new_project_name = "new-project-name"
+
+    aiven_client.get_organization.return_value = {
+        "organization_id": organization_id,
+        "organization_name": "My Org",
+        "account_id": account_id,
+        "tier": "business",
+        "create_time": "2023-07-13T08:00:45Z",
+        "update_time": "2023-07-13T08:00:45Z",
+    }
+
+    aiven_client.update_project.return_value = {
+        "project_id": "p123123124",
+        "project_name": new_project_name,
+        "default_cloud": "my-default-cloud",
+        "billing_currency": "USD",
+        "vat_id": "",
+        "billing_extra_text": "",
+    }
+
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "project",
+            "update",
+            "--project",
+            project_name,
+            "--parent-id",
+            organization_id,
+            "--name",
+            new_project_name,
+        ]
+    )
+    aiven_client.update_project.assert_called_with(
+        new_project_name=new_project_name,
+        account_id=account_id,
+        billing_address=None,
+        billing_currency=None,
+        billing_extra_text=None,
+        card_id=None,
+        cloud=None,
+        country_code=None,
+        project=project_name,
+        vat_id=None,
+        billing_emails=None,
+        tech_emails=None,
+    )
