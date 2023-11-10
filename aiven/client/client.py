@@ -1639,43 +1639,22 @@ class AivenClient(AivenClientBase):
     def create_project(
         self,
         project: str,
-        account_id: str | None = None,
+        account_id: str,
         billing_group_id: str | None = None,
-        card_id: str | None = None,
         cloud: str | None = None,
         copy_from_project: str | None = None,
-        country_code: str | None = None,
-        billing_address: str | None = None,
-        billing_currency: str | None = None,
-        billing_extra_text: str | None = None,
-        vat_id: str | None = None,
-        billing_emails: Sequence[str] | None = None,
         tech_emails: Sequence[str] | None = None,
         use_source_project_billing_group: bool | None = None,
     ) -> Mapping:
         body: dict[str, Any] = {
-            "card_id": card_id,
             "cloud": cloud,
             "project": project,
+            "account_id": account_id,
         }
-        if account_id is not None:
-            body["account_id"] = account_id
         if billing_group_id is not None:
             body["billing_group_id"] = billing_group_id
         if copy_from_project is not None:
             body["copy_from_project"] = copy_from_project
-        if country_code is not None:
-            body["country_code"] = country_code
-        if billing_address is not None:
-            body["billing_address"] = billing_address
-        if billing_currency is not None:
-            body["billing_currency"] = billing_currency
-        if billing_extra_text is not None:
-            body["billing_extra_text"] = billing_extra_text
-        if vat_id is not None:
-            body["vat_id"] = vat_id
-        if billing_emails is not None:
-            body["billing_emails"] = [{"email": email} for email in billing_emails]
         if tech_emails is not None:
             body["tech_emails"] = [{"email": email} for email in tech_emails]
         if use_source_project_billing_group is not None:
@@ -1697,14 +1676,7 @@ class AivenClient(AivenClientBase):
         project: str,
         new_project_name: str | None = None,
         account_id: str | None = None,
-        card_id: str | None = None,
         cloud: str | None = None,
-        country_code: str | None = None,
-        billing_address: str | None = None,
-        billing_currency: str | None = None,
-        billing_extra_text: str | None = None,
-        vat_id: str | None = None,
-        billing_emails: Sequence[str] | None = None,
         tech_emails: Sequence[str] | None = None,
     ) -> Mapping:
         body: dict[str, Any] = {}
@@ -1712,22 +1684,8 @@ class AivenClient(AivenClientBase):
             body["project_name"] = new_project_name
         if account_id is not None:
             body["account_id"] = account_id
-        if card_id is not None:
-            body["card_id"] = card_id
         if cloud is not None:
             body["cloud"] = cloud
-        if country_code is not None:
-            body["country_code"] = country_code
-        if billing_address is not None:
-            body["billing_address"] = billing_address
-        if billing_currency is not None:
-            body["billing_currency"] = billing_currency
-        if billing_extra_text is not None:
-            body["billing_extra_text"] = billing_extra_text
-        if vat_id is not None:
-            body["vat_id"] = vat_id
-        if billing_emails is not None:
-            body["billing_emails"] = [{"email": email} for email in billing_emails]
         if tech_emails is not None:
             body["tech_emails"] = [{"email": email} for email in tech_emails]
 
@@ -1832,34 +1790,6 @@ class AivenClient(AivenClientBase):
             params=params,
             result_key="events",
         )
-
-    def get_cards(self) -> Sequence[dict[str, Any]]:
-        return self.verify(self.get, "/card", result_key="cards")
-
-    def add_card(self, stripe_token: str) -> Mapping:
-        request = {
-            "stripe_token": stripe_token,
-        }
-        return self.verify(self.post, "/card", body=request, result_key="card")
-
-    def update_card(self, card_id: str, **kwargs: Any) -> Mapping:
-        keys = {"exp_month", "exp_year", "name"}
-        wrong = set(kwargs) - keys
-        assert not wrong, "invalid arguments to update_card: {!r}".format(wrong)
-        request: dict[str, Any] = {}
-        for key in keys:
-            value = kwargs.get(key)
-            if value is not None:
-                expected: type = int if key in {"exp_month", "exp_year"} else str
-
-                assert isinstance(value, expected), "expected '{}' type for argument '{}'".format(expected, key)
-
-                request[key] = value
-
-        return self.verify(self.put, self.build_path("card", card_id), body=request, result_key="card")
-
-    def remove_card(self, card_id: str) -> Mapping:
-        return self.verify(self.delete, self.build_path("card", card_id))
 
     def get_stripe_key(self) -> str:
         return self.verify(self.get, self.build_path("config", "stripe_key"), result_key="stripe_key")

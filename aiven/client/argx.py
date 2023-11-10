@@ -78,6 +78,22 @@ class ArgumentDeprecationNotice(argparse.Action):
 
 
 class NextReleaseDeprecationNotice(ArgumentDeprecationNotice):
+    """Action class for CLI parameters that will be deprecated in the next major release.
+
+    Parameters:
+        deprecation_message_hint: (Optional) Shows the message when you use the parameter.
+        deprecation_help_hint: (Optional) Shows the message on help text.
+
+    Example Usage:
+        @arg(
+            "--account-id",
+            help="Account ID of the project",
+            action=argx.NextReleaseDeprecationNotice,
+            deprecation_message_hint="Please use `--parent-id` instead, which will be mandatory in the next release.",
+            deprecation_help_hint="Will be replaced by `--parent-id` in the next release.",
+        )
+    """
+
     message = "Argument `%s` is deprecated and will be removed in the next release."
 
 

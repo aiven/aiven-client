@@ -4310,16 +4310,16 @@ ssl.truststore.type=JKS
             layout = [["project_name", "default_cloud", "credit_card"]]
         self.print_response(projects, json=getattr(self.args, "json", False), table_layout=layout)
 
+    def _resolve_parent_id(self, parent_id: str) -> str:
+        """Resolves parent id to an account id, if parent id was an organization id"""
+
+        if parent_id.startswith("org"):
+            org_info = self.client.get_organization(parent_id)
+            return org_info["account_id"]
+        return parent_id
+
     @arg("project_name", help="Project name")
-    @arg(
-        "--account-id",
-        help="Account ID of the project",
-        action=argx.NextReleaseDeprecationNotice,
-        deprecation_message_hint="Please use `--parent-id` instead, which will be mandatory in the next release.",
-        deprecation_help_hint="Will be replaced by `--parent-id` in the next release.",
-    )
     @arg("--billing-group-id", help="Billing group ID of the project")
-    @arg.card_id
     @arg.cloud
     @arg(
         "--no-fail-if-exists",
@@ -4342,41 +4342,17 @@ ssl.truststore.type=JKS
             "used by source project instead of creating a new one"
         ),
     )
-    @arg.country_code
-    @arg.billing_address
-    @arg.billing_extra_text
-    @arg.billing_currency
-    @arg.vat_id
-    @arg.billing_email
     @arg.tech_email
-    @arg.parent_id
+    @arg.parent_id_mandatory
     def project__create(self) -> None:
         """Create a project"""
-
-        if self.args.parent_id is not None and self.args.account_id is not None:
-            raise argx.UserError("`--parent-id` and `--account-id` cannot be specified together.")
-
-        account_id = self.args.parent_id or self.args.account_id
-
-        # If parent id was an organization id, resolve to root account id
-        if account_id.startswith("org"):
-            org_info = self.client.get_organization(self.args.parent_id)
-            account_id = org_info["account_id"]
-
         try:
             project = self.client.create_project(
-                account_id=account_id,
-                billing_address=self.args.billing_address,
-                billing_currency=self.args.billing_currency,
-                billing_extra_text=self.args.billing_extra_text,
+                account_id=self._resolve_parent_id(self.args.parent_id),
                 billing_group_id=self.args.billing_group_id,
-                card_id=self.args.card_id,
                 cloud=self.args.cloud,
                 copy_from_project=self.args.copy_from_project,
-                country_code=self.args.country_code,
                 project=self.args.project_name,
-                vat_id=self.args.vat_id,
-                billing_emails=self.args.billing_email,
                 tech_emails=self.args.tech_email,
                 use_source_project_billing_group=self.args.use_source_project_billing_group,
             )
@@ -4413,15 +4389,8 @@ ssl.truststore.type=JKS
 
     @arg.project
     @arg("--name", help="New project name")
-    @arg("--account-id", help="Account ID of the project")
-    @arg("--card-id", help="Card ID")
+    @arg.parent_id
     @arg.cloud
-    @arg.country_code
-    @arg.billing_address
-    @arg.billing_extra_text
-    @arg.billing_currency
-    @arg.vat_id
-    @arg.billing_email
     @arg.tech_email
     def project__update(self) -> None:
         """Update a project"""
@@ -4429,16 +4398,9 @@ ssl.truststore.type=JKS
         try:
             project = self.client.update_project(
                 new_project_name=self.args.name,
-                account_id=self.args.account_id,
-                billing_address=self.args.billing_address,
-                billing_currency=self.args.billing_currency,
-                billing_extra_text=self.args.billing_extra_text,
-                card_id=self.args.card_id,
+                account_id=self._resolve_parent_id(self.args.parent_id) if self.args.parent_id else None,
                 cloud=self.args.cloud,
-                country_code=self.args.country_code,
                 project=project_name,
-                vat_id=self.args.vat_id,
-                billing_emails=self.args.billing_email,
                 tech_emails=self.args.tech_email,
             )
         except client.Error as ex:
@@ -4881,88 +4843,6 @@ server_encryption_options:
                 self.client.set_auth_token(auth_token)
             elif not getattr(func, "optional_auth", False):
                 raise argx.UserError("not authenticated: please login first with 'avn user login'")
-
-    @arg.json
-    def card__list(self) -> None:
-        """List credit cards"""
-        layout = [["card_id", "name", "country", "exp_year", "exp_month", "last4"]]
-        self.print_response(self.client.get_cards(), json=self.args.json, table_layout=layout)
-
-    def _card_get_stripe_token(
-        self, stripe_publishable_key: str, name: str, number: str, exp_month: int, exp_year: int, cvc: str
-    ) -> str:
-        data = {
-            "card[name]": name,
-            "card[number]": number,
-            "card[exp_month]": exp_month,
-            "card[exp_year]": exp_year,
-            "card[cvc]": cvc,
-            "key": stripe_publishable_key,
-        }
-        response = requests.post("https://api.stripe.com/v1/tokens", data=data, timeout=30)
-        if not response.ok:
-            print(response.text)
-            response.raise_for_status()
-        return response.json()["id"]
-
-    @arg.json
-    @arg("--cvc", help="Credit card security code", required=True)
-    @arg("--exp-month", help="Card expiration month (1-12)", type=int, required=True)
-    @arg("--exp-year", help="Card expiration year", type=int, required=True)
-    @arg("--name", help="Name on card", required=True)
-    @arg("--number", help="Credit card number", type=int, required=True)
-    @arg("--update-project", help="Assign card to project")
-    def card__add(self) -> None:
-        """Add a credit card"""
-        self.print_boxed(
-            [
-                "avn card add has been deprecated and will be removed in the next major release.",
-                "Please use `avn organization --organization-id organization_id card create`",
-            ]
-        )
-
-        stripe_key = self.client.get_stripe_key()
-        stripe_token = self._card_get_stripe_token(
-            stripe_key,
-            self.args.name,
-            self.args.number,
-            self.args.exp_month,
-            self.args.exp_year,
-            self.args.cvc,
-        )
-        card = self.client.add_card(stripe_token)
-        if self.args.json:
-            self.print_response(card, json=True)
-
-        if self.args.update_project:
-            self.client.update_project(
-                project=self.args.update_project,
-                card_id=card["card_id"],
-            )
-
-    @arg.json
-    @arg("card-id", help="Card ID")
-    @arg("--exp-month", help="Card expiration month (1-12)", type=int)
-    @arg("--exp-year", help="Card expiration year", type=int)
-    @arg("--name", help="Name on card")
-    def card__update(self) -> None:
-        """Update credit card information"""
-        card = self.client.update_card(
-            card_id=getattr(self.args, "card-id"),
-            exp_month=self.args.exp_month,
-            exp_year=self.args.exp_year,
-            name=self.args.name,
-        )
-        if self.args.json:
-            self.print_response(card, json=True)
-
-    @arg.json
-    @arg("card-id", help="Card ID")
-    def card__remove(self) -> None:
-        """Remove a credit card"""
-        result = self.client.remove_card(card_id=getattr(self.args, "card-id"))
-        if self.args.json:
-            self.print_response(result, json=True)
 
     @arg.json
     @arg.project
