@@ -1639,7 +1639,7 @@ class AivenClient(AivenClientBase):
     def create_project(
         self,
         project: str,
-        account_id: str,
+        account_id: str | None,
         billing_group_id: str | None = None,
         cloud: str | None = None,
         copy_from_project: str | None = None,
@@ -1649,8 +1649,9 @@ class AivenClient(AivenClientBase):
         body: dict[str, Any] = {
             "cloud": cloud,
             "project": project,
-            "account_id": account_id,
         }
+        if account_id is not None:
+            body["account_id"] = account_id
         if billing_group_id is not None:
             body["billing_group_id"] = billing_group_id
         if copy_from_project is not None:
