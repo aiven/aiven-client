@@ -1639,7 +1639,7 @@ class AivenClient(AivenClientBase):
     def create_project(
         self,
         project: str,
-        account_id: str | None,
+        account_id: str | None = None,
         billing_group_id: str | None = None,
         cloud: str | None = None,
         copy_from_project: str | None = None,
