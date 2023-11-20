@@ -52,7 +52,7 @@ jobs:
     needs: lint
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', 'pypy-3.8', 'pypy-3.9', 'pypy-3.10']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', 'pypy-3.8', 'pypy-3.9', 'pypy-3.10']
         os: [macos-latest, ubuntu-latest, windows-latest]
 
     steps:
