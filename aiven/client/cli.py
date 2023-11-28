@@ -5786,6 +5786,27 @@ server_encryption_options:
         self.client.delete_organization_card(self.args.organization_id, self.args.card_id)
         print("Deleted")
 
+    @arg.project
+    @arg.cloud
+    @arg.json
+    @arg.service_type
+    @arg("-p", "--plan", help="subscription plan of service")
+    def sustainability__service_plan_emissions_project(self) -> None:
+        """Estimate emissions for a service plan"""
+        project = self.get_project()
+        service_type = self._get_service_type()
+        plan = self._get_plan()
+        cloud = self.args.cloud
+
+        estimate = self.client.sustainability_service_plan_emissions_project(
+            project=project, service_type=service_type, plan=plan, cloud=cloud
+        )
+        records = [{"measurement": k, "value": v} for k, v in estimate["emissions"].items()]
+
+        layout = ["measurement", "value"]
+
+        self.print_response(records, json=self.args.json, table_layout=layout)
+
 
 if __name__ == "__main__":
     AivenCLI().main()
