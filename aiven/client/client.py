@@ -2586,7 +2586,9 @@ class AivenClient(AivenClientBase):
         organization = self.verify(self.get, self.build_path("organization", organization_id))
         self.verify(self.delete, self.build_path("account", organization["account_id"], "payment_method", card_id))
 
-    def sustainability_service_plan_emissions_project(self, project: str, service_type: str, plan: str, cloud: str) -> dict[str, Any]:
+    def sustainability_service_plan_emissions_project(
+        self, project: str, service_type: str, plan: str, cloud: str
+    ) -> dict[str, Any]:
         return self.verify(
             self.get,
             self.build_path(
@@ -2601,4 +2603,17 @@ class AivenClient(AivenClientBase):
                 "clouds",
                 cloud,
             ),
+        )
+
+    def sustainability_project_emissions_estimate(self, project: str, since: str, until: str) -> dict[str, Any]:
+        params = {"since": since, "until": until}
+        return self.verify(
+            self.get,
+            self.build_path(
+                "project",
+                project,
+                "sustainability",
+                "emissions",
+            ),
+            params=params,
         )

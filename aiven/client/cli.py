@@ -5807,6 +5807,24 @@ server_encryption_options:
 
         self.print_response(records, json=self.args.json, table_layout=layout)
 
+    @arg.project
+    @arg.json
+    @arg("--since", help="Period begin datestamp in format YYYYMMDD", required=True)
+    @arg("--until", help="Period begin datestamp in format YYYYMMDD", required=True)
+    def sustainability__project_emissions_estimate(self) -> None:
+        """Estimate emissions for a project"""
+        project = self.get_project()
+        since = self.args.since
+        until = self.args.until
+
+        estimate = self.client.sustainability_project_emissions_estimate(project=project, since=since, until=until)
+
+        records = [{"measurement": k, "value": v} for k, v in estimate["emissions"].items()]
+
+        layout = ["measurement", "value"]
+
+        self.print_response(records, json=self.args.json, table_layout=layout)
+
 
 if __name__ == "__main__":
     AivenCLI().main()

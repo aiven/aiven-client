@@ -1698,3 +1698,23 @@ def test_sustainability__service_plan_emissions_project() -> None:
     aiven_client.sustainability_service_plan_emissions_project.assert_called_with(
         project="myproj", service_type="kafka", plan="business-32", cloud="google-europe-west1"
     )
+
+
+def test_sustainability__project_emissions_estimate() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.sustainability_project_emissions_estimate.return_value = {
+        "emissions": {"co2eq_mtons": "0.50", "energy_kwh": "1279.00"}
+    }
+    args = [
+        "sustainability",
+        "project-emissions-estimate",
+        "--project=myproj",
+        "--since=20230901",
+        "--until=20231001",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.sustainability_project_emissions_estimate.assert_called_with(
+        project="myproj",
+        since="20230901",
+        until="20231001",
+    )
