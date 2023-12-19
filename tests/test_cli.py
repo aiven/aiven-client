@@ -21,6 +21,7 @@ import json
 import pytest
 import random
 import string
+import tempfile
 import uuid
 
 EXIT_CODE_INVALID_USAGE = 2
@@ -1467,3 +1468,214 @@ def test_project_update__parent_id_as_org_id_requested_correctly() -> None:
         project=project_name,
         tech_emails=None,
     )
+
+
+def test_custom_files_list(capsys: CaptureFixture[str]) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+
+    return_value = {
+        "custom_files": [
+            {
+                "create_time": "2023-01-01T00:00:00Z",
+                "file_id": "a4d83aaa-35ae-51b4-b500-81e743bfe906",
+                "filename": "foo1",
+                "filesize": 25,
+                "filetype": "synonyms",
+                "service_reference": "custom/synonyms/foo1",
+                "update_time": "2023-01-01T00:00:00Z",
+            }
+        ]
+    }
+
+    aiven_client.custom_file_list.return_value = return_value
+
+    build_aiven_cli(aiven_client).run(args=["service", "custom-file", "list", "--project", "test", "foo"])
+    aiven_client.custom_file_list.assert_called_with(project="test", service="foo")
+    captured = capsys.readouterr()
+    assert json.loads(captured.out) == return_value
+
+
+def test_custom_files_get_stdout(capsys: CaptureFixture[str]) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+
+    return_value = b"foo => bar"
+
+    aiven_client.custom_file_get.return_value = return_value
+
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "service",
+            "custom-file",
+            "get",
+            "--project",
+            "test",
+            "--file_id",
+            "a4d83aaa-35ae-51b4-b500-81e743bfe906",
+            "--stdout_write",
+            "foo",
+        ]
+    )
+    aiven_client.custom_file_get.assert_called_with(
+        project="test", service="foo", file_id="a4d83aaa-35ae-51b4-b500-81e743bfe906"
+    )
+    captured = capsys.readouterr()
+    assert captured.out.strip() == return_value.decode("utf-8")
+
+
+def test_custom_files_get_file(capsys: CaptureFixture[str]) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+
+    return_value = b"foo => bar"
+
+    aiven_client.custom_file_get.return_value = return_value
+    with tempfile.NamedTemporaryFile(delete=False) as f_temp:
+        # Closing file so Windows could let cli open it
+        file_name = f_temp.name
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "service",
+            "custom-file",
+            "get",
+            "--project",
+            "test",
+            "--file_id",
+            "a4d83aaa-35ae-51b4-b500-81e743bfe906",
+            "--target_filepath",
+            file_name,
+            "foo",
+        ]
+    )
+    aiven_client.custom_file_get.assert_called_with(
+        project="test", service="foo", file_id="a4d83aaa-35ae-51b4-b500-81e743bfe906"
+    )
+    captured = capsys.readouterr()
+    assert captured.out.strip() == ""
+    with open(file_name, "rb") as f:
+        assert f.read() == return_value
+
+
+def test_custom_files_get_both(capsys: CaptureFixture[str]) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+
+    return_value = b"foo => bar"
+
+    aiven_client.custom_file_get.return_value = return_value
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        # Closing file so Windows could let cli open it
+        file_name = f.name
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "service",
+            "custom-file",
+            "get",
+            "--project",
+            "test",
+            "--file_id",
+            "a4d83aaa-35ae-51b4-b500-81e743bfe906",
+            "--target_filepath",
+            file_name,
+            "--stdout_write",
+            "foo",
+        ]
+    )
+    aiven_client.custom_file_get.assert_called_with(
+        project="test", service="foo", file_id="a4d83aaa-35ae-51b4-b500-81e743bfe906"
+    )
+    captured = capsys.readouterr()
+    assert captured.out.strip() == return_value.decode("utf-8")
+    with open(file_name, "rb") as f:
+        assert f.read() == return_value
+
+
+def test_custom_files_get_none(capsys: CaptureFixture[str]) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+
+    return_value = b"foo => bar"
+
+    aiven_client.custom_file_get.return_value = return_value
+    aiven_cli = build_aiven_cli(aiven_client)
+    aiven_cli.run(
+        args=[
+            "service",
+            "custom-file",
+            "get",
+            "--project",
+            "test",
+            "--file_id",
+            "a4d83aaa-35ae-51b4-b500-81e743bfe906",
+            "foo",
+        ]
+    )
+    aiven_client.custom_file_get.assert_not_called()
+    captured = capsys.readouterr()
+    assert captured.out.strip() == ""
+    with pytest.raises(argx.UserError):
+        aiven_cli.service__custom_file__get()
+
+
+def test_custom_files_upload(capsys: CaptureFixture[str]) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+
+    return_value = {
+        "file_id": "d19878d5-2726-5773-81cb-ff61562c892c",
+        "message": "created",
+        "service_reference": "custom/synonyms/foo2",
+    }
+
+    aiven_client.custom_file_upload.return_value = return_value
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        # Closing file so Windows could let cli open it
+        file_name = f.name
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "service",
+            "custom-file",
+            "upload",
+            "--project",
+            "test",
+            "--file_path",
+            file_name,
+            "--file_type",
+            "synonyms",
+            "--file_name",
+            "foo2",
+            "foo",
+        ]
+    )
+    # Can't check args as the file is reopened
+    aiven_client.custom_file_upload.assert_called_once()
+    captured = capsys.readouterr()
+    assert json.loads(captured.out.strip()) == return_value
+
+
+def test_custom_files_update(capsys: CaptureFixture[str]) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+
+    return_value = {
+        "file_id": "d19878d5-2726-5773-81cb-ff61562c892c",
+        "message": "updated",
+        "service_reference": "custom/synonyms/foo2",
+    }
+
+    aiven_client.custom_file_update.return_value = return_value
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        # Closing file so Windows could let cli open it
+        file_name = f.name
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "service",
+            "custom-file",
+            "update",
+            "--project",
+            "test",
+            "--file_path",
+            file_name,
+            "--file_id",
+            "d19878d5-2726-5773-81cb-ff61562c892c",
+            "foo",
+        ]
+    )
+    # Can't check args as the file is reopened
+    aiven_client.custom_file_update.assert_called_once()
+    captured = capsys.readouterr()
+    assert json.loads(captured.out.strip()) == return_value

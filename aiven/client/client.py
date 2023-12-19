@@ -8,7 +8,8 @@ from .common import UNDEFINED
 from .session import get_requests_session
 from http import HTTPStatus
 from requests import Response
-from typing import Any, Callable, Collection, Mapping, Sequence, TypedDict
+from requests_toolbelt import MultipartEncoder  # type: ignore
+from typing import Any, BinaryIO, Callable, Collection, Mapping, Sequence, TypedDict
 from urllib.parse import quote
 
 import json
@@ -79,6 +80,10 @@ class AivenClientBase:
             headers["content-type"] = "application/json"
             data = json.dumps(body)
             log_data = json.dumps(body, sort_keys=True, indent=4)
+        elif isinstance(body, MultipartEncoder):
+            headers["content-type"] = body.content_type
+            data = body
+            log_data = data
         else:
             headers["content-type"] = "application/octet-stream"
             data = body
@@ -174,11 +179,28 @@ class AivenClientBase:
                 )
                 time.sleep(0.2)
 
+        return self._process_response(response=response, op=op, path=path, result_key=result_key)
+
+    @staticmethod
+    def build_path(*parts: str) -> str:
+        return "/" + "/".join(quote(part, safe="") for part in parts)
+
+    def _process_response(
+        self,
+        response: Response,
+        op: Callable[..., Response],
+        path: str,
+        result_key: str | None = None,
+    ) -> Mapping | bytes:
         # Check API is actually returning data or not
         if response.status_code == HTTPStatus.NO_CONTENT or len(response.content) == 0:
             return {}
 
+        if response.headers.get("Content-Type") == "application/octet-stream":
+            return response.content
+
         result = response.json()
+
         if result.get("error"):
             raise ResponseError(
                 "server returned error: {op} {base_url}{path} {result}".format(
@@ -189,10 +211,6 @@ class AivenClientBase:
         if result_key is not None:
             return result[result_key]
         return result
-
-    @staticmethod
-    def build_path(*parts: str) -> str:
-        return "/" + "/".join(quote(part, safe="") for part in parts)
 
 
 class AivenClient(AivenClientBase):
@@ -2137,6 +2155,54 @@ class AivenClient(AivenClientBase):
     def clickhouse_database_list(self, project: str, service: str) -> Mapping:
         path = self.build_path("project", project, "service", service, "clickhouse", "db")
         return self.verify(self.get, path, result_key="databases")
+
+    def custom_file_list(self, project: str, service: str) -> Mapping:
+        path = self.build_path("project", project, "service", service, "file")
+        return self.verify(self.get, path)
+
+    def custom_file_get(self, project: str, service: str, file_id: str) -> bytes:
+        path = self.build_path("project", project, "service", service, "file", file_id)
+        return self.verify(self.get, path)
+
+    def custom_file_upload(
+        self,
+        project: str,
+        service: str,
+        file_type: str,
+        file_object: BinaryIO,
+        file_name: str,
+        update: bool = False,
+    ) -> Mapping:
+        path = self.build_path("project", project, "service", service, "file")
+        return self.verify(
+            self.post,
+            path,
+            body=MultipartEncoder(
+                fields={
+                    "file": (file_name, file_object, "application/octet-stream"),
+                    "filetype": file_type,
+                    "filename": file_name,
+                }
+            ),
+        )
+
+    def custom_file_update(
+        self,
+        project: str,
+        service: str,
+        file_object: BinaryIO,
+        file_id: str,
+    ) -> Mapping:
+        path = self.build_path("project", project, "service", service, "file", file_id)
+        return self.verify(
+            self.put,
+            path,
+            body=MultipartEncoder(
+                fields={
+                    "file": (file_id, file_object, "application/octet-stream"),
+                }
+            ),
+        )
 
     def flink_list_applications(
         self,

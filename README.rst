@@ -343,9 +343,25 @@ Delete a service integration::
 
     $ avn service integration-delete --project <project> <integration_id>
 
+Custom Files
+--------------------
+
+Listing files::
+
+    $ anv service custom-file list --project <project> <service_name>
+
+Reading file::
+
+    $ anv service custom-file get --project <project> --file_id <file_id> [--target_filepath <file_path>] [--stdout_write] <service_name>
 
 
+Uploading new files::
 
+    $ avn service custom-file upload --project <project> --file_type <file_type> --file_path <file_path> --file_name <file_name> <service_name>
+
+Updating existing files::
+
+    $ avn service custom-file update --project <project> --file_path <file_path> --file_id <file_id> <service_name>
 .. _teams:
 
 Working with Teams
