@@ -87,7 +87,6 @@ def user_config_json() -> Callable[[Callable[[CommandLineTool], T]], Callable[[C
 
 
 arg.account_id = arg("account_id", help="Account identifier")
-arg.authentication_id = arg("authentication_id", help="Account authentication method identifier")
 arg.billing_address = arg("--billing-address", help="Physical billing address for invoices")
 arg.billing_currency = arg("--billing-currency", help="Currency for charges")
 arg.billing_extra_text = arg(

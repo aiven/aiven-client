@@ -13,7 +13,6 @@ from aiven.client.connection_info.common import Store
 from aiven.client.connection_info.kafka import KafkaCertificateConnectionInfo, KafkaSASLConnectionInfo
 from aiven.client.connection_info.pg import PGConnectionInfo
 from aiven.client.connection_info.redis import RedisConnectionInfo
-from aiven.client.pretty import TableLayout
 from aiven.client.speller import suggest
 from argparse import ArgumentParser
 from ast import literal_eval
@@ -34,16 +33,6 @@ import subprocess
 import sys
 import time
 
-AUTHENTICATION_METHOD_COLUMNS = [
-    "account_id",
-    "authentication_method_enabled",
-    "authentication_method_id",
-    "authentication_method_name",
-    "authentication_method_type",
-    "state",
-    "create_time",
-    "update_time",
-]
 USER_GROUP_COLUMNS = [
     "user_group_name",
     "user_group_id",
@@ -682,86 +671,6 @@ class AivenCLI(argx.CommandLineTool):
                 value = fob.read()
             options[name] = value
         return options
-
-    @arg.json
-    @arg.account_id
-    @arg("-n", "--name", required=True, help="Authentication method name")
-    @arg(
-        "-t",
-        "--type",
-        required=True,
-        help="Authentication method type",
-        choices=["saml"],
-    )
-    @arg.config_cmdline
-    @arg.config_file
-    def account__authentication_method__create(self) -> None:
-        """Create new account authentication method"""
-        options = self._parse_auth_config_options(self.args.config_cmdline, self.args.config_file)
-        method = self.client.create_account_authentication_method(
-            self.args.account_id,
-            method_name=self.args.name,
-            method_type=self.args.type,
-            options=options,
-        )
-        acs_url = "https://api.aiven.io/v1/sso/saml/account/{}/method/{}/acs".format(
-            self.args.account_id, method["authentication_method_id"]
-        )
-        metadata_url = "https://api.aiven.io/v1/sso/saml/account/{}/method/{}/metadata".format(
-            self.args.account_id, method["authentication_method_id"]
-        )
-        acs_key = "ACS (Single Sign On / Recipient) URL"
-        metadata_key = "Metadata URL"
-        method[acs_key] = acs_url
-        method[metadata_key] = metadata_url
-        table_layout: TableLayout = [AUTHENTICATION_METHOD_COLUMNS, acs_key, metadata_key]
-        self.print_response(method, json=self.args.json, single_item=True, table_layout=table_layout)
-
-    @arg.json
-    @arg.account_id
-    @arg.authentication_id
-    @arg("-n", "--name", help="New name for the authentication method")
-    @arg("--enable", help="Enable the authentication method", action="store_true")
-    @arg("--disable", help="Disable the authentication method", action="store_true")
-    @arg.config_cmdline
-    @arg.config_file
-    def account__authentication_method__update(self) -> None:
-        """Update an account authentication method"""
-        if self.args.enable and self.args.disable:
-            raise argx.UserError("Only set at most one of --enable and --disable")
-        enable = None
-        if self.args.enable:
-            enable = True
-        elif self.args.disable:
-            enable = False
-        options = self._parse_auth_config_options(self.args.config_cmdline, self.args.config_file)
-        account = self.client.update_account_authentication_method(
-            self.args.account_id,
-            self.args.authentication_id,
-            method_enable=enable,
-            method_name=self.args.name,
-            options=options,
-        )
-        self.print_response(
-            account,
-            json=self.args.json,
-            single_item=True,
-            table_layout=AUTHENTICATION_METHOD_COLUMNS,
-        )
-
-    @arg.account_id
-    @arg.authentication_id
-    def account__authentication_method__delete(self) -> None:
-        """Delete an account authentication method"""
-        self.client.delete_account_authentication_method(self.args.account_id, self.args.authentication_id)
-        print("Deleted")
-
-    @arg.json
-    @arg.account_id
-    def account__authentication_method__list(self) -> None:
-        """Lists all current account authentication methods"""
-        methods = self.client.get_account_authentication_methods(self.args.account_id)
-        self.print_response(methods, json=self.args.json, table_layout=AUTHENTICATION_METHOD_COLUMNS)
 
     @arg.json
     @arg.account_id
