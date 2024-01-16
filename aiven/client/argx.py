@@ -8,7 +8,7 @@ from .pretty import TableLayout
 from aiven.client import envdefault, pretty
 from argparse import Action, ArgumentParser, Namespace
 from os import PathLike
-from typing import Any, Callable, cast, Collection, Mapping, NoReturn, Sequence, TextIO, TYPE_CHECKING, TypeVar
+from typing import Any, Callable, cast, Collection, Iterable, Mapping, NoReturn, Sequence, TextIO, TYPE_CHECKING, TypeVar
 
 import aiven.client.client
 import argparse
@@ -98,7 +98,12 @@ class NextReleaseDeprecationNotice(ArgumentDeprecationNotice):
 
 
 class CustomFormatter(argparse.RawDescriptionHelpFormatter):
-    """Help formatter to display the default value only for integers and non-empty strings"""
+    """Help formatter to display the default value only for integers and
+    non-empty strings, and to sort --options alphabetically."""
+
+    def add_arguments(self, actions: Iterable[Action]) -> None:
+        actions = sorted(actions, key=lambda x: x.dest)
+        super().add_arguments(actions)
 
     def _get_help_string(self, action: Action) -> str:
         help_text = action.help or ""
