@@ -2659,9 +2659,17 @@ ssl.truststore.type=JKS
         topic = self.client.get_service_topic(
             project=self.get_project(), service=self.args.service_name, topic=self.args.topic
         )
-        layout = [["partition", "isr", "size", "earliest_offset", "latest_offset", "groups"]]
+        has_remote_size = False
         for p in topic["partitions"]:
             p["groups"] = len(p["consumer_groups"])
+            if "remote_size" in p and not has_remote_size:
+                has_remote_size = True
+        is_tiered = "remote_storage_enable" in topic["config"] and topic["config"]["remote_storage_enable"]["value"]
+
+        if is_tiered and has_remote_size:
+            layout = [["partition", "isr", "size", "remote_size", "earliest_offset", "latest_offset", "groups"]]
+        else:
+            layout = [["partition", "isr", "size", "earliest_offset", "latest_offset", "groups"]]
 
         self.print_response(
             topic["partitions"],
