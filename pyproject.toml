@@ -64,6 +64,9 @@ source = "vcs"
 [tool.hatch.build.hooks.vcs]
 version-file = "aiven/client/version.py"
 
+[tool.hatch.build.targets.wheel]
+packages = ["aiven"]
+
 [tool.black]
 line-length = 125
 target-version = ['py38', 'py39', 'py310', 'py311']
