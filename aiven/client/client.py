@@ -778,6 +778,26 @@ class AivenClient(AivenClientBase):
         path = self.build_path("project", project, "service", service, "elasticsearch", "acl")
         return self.verify(self.put, path, body={"elasticsearch_acl_config": acl_config})
 
+    def opensearch_security_get(self, project: str, service: str) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path("project", project, "service", service, "opensearch", "security"),
+        )
+
+    def opensearch_security_set(self, project: str, service: str, password: str) -> Mapping:
+        return self.verify(
+            self.post,
+            self.build_path("project", project, "service", service, "opensearch", "security", "admin"),
+            body={"admin_password": password},
+        )
+
+    def opensearch_security_reset(self, project: str, service: str, old_password: str, new_password: str) -> Mapping:
+        return self.verify(
+            self.put,
+            self.build_path("project", project, "service", service, "opensearch", "security", "admin"),
+            body={"admin_password": old_password, "new_password": new_password},
+        )
+
     def add_service_kafka_acl(self, project: str, service: str, permission: str, topic: str, username: str) -> Mapping:
         return self.verify(
             self.post,
