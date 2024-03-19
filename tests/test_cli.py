@@ -1718,3 +1718,118 @@ def test_sustainability__project_emissions_estimate() -> None:
         since="20230901",
         until="20231001",
     )
+
+
+def test_byoc_create() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.byoc_create.return_value = {
+        "custom_cloud_environment": {
+            "cloud_provider": "aws",
+            "cloud_region": "eu-north-1",
+            "contact_emails": [],
+            "custom_cloud_environment_id": "d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+            "deployment_model": "standard",
+            "reserved_cidr": "10.1.0.0/20",
+            "display_name": "My Byoc Cloud",
+            "state": "draft",
+        }
+    }
+    args = [
+        "byoc",
+        "create",
+        "--organization-id=org123456789a",
+        "--deployment-model=standard",
+        "--cloud-provider=aws",
+        "--cloud-region=eu-north-1",
+        "--reserved-cidr=10.1.0.0/20",
+        "--display-name=My Byoc Cloud",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.byoc_create.assert_called_once_with(
+        organization_id="org123456789a",
+        deployment_model="standard",
+        cloud_provider="aws",
+        cloud_region="eu-north-1",
+        reserved_cidr="10.1.0.0/20",
+        display_name="My Byoc Cloud",
+    )
+
+
+def test_byoc_update() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.byoc_update.return_value = {
+        "custom_cloud_environment": {
+            "cloud_provider": "aws",
+            "cloud_region": "eu-west-2",
+            "contact_emails": [],
+            "custom_cloud_environment_id": "d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+            "deployment_model": "standard",
+            "reserved_cidr": "10.1.0.0/24",
+            "display_name": "Another name",
+            "state": "draft",
+        }
+    }
+    args = [
+        "byoc",
+        "update",
+        "--organization-id=org123456789a",
+        "--byoc-id=d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+        "--cloud-region=eu-west-2",
+        "--reserved-cidr=10.1.0.0/24",
+        "--display-name=Another name",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.byoc_update.assert_called_once_with(
+        organization_id="org123456789a",
+        byoc_id="d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+        deployment_model=None,
+        cloud_provider=None,
+        cloud_region="eu-west-2",
+        reserved_cidr="10.1.0.0/24",
+        display_name="Another name",
+    )
+
+
+def test_byoc_provision() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.byoc_provision.return_value = {
+        "custom_cloud_environment": {
+            "cloud_provider": "aws",
+            "cloud_region": "eu-west-2",
+            "contact_emails": [],
+            "custom_cloud_environment_id": "d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+            "deployment_model": "standard",
+            "reserved_cidr": "10.1.0.0/24",
+            "display_name": "Another name",
+            "state": "creating",
+        }
+    }
+    args = [
+        "byoc",
+        "provision",
+        "--organization-id=org123456789a",
+        "--byoc-id=d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+        "--aws-iam-role-arn=arn:aws:iam::123456789012:role/role-name",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.byoc_provision.assert_called_once_with(
+        organization_id="org123456789a",
+        byoc_id="d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+        aws_iam_role_arn="arn:aws:iam::123456789012:role/role-name",
+    )
+
+
+def test_byoc_delete() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.byoc_delete.return_value = {"message": "deleting"}
+    args = [
+        "byoc",
+        "delete",
+        "--organization-id=org123456789a",
+        "--byoc-id=d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.byoc_delete.assert_called_once_with(
+        organization_id="org123456789a",
+        byoc_id="d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+    )
