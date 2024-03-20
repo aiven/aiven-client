@@ -2637,3 +2637,127 @@ class AivenClient(AivenClientBase):
             ),
             params=params,
         )
+
+    def byoc_create(
+        self,
+        *,
+        organization_id: str,
+        deployment_model: str,
+        cloud_provider: str,
+        cloud_region: str,
+        reserved_cidr: str,
+        display_name: str,
+    ) -> Mapping[Any, Any]:
+        body = {
+            "deployment_model": deployment_model,
+            "cloud_provider": cloud_provider,
+            "cloud_region": cloud_region,
+            "reserved_cidr": reserved_cidr,
+            "display_name": display_name,
+        }
+        return self.verify(
+            self.post, self.build_path("organization", organization_id, "custom-cloud-environments"), body=body
+        )
+
+    def byoc_update(
+        self,
+        *,
+        organization_id: str,
+        byoc_id: str,
+        deployment_model: str | None,
+        cloud_provider: str | None,
+        cloud_region: str | None,
+        reserved_cidr: str | None,
+        display_name: str | None,
+    ) -> Mapping[Any, Any]:
+        body = {
+            key: value
+            for key, value in {
+                "deployment_model": deployment_model,
+                "cloud_provider": cloud_provider,
+                "cloud_region": cloud_region,
+                "reserved_cidr": reserved_cidr,
+                "display_name": display_name,
+            }.items()
+            if value is not None
+        }
+        return self.verify(
+            self.put,
+            self.build_path("organization", organization_id, "custom-cloud-environments", byoc_id),
+            body=body,
+        )
+
+    def byoc_list(self, *, organization_id: str) -> Mapping[Any, Any]:
+        return self.verify(self.get, self.build_path("organization", organization_id, "custom-cloud-environments"))
+
+    def byoc_provision(self, *, organization_id: str, byoc_id: str, aws_iam_role_arn: str | None) -> Mapping[Any, Any]:
+        if aws_iam_role_arn is not None:
+            body = {"aws_iam_role_arn": aws_iam_role_arn}
+        else:
+            body = {}
+        return self.verify(
+            self.post,
+            self.build_path("organization", organization_id, "custom-cloud-environments", byoc_id, "provision"),
+            body=body,
+        )
+
+    def byoc_delete(self, *, organization_id: str, byoc_id: str) -> Mapping[Any, Any]:
+        return self.verify(
+            self.delete,
+            self.build_path("organization", organization_id, "custom-cloud-environments", byoc_id),
+        )
+
+    def byoc_terraform_get_template(self, *, organization_id: str, byoc_id: str) -> str:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "organization",
+                organization_id,
+                "custom-cloud-environments",
+                byoc_id,
+                "infra-templates",
+                "terraform",
+                "template",
+            ),
+        )["template"]
+
+    def byoc_terraform_get_vars(self, *, organization_id: str, byoc_id: str) -> str:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "organization",
+                organization_id,
+                "custom-cloud-environments",
+                byoc_id,
+                "infra-templates",
+                "terraform",
+                "variables",
+            ),
+        )["variables"]
+
+    def byoc_permissions_get(self, *, organization_id: str, byoc_id: str) -> Mapping[Any, Any]:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "organization",
+                organization_id,
+                "custom-cloud-environments",
+                byoc_id,
+                "permissions",
+            ),
+        )
+
+    def byoc_permissions_set(
+        self, *, organization_id: str, byoc_id: str, accounts: list[str], projects: list[str]
+    ) -> Mapping[Any, Any]:
+        return self.verify(
+            self.put,
+            self.build_path(
+                "organization",
+                organization_id,
+                "custom-cloud-environments",
+                byoc_id,
+                "permissions",
+            ),
+            body={"accounts": accounts, "projects": projects},
+        )

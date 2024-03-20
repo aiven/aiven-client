@@ -5889,6 +5889,136 @@ server_encryption_options:
 
         self.print_response(records, json=self.args.json, table_layout=layout)
 
+    @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
+    @arg("--deployment-model", required=True, help="Deployment model for the BYOC cloud")
+    @arg("--cloud-provider", required=True, help="Cloud provider to create the BYOC cloud in")
+    @arg("--cloud-region", required=True, help="Region for the BYOC cloud")
+    @arg("--reserved-cidr", required=True, help="The CIDR for the VPC to create for the custom cloud environment")
+    @arg("--display-name", required=True, help="User set display name for the custom cloud environment")
+    def byoc__create(self) -> None:
+        """Create a new Bring Your Own Cloud configuration."""
+        output = self.client.byoc_create(
+            organization_id=self.args.organization_id,
+            deployment_model=self.args.deployment_model,
+            cloud_provider=self.args.cloud_provider,
+            cloud_region=self.args.cloud_region,
+            reserved_cidr=self.args.reserved_cidr,
+            display_name=self.args.display_name,
+        )
+        self.print_response(output)
+
+    @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
+    @arg("--byoc-id", required=True, help="Identifier of the custom cloud environment that defines the BYOC cloud")
+    @arg("--deployment-model", help="Deployment model for the BYOC cloud")
+    @arg("--cloud-provider", help="Cloud provider to create the BYOC cloud in")
+    @arg("--cloud-region", help="Region for the BYOC cloud")
+    @arg("--reserved-cidr", help="The CIDR for the VPC to create for the custom cloud environment")
+    @arg("--display-name", help="User set display name for the custom cloud environment")
+    def byoc__update(self) -> None:
+        """Update an existing Bring Your Own Cloud configuration."""
+        output = self.client.byoc_update(
+            organization_id=self.args.organization_id,
+            byoc_id=self.args.byoc_id,
+            deployment_model=self.args.deployment_model,
+            cloud_provider=self.args.cloud_provider,
+            cloud_region=self.args.cloud_region,
+            reserved_cidr=self.args.reserved_cidr,
+            display_name=self.args.display_name,
+        )
+        self.print_response(output)
+
+    @arg("--organization-id", required=True, help="List BYOC cloud in this organization")
+    def byoc__list(self) -> None:
+        """List all Bring Your Own Cloud configurations in an organization."""
+        output = self.client.byoc_list(organization_id=self.args.organization_id)
+        self.print_response(output)
+
+    @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
+    @arg("--byoc-id", required=True, help="Identifier of the custom cloud environment that defines the BYOC cloud")
+    @arg("--aws-iam-role-arn", help="The IAM role that Aiven is authorized to assume to operate the cloud (AWS)")
+    def byoc__provision(self) -> None:
+        """Provision resources for a Bring Your Own Cloud cloud."""
+        output = self.client.byoc_provision(
+            organization_id=self.args.organization_id, byoc_id=self.args.byoc_id, aws_iam_role_arn=self.args.aws_iam_role_arn
+        )
+        self.print_response(output)
+
+    @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
+    @arg("--byoc-id", required=True, help="Identifier of the custom cloud environment that defines the BYOC cloud")
+    def byoc__delete(self) -> None:
+        """Delete a Bring Your Own Cloud cloud."""
+        output = self.client.byoc_delete(organization_id=self.args.organization_id, byoc_id=self.args.byoc_id)
+        self.print_response(output)
+
+    @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
+    @arg("--byoc-id", required=True, help="Identifier of the custom cloud environment that defines the BYOC cloud")
+    def byoc__template__terraform__get_template(self) -> None:
+        """Download Terraform template for provisioning a BYOC cloud."""
+        print(self.client.byoc_terraform_get_template(organization_id=self.args.organization_id, byoc_id=self.args.byoc_id))
+
+    @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
+    @arg("--byoc-id", required=True, help="Identifier of the custom cloud environment that defines the BYOC cloud")
+    def byoc__template__terraform__get_vars(self) -> None:
+        """Download Terraform veriables for provisioning BYOC cloud."""
+        print(self.client.byoc_terraform_get_vars(organization_id=self.args.organization_id, byoc_id=self.args.byoc_id))
+
+    @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
+    @arg("--byoc-id", required=True, help="Identifier of the custom cloud environment that defines the BYOC cloud")
+    def byoc__cloud__permissions__get(self) -> None:
+        """Get account and project permissions for a BYOC cloud."""
+        print(self.client.byoc_permissions_get(organization_id=self.args.organization_id, byoc_id=self.args.byoc_id))
+
+    @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
+    @arg("--byoc-id", required=True, help="Identifier of the custom cloud environment that defines the BYOC cloud")
+    @arg("--account", nargs="*", help="Identifiers of accounts to give access to the BYOC cloud")
+    @arg("--project", nargs="*", help="Names of project to give access to the BYOC cloud ")
+    def byoc__cloud__permissions__set(self) -> None:
+        """Set account and project permissions for a BYOC cloud, replacing the current set of permissions."""
+        print(
+            self.client.byoc_permissions_set(
+                organization_id=self.args.organization_id,
+                byoc_id=self.args.byoc_id,
+                accounts=self.args.account or [],
+                projects=self.args.project or [],
+            )
+        )
+
+    @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
+    @arg("--byoc-id", required=True, help="Identifier of the custom cloud environment that defines the BYOC cloud")
+    @arg("--account", nargs="*", help="Identifier of an account to grant access to use the BYOC cloud")
+    @arg("--project", nargs="*", help="Name of a projects to grant access to use the BYOC cloud")
+    def byoc__cloud__permissions__add(self) -> None:
+        """Update BYOC cloud permissions, adding access for accounts and/or projects."""
+        permissions = self.client.byoc_permissions_get(organization_id=self.args.organization_id, byoc_id=self.args.byoc_id)
+        new_accounts = list(set(permissions["accounts"]) | set(self.args.account or []))
+        new_projects = list(set(permissions["projects"]) | set(self.args.project or []))
+        print(
+            self.client.byoc_permissions_set(
+                organization_id=self.args.organization_id,
+                byoc_id=self.args.byoc_id,
+                accounts=new_accounts,
+                projects=new_projects,
+            )
+        )
+
+    @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
+    @arg("--byoc-id", required=True, help="Identifier of the custom cloud environment that defines the BYOC cloud")
+    @arg("--account", nargs="*", help="Identifier of an account to remove access to use the BYOC cloud")
+    @arg("--project", nargs="*", help="Name of a projects to remove access to use the BYOC cloud")
+    def byoc__cloud__permissions__remove(self) -> None:
+        """Update BYOC cloud permissions, removing access from accounts and/or projects."""
+        permissions = self.client.byoc_permissions_get(organization_id=self.args.organization_id, byoc_id=self.args.byoc_id)
+        new_accounts = list(set(permissions["accounts"]) - set(self.args.account or []))
+        new_projects = list(set(permissions["projects"]) - set(self.args.project or []))
+        print(
+            self.client.byoc_permissions_set(
+                organization_id=self.args.organization_id,
+                byoc_id=self.args.byoc_id,
+                accounts=new_accounts,
+                projects=new_projects,
+            )
+        )
+
 
 if __name__ == "__main__":
     AivenCLI().main()
