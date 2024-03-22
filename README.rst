@@ -344,7 +344,7 @@ Delete a service integration::
     $ avn service integration-delete --project <project> <integration_id>
 
 Custom Files
---------------------
+------------
 
 Listing files::
 
@@ -362,6 +362,7 @@ Uploading new files::
 Updating existing files::
 
     $ avn service custom-file update --project <project> --file_path <file_path> --file_id <file_id> <service_name>
+
 .. _teams:
 
 Working with Teams
