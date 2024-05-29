@@ -4,14 +4,28 @@
 # See the file `LICENSE` for details.
 from __future__ import annotations
 
+from ._typing import assert_never
 from .common import UNDEFINED
 from .session import get_requests_session
 from http import HTTPStatus
 from requests import Response
 from requests_toolbelt import MultipartEncoder  # type: ignore
-from typing import Any, BinaryIO, Callable, Collection, Mapping, Sequence, TypedDict
+from typing import (
+    Any,
+    BinaryIO,
+    Callable,
+    Collection,
+    Final,
+    Literal,
+    Mapping,
+    NamedTuple,
+    Sequence,
+    TYPE_CHECKING,
+    TypedDict,
+)
 from urllib.parse import quote
 
+import datetime
 import json
 import logging
 import re
@@ -23,6 +37,9 @@ try:
     from .version import __version__
 except ImportError:
     __version__ = "UNKNOWN"
+
+if TYPE_CHECKING:
+    from typing_extensions import TypeAlias
 
 UNCHANGED = object()  # used as a sentinel value
 
@@ -45,10 +62,39 @@ class Tag(TypedDict):
     value: str
 
 
+HTTPMethod: TypeAlias = Literal[
+    "CONNECT",
+    "DELETE",
+    "GET",
+    "HEAD",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+    "TRACE",
+]
+
+
+class RetrySpec(NamedTuple):
+    attempts: int = 3
+    # Retry GET operations by default
+    http_methods: tuple[HTTPMethod, ...] = ("GET",)
+    sleep: datetime.timedelta = datetime.timedelta(milliseconds=200)
+
+
 class AivenClientBase:
     """Aiven Client with low-level HTTP operations"""
 
-    def __init__(self, base_url: str, show_http: bool = False, request_timeout: int | None = None) -> None:
+    NO_RETRY: Final = RetrySpec(attempts=1)
+    DEFAULT_RETRY: Final = RetrySpec()
+
+    def __init__(
+        self,
+        base_url: str,
+        show_http: bool = False,
+        request_timeout: int | None = None,
+        default_retry_spec: RetrySpec = DEFAULT_RETRY,
+    ) -> None:
         self.log = logging.getLogger("AivenClient")
         self.auth_token: str | None = None
         self.base_url = base_url
@@ -57,6 +103,7 @@ class AivenClientBase:
         self.http_log = logging.getLogger("aiven_http")
         self.init_http_logging(show_http)
         self.api_prefix = "/v1"
+        self.default_retry_spec: Final = default_retry_spec
 
     def init_http_logging(self, show_http: bool) -> None:
         http_handler = logging.StreamHandler()
@@ -141,6 +188,23 @@ class AivenClientBase:
         """HTTP DELETE"""
         return self._execute(self.session.delete, "DELETE", path, body, params)
 
+    def _get_retry_spec(
+        self,
+        op: Callable[..., Response],
+        argument: int | RetrySpec | None,
+    ) -> RetrySpec:
+        if argument is None:
+            if op.__name__.upper() in self.default_retry_spec.http_methods:
+                return self.default_retry_spec
+            else:
+                return self.NO_RETRY
+        elif isinstance(argument, int):
+            return self.default_retry_spec._replace(attempts=argument)
+        elif isinstance(argument, RetrySpec):
+            return argument
+        else:
+            assert_never(argument)
+
     def verify(
         self,
         op: Callable[..., Response],
@@ -148,14 +212,10 @@ class AivenClientBase:
         body: Any = None,
         params: Any = None,
         result_key: str | None = None,
-        retry: int | None = None,
+        retry: int | RetrySpec | None = None,
     ) -> Any:
-        # Retry GET operations by default
-        if retry is None and op == self.get:
-            attempts = 3
-        else:
-            attempts = 1 + (retry or 0)
-
+        retry_spec = self._get_retry_spec(op, retry)
+        attempts = retry_spec.attempts
         path = self.api_prefix + path
 
         while attempts:
@@ -177,7 +237,7 @@ class AivenClientBase:
                     ex,
                     attempts,
                 )
-                time.sleep(0.2)
+                time.sleep(retry_spec.sleep.total_seconds())
 
         return self._process_response(response=response, op=op, path=path, result_key=result_key)
 
