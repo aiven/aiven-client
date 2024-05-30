@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from aiven.client import AivenClient
-from aiven.client.client import ResponseError
+from aiven.client.client import ResponseError, RetrySpec
 from http import HTTPStatus
 from typing import Any
 from unittest import mock
@@ -142,3 +142,28 @@ def test_response_processing_error_raise() -> None:
             str(e)
             == "server returned error: test operation test_base_url {'foo': 1, 'bar': 2, 'spam': 3, 'error': 'test error'}"
         )
+
+
+class TestGetRetrySpec:
+    def test_falls_back_to_default_default_spec_when_matching_operation(self) -> None:
+        client = AivenClient("foo.test")
+        assert client._get_retry_spec(client.get, None) == client.DEFAULT_RETRY
+
+    def test_falls_back_to_given_default_spec_when_matching_operation(self) -> None:
+        spec = RetrySpec(http_methods=("GET", "PUT"))
+        client = AivenClient("foo.test", default_retry_spec=spec)
+        assert client._get_retry_spec(client.put, None) == spec
+
+    def test_falls_back_to_no_retry_when_not_matching_operation(self) -> None:
+        client = AivenClient("foo.test")
+        assert client._get_retry_spec(client.post, None) == client.NO_RETRY
+
+    def test_can_pass_integer_attempts(self) -> None:
+        client = AivenClient("foo.test")
+        attempts = 42
+        assert client._get_retry_spec(client.get, attempts) == RetrySpec(attempts=attempts)
+
+    def test_can_pass_retry_spec(self) -> None:
+        client = AivenClient("foo.test")
+        given_spec = RetrySpec(attempts=52)
+        assert client._get_retry_spec(client.get, given_spec) is given_spec
