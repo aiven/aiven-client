@@ -176,7 +176,7 @@ arg.untag = arg(
 )
 arg.service_name = arg("service_name", help="Service name")
 arg.service_name_mandatory = arg("service_name", help="Service name", required=True)
-arg.service_type = arg("-t", "--service-type", help="Type of service (see 'service list-types')")
+arg.service_type = arg("-t", "--service-type", help="Type of service (see 'service types')")
 arg.static_ip_id = arg("static_ip_id", help="Static IP address ID")
 arg.ns_name = arg("ns_name", help="Namespace name")
 arg.ns_type = arg("--ns-type", help="Namespace type ('aggregated' or 'unaggregated')", required=True)
