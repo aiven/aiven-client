@@ -3,7 +3,13 @@ release = 1
 PYTHON ?= python3
 PYTHON_DIRS = aiven tests
 
+all: install-py validate-style lint test
+
+install-py:
+	$(PYTHON) -m pip install -e .[dev]
+
 test: pytest
+
 lint: ruff flake8 mypy
 
 reformat:

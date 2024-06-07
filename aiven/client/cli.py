@@ -5938,7 +5938,7 @@ server_encryption_options:
     @arg("--aws-iam-role-arn", help="The IAM role that Aiven is authorized to assume to operate the cloud (AWS)")
     @arg(
         "--google-privilege-bearing-service-account-id",
-        help="The privilege-bearing service account that Aiven is authorized to impersonate to operate the cloud (AWS)",
+        help="The privilege-bearing service account that Aiven is authorized to impersonate to operate the cloud (Google)",
     )
     def byoc__provision(self) -> None:
         """Provision resources for a Bring Your Own Cloud cloud."""
