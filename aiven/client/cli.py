@@ -5942,6 +5942,10 @@ server_encryption_options:
     )
     def byoc__provision(self) -> None:
         """Provision resources for a Bring Your Own Cloud cloud."""
+        if self.args.aws_iam_role_arn and self.args.google_privilege_bearing_service_account_id:
+            raise argx.UserError(
+                "--aws-iam-role-arn and --google-privilege-bearing-service-account-id are mutually exclusive."
+            )
         output = self.client.byoc_provision(
             organization_id=self.args.organization_id,
             byoc_id=self.args.byoc_id,
