@@ -32,8 +32,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - id: dependencies
-        run: |
-          pip install -e .[dev]
+        run: make install-py
 
       - id: validate-style
         run: make validate-style

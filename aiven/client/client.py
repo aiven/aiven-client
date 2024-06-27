@@ -2750,9 +2750,18 @@ class AivenClient(AivenClientBase):
     def byoc_list(self, *, organization_id: str) -> Mapping[Any, Any]:
         return self.verify(self.get, self.build_path("organization", organization_id, "custom-cloud-environments"))
 
-    def byoc_provision(self, *, organization_id: str, byoc_id: str, aws_iam_role_arn: str | None) -> Mapping[Any, Any]:
+    def byoc_provision(
+        self,
+        *,
+        organization_id: str,
+        byoc_id: str,
+        aws_iam_role_arn: str | None = None,
+        google_privilege_bearing_service_account_id: str | None = None,
+    ) -> Mapping[Any, Any]:
         if aws_iam_role_arn is not None:
             body = {"aws_iam_role_arn": aws_iam_role_arn}
+        elif google_privilege_bearing_service_account_id is not None:
+            body = {"google_privilege_bearing_service_account_id": google_privilege_bearing_service_account_id}
         else:
             body = {}
         return self.verify(

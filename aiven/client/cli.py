@@ -5936,10 +5936,21 @@ server_encryption_options:
     @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
     @arg("--byoc-id", required=True, help="Identifier of the custom cloud environment that defines the BYOC cloud")
     @arg("--aws-iam-role-arn", help="The IAM role that Aiven is authorized to assume to operate the cloud (AWS)")
+    @arg(
+        "--google-privilege-bearing-service-account-id",
+        help="The privilege-bearing service account that Aiven is authorized to impersonate to operate the cloud (Google)",
+    )
     def byoc__provision(self) -> None:
         """Provision resources for a Bring Your Own Cloud cloud."""
+        if self.args.aws_iam_role_arn and self.args.google_privilege_bearing_service_account_id:
+            raise argx.UserError(
+                "--aws-iam-role-arn and --google-privilege-bearing-service-account-id are mutually exclusive."
+            )
         output = self.client.byoc_provision(
-            organization_id=self.args.organization_id, byoc_id=self.args.byoc_id, aws_iam_role_arn=self.args.aws_iam_role_arn
+            organization_id=self.args.organization_id,
+            byoc_id=self.args.byoc_id,
+            aws_iam_role_arn=self.args.aws_iam_role_arn,
+            google_privilege_bearing_service_account_id=self.args.google_privilege_bearing_service_account_id,
         )
         self.print_response(output)
 

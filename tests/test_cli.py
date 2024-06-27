@@ -1790,12 +1790,23 @@ def test_byoc_update() -> None:
     )
 
 
-def test_byoc_provision() -> None:
+@pytest.mark.parametrize(
+    "provider,region,byoc_account_id",
+    [
+        ("aws", "eu-west-2", "arn:aws:iam::123456789012:role/role-name"),
+        (
+            "google",
+            "europe-north1",
+            "projects/aiven-test-byoa/serviceAccounts/aiven-cce4bafaf95155@aiven-test-byoa.iam.gserviceaccount.com",
+        ),
+    ],
+)
+def test_byoc_provision(provider: str, region: str, byoc_account_id: str) -> None:
     aiven_client = mock.Mock(spec_set=AivenClient)
     aiven_client.byoc_provision.return_value = {
         "custom_cloud_environment": {
-            "cloud_provider": "aws",
-            "cloud_region": "eu-west-2",
+            "cloud_provider": provider,
+            "cloud_region": region,
             "contact_emails": [],
             "custom_cloud_environment_id": "d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
             "deployment_model": "standard",
@@ -1804,19 +1815,39 @@ def test_byoc_provision() -> None:
             "state": "creating",
         }
     }
+    byoc_account_id_args = {
+        "aws": "--aws-iam-role-arn",
+        "google": "--google-privilege-bearing-service-account-id",
+    }
+    args = [
+        "byoc",
+        "provision",
+        "--organization-id=org123456789a",
+        "--byoc-id=d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+        f"{byoc_account_id_args[provider]}={byoc_account_id}",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.byoc_provision.assert_called_once_with(
+        organization_id="org123456789a",
+        byoc_id="d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+        aws_iam_role_arn=byoc_account_id if provider == "aws" else None,
+        google_privilege_bearing_service_account_id=byoc_account_id if provider == "google" else None,
+    )
+
+
+def test_byoc_provision_args() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
     args = [
         "byoc",
         "provision",
         "--organization-id=org123456789a",
         "--byoc-id=d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
         "--aws-iam-role-arn=arn:aws:iam::123456789012:role/role-name",
+        "--google-privilege-bearing-service-account-id="
+        "projects/aiven-test-byoa/serviceAccounts/aiven-cce4bafaf95155@aiven-test-byoa.iam.gserviceaccount.com",
     ]
     build_aiven_cli(aiven_client).run(args=args)
-    aiven_client.byoc_provision.assert_called_once_with(
-        organization_id="org123456789a",
-        byoc_id="d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
-        aws_iam_role_arn="arn:aws:iam::123456789012:role/role-name",
-    )
+    aiven_client.byoc_provision.assert_not_called()
 
 
 def test_byoc_delete() -> None:
