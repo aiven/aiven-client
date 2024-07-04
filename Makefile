@@ -33,7 +33,7 @@ mypy:
 	$(PYTHON) -m mypy $(PYTHON_DIRS)
 
 ruff:
-	$(PYTHON) -m ruff $(PYTHON_DIRS)
+	$(PYTHON) -m ruff check $(PYTHON_DIRS)
 
 pytest:
 	$(PYTHON) -m pytest -vv tests/
