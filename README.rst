@@ -280,11 +280,11 @@ List, add and delete service users::
   $ avn service user-create
   $ avn service user-delete
 
-For Redis services running version 6 or above, it's possible to create users with ACLs_::
+For Valkey services it's possible to create users with ACLs_::
 
-  $ avn service user-create --username new_user --redis-acl-keys="prefix* another_key" --redis-acl-commands="+set" --redis-acl-categories="-@all +@admin" --redis-acl-channels="prefix* some_chan" my-redis-service
+  $ avn service user-create --username new_user --valkey-acl-keys="prefix* another_key" --valkey-acl-commands="+set" --valkey-acl-categories="-@all +@admin" --valkey-acl-channels="prefix* some_chan" my-valkey-service
 
-.. _`ACLs`: https://redis.io/topics/acl
+.. _`ACLs`: https://valkey.io/docs/topics/acl
 
 Service users are created with strong random passwords.
 
@@ -348,11 +348,11 @@ Custom Files
 
 Listing files::
 
-    $ anv service custom-file list --project <project> <service_name>
+    $ avn service custom-file list --project <project> <service_name>
 
 Reading file::
 
-    $ anv service custom-file get --project <project> --file_id <file_id> [--target_filepath <file_path>] [--stdout_write] <service_name>
+    $ avn service custom-file get --project <project> --file_id <file_id> [--target_filepath <file_path>] [--stdout_write] <service_name>
 
 
 Uploading new files::
