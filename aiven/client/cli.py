@@ -40,6 +40,17 @@ USER_GROUP_COLUMNS = [
 ]
 EOL_ADVANCE_WARNING_TIME = timedelta(weeks=26)  # Give 6 months advance notice for EOL services
 
+REDIS_VALKEY_ACL_ARGS = [
+    "redis_acl_keys",
+    "redis_acl_commands",
+    "redis_acl_categories",
+    "redis_acl_channels",
+    "valkey_acl_keys",
+    "valkey_acl_commands",
+    "valkey_acl_categories",
+    "valkey_acl_channels",
+]
+
 
 def convert_str_to_value(schema: Mapping[str, Any], value: Any | None) -> Any:
     if value is not None:
@@ -1783,11 +1794,7 @@ class AivenCLI(argx.CommandLineTool):
 
     def _parse_access_control(self) -> Mapping[str, Any]:
         arg_vars = vars(self.args)
-        result = {
-            key: arg_vars[key].split()
-            for key in ["redis_acl_keys", "redis_acl_commands", "redis_acl_categories", "redis_acl_channels"]
-            if arg_vars[key] is not None
-        }
+        result = {key: arg_vars[key].split() for key in REDIS_VALKEY_ACL_ARGS if arg_vars[key] is not None}
         for key in ["m3_group"]:
             value = arg_vars[key]
             if value is not None:
@@ -1802,6 +1809,10 @@ class AivenCLI(argx.CommandLineTool):
     @arg("--redis-acl-commands", help="ACL rules for commands (Redis only)")
     @arg("--redis-acl-categories", help="ACL rules for command categories (Redis only)")
     @arg("--redis-acl-channels", help="ACL rules for channels (Redis only)")
+    @arg("--valkey-acl-keys", help="ACL rules for keys (Valkey only)")
+    @arg("--valkey-acl-commands", help="ACL rules for commands (Valkey only)")
+    @arg("--valkey-acl-categories", help="ACL rules for command categories (Valkey only)")
+    @arg("--valkey-acl-channels", help="ACL rules for channels (Valkey only)")
     @arg.json
     def service__user_create(self) -> None:
         """Create service user"""
@@ -2043,13 +2054,17 @@ ssl.truststore.type=JKS
     @arg.service_name
     @arg("--username", help="Service user username", required=True)
     @arg("--m3-group", help="Service user group")
-    @arg("--redis-acl-keys", help="ACL rules for keys")
-    @arg("--redis-acl-commands", help="ACL rules for commands")
-    @arg("--redis-acl-categories", help="ACL rules for command categories")
-    @arg("--redis-acl-channels", help="ACL rules for channels")
+    @arg("--redis-acl-keys", help="ACL rules for keys (Redis only)")
+    @arg("--redis-acl-commands", help="ACL rules for commands (Redis only)")
+    @arg("--redis-acl-categories", help="ACL rules for command categories (Redis only)")
+    @arg("--redis-acl-channels", help="ACL rules for channels (Redis only)")
+    @arg("--valkey-acl-keys", help="ACL rules for keys (Valkey only)")
+    @arg("--valkey-acl-commands", help="ACL rules for commands (Valkey only)")
+    @arg("--valkey-acl-categories", help="ACL rules for command categories (Valkey only)")
+    @arg("--valkey-acl-channels", help="ACL rules for channels (Valkey only)")
     @arg.json
     def service__user_set_access_control(self) -> None:
-        """Set Redis service user access control"""
+        """Set Redis/Valkey service user access control"""
         access_control = self._parse_access_control()
         self.client.set_service_user_access_control(
             project=self.get_project(),
