@@ -1614,6 +1614,11 @@ class AivenClient(AivenClientBase):
     ) -> Sequence[dict[str, Any]]:
         if service_type is None:
             service_type = self.get_service(project, service)["service_type"]
+
+        # Currently, `alloydbomni` query stats are also exposed under `/pg/query/stats`.
+        if service_type == "alloydbomni":
+            service_type = "pg"
+
         path = self.build_path("project", project, "service", service, service_type, "query", "stats")
         return self.verify(
             self.post,
