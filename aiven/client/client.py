@@ -2830,3 +2830,43 @@ class AivenClient(AivenClientBase):
             ),
             body={"accounts": accounts, "projects": projects},
         )
+
+    def alloydbomni_google_cloud_private_key_set(self, *, project: str, service: str, private_key: str) -> dict[str, Any]:
+        return self.verify(
+            self.post,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "alloydbomni",
+                "google_cloud_private_key",
+            ),
+            body={"private_key": private_key},
+        )
+
+    def alloydbomni_google_cloud_private_key_delete(self, *, project: str, service: str) -> dict[str, Any]:
+        return self.verify(
+            self.delete,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "alloydbomni",
+                "google_cloud_private_key",
+            ),
+        )
+
+    def alloydbomni_google_cloud_private_key_show(self, *, project: str, service: str) -> dict[str, Any]:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "alloydbomni",
+                "google_cloud_private_key",
+            ),
+        )
