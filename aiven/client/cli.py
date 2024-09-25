@@ -5903,6 +5903,192 @@ server_encryption_options:
         self.client.delete_organization_card(self.args.organization_id, self.args.card_id)
         print("Deleted")
 
+    @arg.json
+    @arg.organization_id
+    @arg.verbose
+    def organization__vpc__list(self) -> None:
+        """List VPCs in an organization"""
+        vpcs = self.client.list_organization_vpcs(organization_id=self.args.organization_id).get("vpcs", [])
+        output = [
+            {
+                **vpc,
+                "cloud_name": ",".join([cloud["cloud_name"] for cloud in vpc["clouds"]]),
+                "network_cidr": ",".join([cloud["network_cidr"] for cloud in vpc["clouds"]]),
+            }
+            for vpc in vpcs
+        ]
+
+        layout = ["organization_vpc_id", "cloud_name", "network_cidr", "state"]
+        if self.args.verbose:
+            layout += ["create_time", "update_time"]
+
+        self.print_response(output, json=self.args.json, table_layout=layout)
+
+    @arg.json
+    @arg.organization_id
+    @arg("--organization-vpc-id", required=True)
+    @arg.verbose
+    def organization__vpc__get(self) -> None:
+        """Show a single VPCs in an organization"""
+        vpc = self.client.get_organization_vpc(
+            organization_id=self.args.organization_id,
+            organization_vpc_id=self.args.organization_vpc_id,
+        )
+        layout = ["organization_vpc_id", "clouds", "state"]
+        if self.args.verbose:
+            layout += ["create_time", "update_time"]
+        self.print_response([vpc], json=self.args.json, table_layout=layout)
+
+    @arg.json
+    @arg.organization_id
+    @arg.cloud
+    @arg(
+        "--network-cidr",
+        help="The network range for the project VPC in CIDR format (a.b.c.d/e)",
+        required=True,
+    )
+    def organization__vpc__create(self) -> None:
+        """Create a new VPC in an organization"""
+        vpc = self.client.create_organization_vpc(
+            organization_id=self.args.organization_id,
+            cloud=self.args.cloud,
+            network_cidr=self.args.network_cidr,
+            peering_connections=[],
+        )
+        self.print_response([vpc], json=self.args.json)
+
+    @arg.json
+    @arg.organization_id
+    @arg("--organization-vpc-id", required=True)
+    def organization__vpc__delete(self) -> None:
+        """Delete a VPC in an organization"""
+        vpc = self.client.delete_organization_vpc(
+            organization_id=self.args.organization_id,
+            organization_vpc_id=self.args.organization_vpc_id,
+        )
+        self.print_response([vpc], json=self.args.json)
+
+    @arg.json
+    @arg.organization_id
+    @arg("--organization-vpc-id", required=True)
+    @arg("--peer-cloud-account", required=True, help=_peer_cloud_account_help)
+    @arg("--peer-vpc", required=True, help=_peer_vpc_help)
+    @arg("--peer-region", help=_peer_region_help)
+    @arg("--peer-resource-group", help=_peer_resource_group_help)
+    @arg("--peer-azure-app-id", help="Azure app object ID")
+    @arg("--peer-azure-tenant-id", help="Azure AD tenant ID")
+    @arg(
+        "--user-peer-network-cidr",
+        help="User-defined peer network IP range for routing/firewall",
+        action="append",
+        dest="user_peer_network_cidrs",
+    )
+    def organization__vpc__peering_connection__create(self) -> None:
+        """Create a VPC peering connection for an organization VPC"""
+        peering_connection = self.client.organization_vpc_peering_connection_create(
+            organization_id=self.args.organization_id,
+            vpc_id=self.args.organization_vpc_id,
+            peer_cloud_account=self.args.peer_cloud_account,
+            peer_vpc=self.args.peer_vpc,
+            peer_region=self.args.peer_region,
+            peer_resource_group=self.args.peer_resource_group,
+            peer_azure_app_id=self.args.peer_azure_app_id,
+            peer_azure_tenant_id=self.args.peer_azure_tenant_id,
+        )
+        layout = [
+            "peer_cloud_account",
+            "peer_resource_group",
+            "peer_vpc",
+            "peer_region",
+            "state",
+        ]
+        self.print_response(
+            [dict(peering_connection, peer_resource_group=peering_connection.get("peer_resource_group"))],
+            json=self.args.json,
+            table_layout=layout,
+        )
+
+    @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
+    @arg("--organization-vpc-id", required=True)
+    @arg("--peering-connection-id", required=True)
+    @arg.json
+    def organization__vpc__peering_connection__delete(self) -> None:
+        """Delete a VPC peering connection of an organization VPC"""
+        peering_connection = self.client.organization_vpc_peering_connection_delete(
+            organization_id=self.args.organization_id,
+            vpc_id=self.args.organization_vpc_id,
+            peering_connection_id=self.args.peering_connection_id,
+        )
+        layout = [
+            "peer_cloud_account",
+            "peer_resource_group",
+            "peer_vpc",
+            "peer_region",
+            "state",
+        ]
+        self.print_response(
+            [dict(peering_connection, peer_resource_group=peering_connection.get("peer_resource_group"))],
+            json=self.args.json,
+            table_layout=layout,
+        )
+
+    @arg.json
+    @arg.organization_id
+    @arg("--organization-vpc-id", required=True)
+    @arg.verbose
+    def organization__vpc__peering_connection__list(self) -> None:
+        """Show a single VPCs in an organization"""
+        peering_connections = self.client.get_organization_vpc(
+            organization_id=self.args.organization_id,
+            organization_vpc_id=self.args.organization_vpc_id,
+        )["peering_connections"]
+        layout = [
+            "peering_connection_id",
+            "peer_cloud_account",
+            "peer_resource_group",
+            "peer_vpc",
+            "peer_region",
+            "state",
+        ]
+        if self.args.verbose:
+            layout += ["create_time", "update_time"]
+        self.print_response(peering_connections, json=self.args.json, table_layout=layout)
+
+    @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
+    @arg.json
+    def organization__vpc__clouds__list(self) -> None:
+        """List clouds available for creating organization VPCs."""
+        clouds = self.client.organization_vpc_clouds_list(organization_id=self.args.organization_id)
+        self.print_response(clouds, json=self.args.json)
+
+    @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
+    @arg("--organization-vpc-id", required=True)
+    @arg("--peering-connection-id", required=True)
+    @arg("cidrs", nargs="+", metavar="CIDR")
+    @arg.json
+    def organization__vpc__peering_connection__user_peer_network_cidrs__add(self) -> None:
+        """Add user peer network CIDRs for an organization VPC peering connection."""
+        self.client.organization_vpc_user_peer_network_cidrs_update(
+            organization_id=self.args.organization_id,
+            organization_vpc_id=self.args.organization_vpc_id,
+            peering_connection_id=self.args.peering_connection_id,
+            add=[{"cidr": cidr} for cidr in self.args.cidrs],
+        )
+
+    @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
+    @arg("--organization-vpc-id", required=True)
+    @arg("--peering-connection-id", required=True)
+    @arg("cidrs", nargs="+", metavar="CIDR")
+    @arg.json
+    def organization__vpc__peering_connection__user_peer_network_cidrs__delete(self) -> None:
+        """Delete user peer network CIDRs from an organization VPC peering connection."""
+        self.client.organization_vpc_user_peer_network_cidrs_update(
+            organization_id=self.args.organization_id,
+            organization_vpc_id=self.args.organization_vpc_id,
+            peering_connection_id=self.args.peering_connection_id,
+            delete=self.args.cidrs,
+        )
+
     @arg.project
     @arg.cloud
     @arg.json

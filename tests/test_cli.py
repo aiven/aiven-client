@@ -2139,3 +2139,250 @@ def test_service__privatelink__aws__refresh() -> None:
         project="new-project-name",
         service="kafka-2921638b",
     )
+
+
+ORGANIZATION_VPC = {
+    "clouds": [{"cloud_name": "google-europe-west2", "network_cidr": "10.1.0.0/24"}],
+    "create_time": "2025-03-13T12:08:26Z",
+    "organization_id": "org4f9ed964ba9",
+    "organization_vpc_id": "58e00a73-61c7-470d-b140-ace64c21a417",
+    "peering_connections": [],
+    "pending_build_only_peering_connections": None,
+    "state": "APPROVED",
+    "update_time": "2025-03-13T12:24:34Z",
+}
+ORGANIZATION_VPC_PEERING_CONNECTION: dict[str, Any] = {
+    "create_time": "2025-03-13T12:41:24Z",
+    "peer_azure_app_id": None,
+    "peer_azure_tenant_id": None,
+    "peer_cloud_account": "peer-account",
+    "peer_region": None,
+    "peer_resource_group": None,
+    "peer_vpc": "peer-vpc",
+    "peering_connection_id": "peering-connection-id",
+    "state": "PENDING_PEER",
+    "state_info": {},
+    "update_time": "2025-03-13T12:57:19Z",
+    "user_peer_network_cidrs": [],
+    "vpc_peering_connection_type": "peering",
+}
+
+
+def test_organization_vpc_create() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.create_organization_vpc.return_value = ORGANIZATION_VPC
+    args = [
+        "organization",
+        "vpc",
+        "create",
+        "--organization-id",
+        "org4f9ed964ba9",
+        "--cloud",
+        "google-europe-west2",
+        "--network-cidr",
+        "10.1.0.0/24",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.create_organization_vpc.assert_called_once_with(
+        organization_id="org4f9ed964ba9", cloud="google-europe-west2", network_cidr="10.1.0.0/24", peering_connections=[]
+    )
+
+
+def test_organization_vpc_get() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.get_organization_vpc.return_value = ORGANIZATION_VPC
+    args = [
+        "organization",
+        "vpc",
+        "get",
+        "--organization-id",
+        "org4f9ed964ba9",
+        "--organization-vpc-id",
+        "58e00a73-61c7-470d-b140-ace64c21a417",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.get_organization_vpc.assert_called_once_with(
+        organization_id="org4f9ed964ba9", organization_vpc_id="58e00a73-61c7-470d-b140-ace64c21a417"
+    )
+
+
+def test_organization_vpc_list() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.list_organization_vpcs.return_value = {"vpcs": [ORGANIZATION_VPC]}
+    args = [
+        "organization",
+        "vpc",
+        "list",
+        "--organization-id",
+        "org4f9ed964ba9",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.list_organization_vpcs.assert_called_once_with(organization_id="org4f9ed964ba9")
+
+
+def test_organization_vpc_delete() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.delete_organization_vpc.return_value = {
+        **ORGANIZATION_VPC,
+        "state": "DELETING",
+    }
+    args = [
+        "organization",
+        "vpc",
+        "delete",
+        "--organization-id",
+        "org4f9ed964ba9",
+        "--organization-vpc-id",
+        "58e00a73-61c7-470d-b140-ace64c21a417",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.delete_organization_vpc.assert_called_once_with(
+        organization_id="org4f9ed964ba9", organization_vpc_id="58e00a73-61c7-470d-b140-ace64c21a417"
+    )
+
+
+def test_organization_vpc_peering_connection_create() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.organization_vpc_peering_connection_create.return_value = ORGANIZATION_VPC_PEERING_CONNECTION
+    args = [
+        "organization",
+        "vpc",
+        "peering-connection",
+        "create",
+        "--organization-id",
+        "org4f9ed964ba9",
+        "--organization-vpc-id",
+        "58e00a73-61c7-470d-b140-ace64c21a417",
+        "--peer-cloud-account",
+        "peer-account",
+        "--peer-vpc",
+        "peer-vpc",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.organization_vpc_peering_connection_create.assert_called_once_with(
+        organization_id="org4f9ed964ba9",
+        vpc_id="58e00a73-61c7-470d-b140-ace64c21a417",
+        peer_cloud_account="peer-account",
+        peer_vpc="peer-vpc",
+        peer_region=None,
+        peer_resource_group=None,
+        peer_azure_app_id=None,
+        peer_azure_tenant_id=None,
+    )
+
+
+def test_organization_vpc_peering_connection_delete() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.organization_vpc_peering_connection_delete.return_value = {
+        **ORGANIZATION_VPC_PEERING_CONNECTION,
+        "state": "DELETING",
+    }
+    args = [
+        "organization",
+        "vpc",
+        "peering-connection",
+        "delete",
+        "--organization-id",
+        "org4f9ed964ba9",
+        "--organization-vpc-id",
+        "58e00a73-61c7-470d-b140-ace64c21a417",
+        "--peering-connection-id",
+        "peering-connection-id",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.organization_vpc_peering_connection_delete.assert_called_once_with(
+        organization_id="org4f9ed964ba9",
+        vpc_id="58e00a73-61c7-470d-b140-ace64c21a417",
+        peering_connection_id="peering-connection-id",
+    )
+
+
+def test_organization_vpc_peering_connection_list() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.get_organization_vpc.return_value = {
+        **ORGANIZATION_VPC,
+        "state": "ACTIVE",
+        "peering_connections": [ORGANIZATION_VPC_PEERING_CONNECTION],
+    }
+    args = [
+        "organization",
+        "vpc",
+        "peering-connection",
+        "list",
+        "--organization-id",
+        "org4f9ed964ba9",
+        "--organization-vpc-id",
+        "58e00a73-61c7-470d-b140-ace64c21a417",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.get_organization_vpc.assert_called_once_with(
+        organization_id="org4f9ed964ba9",
+        organization_vpc_id="58e00a73-61c7-470d-b140-ace64c21a417",
+    )
+
+
+def test_organization_vpc_clouds__list() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.organization_vpc_clouds_list.return_value = []
+    args = [
+        "organization",
+        "vpc",
+        "clouds",
+        "list",
+        "--organization-id",
+        "org4f9ed964ba9",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.organization_vpc_clouds_list.assert_called_once_with(organization_id="org4f9ed964ba9")
+
+
+def test_organization_vpc_peering_connection_user_peer_network_cidrs_add() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.organization_vpc_user_peer_network_cidrs_update.return_value = None
+    args = [
+        "organization",
+        "vpc",
+        "peering-connection",
+        "user-peer-network-cidrs",
+        "add",
+        "--organization-id",
+        "org4f9ed964ba9",
+        "--organization-vpc-id",
+        "58e00a73-61c7-470d-b140-ace64c21a417",
+        "--peering-connection-id",
+        "peering-connection-id",
+        "11.0.0.0/24",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.organization_vpc_user_peer_network_cidrs_update.assert_called_once_with(
+        organization_id="org4f9ed964ba9",
+        organization_vpc_id="58e00a73-61c7-470d-b140-ace64c21a417",
+        peering_connection_id="peering-connection-id",
+        add=[{"cidr": "11.0.0.0/24"}],
+    )
+
+
+def test_organization_vpc_peering_connection_user_peer_network_cidrs_delete() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.organization_vpc_user_peer_network_cidrs_update.return_value = None
+    args = [
+        "organization",
+        "vpc",
+        "peering-connection",
+        "user-peer-network-cidrs",
+        "delete",
+        "--organization-id",
+        "org4f9ed964ba9",
+        "--organization-vpc-id",
+        "58e00a73-61c7-470d-b140-ace64c21a417",
+        "--peering-connection-id",
+        "peering-connection-id",
+        "11.0.0.0/24",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.organization_vpc_user_peer_network_cidrs_update.assert_called_once_with(
+        organization_id="org4f9ed964ba9",
+        organization_vpc_id="58e00a73-61c7-470d-b140-ace64c21a417",
+        peering_connection_id="peering-connection-id",
+        delete=["11.0.0.0/24"],
+    )
