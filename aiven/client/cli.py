@@ -1471,6 +1471,20 @@ class AivenCLI(argx.CommandLineTool):
             raise argx.UserError(f"-p/--privatelink-connection-id cannot be used with route {self.args.route}")
         return privatelink_connection_id
 
+    def _get_connection_info_pg(self, service_name: str) -> PGConnectionInfo:
+        """PostgreSQL connection info"""
+        service = self.client.get_service(project=self.get_project(), service=service_name)
+
+        return PGConnectionInfo.from_service(
+            service,
+            route=self._get_route_from_args(),
+            usage=self._get_usage_from_args(),
+            privatelink_connection_id=self._get_privatelink_connection_id_from_args(),
+            username=self.args.username,
+            dbname=self.args.dbname,
+            sslmode=self.args.sslmode,
+        )
+
     @arg.project
     @arg.service_name
     @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
@@ -1482,17 +1496,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg("--sslmode", default="require", choices=("require", "verify-ca", "verify-full", "disable", "allow", "prefer"))
     def service__connection_info__psql(self) -> None:
         """psql command string"""
-        service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
-
-        ci = PGConnectionInfo.from_service(
-            service,
-            route=self._get_route_from_args(),
-            usage=self._get_usage_from_args(),
-            privatelink_connection_id=self._get_privatelink_connection_id_from_args(),
-            username=self.args.username,
-            dbname=self.args.dbname,
-            sslmode=self.args.sslmode,
-        )
+        ci = self._get_connection_info_pg(self.args.service_name)
         cmd = ci.psql()
         print(" ".join(cmd))
 
@@ -1507,17 +1511,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg("--sslmode", default="require", choices=("require", "verify-ca", "verify-full", "disable", "allow", "prefer"))
     def service__connection_info__pg__uri(self) -> None:
         """PostgreSQL service URI"""
-        service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
-
-        ci = PGConnectionInfo.from_service(
-            service,
-            route=self._get_route_from_args(),
-            usage=self._get_usage_from_args(),
-            privatelink_connection_id=self._get_privatelink_connection_id_from_args(),
-            username=self.args.username,
-            dbname=self.args.dbname,
-            sslmode=self.args.sslmode,
-        )
+        ci = self._get_connection_info_pg(self.args.service_name)
         print(ci.uri())
 
     @arg.project
@@ -1531,17 +1525,35 @@ class AivenCLI(argx.CommandLineTool):
     @arg("--sslmode", default="require", choices=("require", "verify-ca", "verify-full", "disable", "allow", "prefer"))
     def service__connection_info__pg__string(self) -> None:
         """PostgreSQL connection string"""
-        service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
+        ci = self._get_connection_info_pg(self.args.service_name)
+        print(ci.connection_string())
 
-        ci = PGConnectionInfo.from_service(
-            service,
-            route=self._get_route_from_args(),
-            usage=self._get_usage_from_args(),
-            privatelink_connection_id=self._get_privatelink_connection_id_from_args(),
-            username=self.args.username,
-            dbname=self.args.dbname,
-            sslmode=self.args.sslmode,
-        )
+    @arg.project
+    @arg.service_name
+    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
+    @arg("--usage", choices=("primary", "replica"))
+    @arg("-p", "--privatelink-connection-id")
+    @arg("--replica", action="store_true")
+    @arg("-u", "--username", default="avnadmin")
+    @arg("-d", "--dbname", default="defaultdb")
+    @arg("--sslmode", default="require", choices=("require", "verify-ca", "verify-full", "disable", "allow", "prefer"))
+    def service__connection_info__alloydbomni__uri(self) -> None:
+        """AlloyDB Omni service URI"""
+        ci = self._get_connection_info_pg(self.args.service_name)
+        print(ci.uri())
+
+    @arg.project
+    @arg.service_name
+    @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
+    @arg("--usage", choices=("primary", "replica"))
+    @arg("-p", "--privatelink-connection-id")
+    @arg("--replica", action="store_true")
+    @arg("-u", "--username", default="avnadmin")
+    @arg("-d", "--dbname", default="defaultdb")
+    @arg("--sslmode", default="require", choices=("require", "verify-ca", "verify-full", "disable", "allow", "prefer"))
+    def service__connection_info__alloydbomni__string(self) -> None:
+        """AlloyDB Omni connection string"""
+        ci = self._get_connection_info_pg(self.args.service_name)
         print(ci.connection_string())
 
     @arg.project
@@ -2437,7 +2449,7 @@ ssl.truststore.type=JKS
                     "total_time",
                 ]
             ]
-            if service_type == "pg"
+            if service_type in ("pg", "alloydbomni")
             else [
                 [
                     "digest_text",
@@ -2469,7 +2481,7 @@ ssl.truststore.type=JKS
                     "temp_blks_read",
                     "temp_blks_written",
                 ]
-                if service_type == "pg"
+                if service_type in ("pg", "alloydbomni")
                 else [
                     "digest",
                     "first_seen",

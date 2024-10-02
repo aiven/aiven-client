@@ -28,7 +28,7 @@ class PGConnectionInfo:
         dbname: str,
         sslmode: str,
     ) -> PGConnectionInfo:
-        if service["service_type"] != "pg":
+        if service["service_type"] not in ("pg", "alloydbomni"):
             raise ConnectionInfoError("Cannot format pg connection info for service type {service_type}".format_map(service))
 
         info = find_component(
