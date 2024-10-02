@@ -6057,6 +6057,76 @@ server_encryption_options:
             )
         )
 
+    @arg.json
+    @arg.project
+    @arg.service_name
+    @arg("--private-key-file", help="Filepath for the private key", required=True)
+    def service__alloydbomni__google_cloud_private_key__set(self) -> None:
+        """Set private key for AlloyDB Ommi AI model integration"""
+        project_name = self.get_project()
+        with open(self.args.private_key_file) as fp:
+            private_key = fp.read()
+        result = self.client.alloydbomni_google_cloud_private_key_set(
+            project=project_name, service=self.args.service_name, private_key=private_key
+        )
+        output = []
+        if result.get("client_email"):
+            output.append(
+                {
+                    "client_email": result.get("client_email"),
+                    "private_key_id": result.get("private_key_id"),
+                }
+            )
+        if not output and not self.args.json:
+            print("No service account key has been set")
+        else:
+            layout = ["client_email", "private_key_id"]
+            self.print_response(output, json=self.args.json, table_layout=layout)
+
+    @arg.json
+    @arg.project
+    @arg.service_name
+    def service__alloydbomni__google_cloud_private_key__show(self) -> None:
+        """Show information on installed private key for AlloyDB Ommi AI model integration"""
+        project_name = self.get_project()
+        result = self.client.alloydbomni_google_cloud_private_key_show(project=project_name, service=self.args.service_name)
+        output = []
+        if result.get("client_email"):
+            output.append(
+                {
+                    "client_email": result.get("client_email"),
+                    "private_key_id": result.get("private_key_id"),
+                }
+            )
+        if not output and not self.args.json:
+            print("No service account key has been set")
+        else:
+            layout = ["client_email", "private_key_id"]
+            self.print_response(output, json=self.args.json, table_layout=layout)
+
+    @arg.json
+    @arg.project
+    @arg.service_name
+    def service__alloydbomni__google_cloud_private_key__delete(self) -> None:
+        """Delete private key installed for AlloyDB Ommi AI model integration"""
+        project_name = self.get_project()
+        result = self.client.alloydbomni_google_cloud_private_key_delete(
+            project=project_name, service=self.args.service_name
+        )
+        output = []
+        if result.get("client_email"):
+            output.append(
+                {
+                    "client_email": result.get("client_email"),
+                    "private_key_id": result.get("private_key_id"),
+                }
+            )
+        if not output and not self.args.json:
+            print("Service account key has been removed")
+        else:
+            layout = ["client_email", "private_key_id"]
+            self.print_response(output, json=self.args.json, table_layout=layout)
+
 
 if __name__ == "__main__":
     AivenCLI().main()
