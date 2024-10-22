@@ -4023,6 +4023,10 @@ ssl.truststore.type=JKS
         help="Creates a read replica for given source service. Only applicable for certain service types",
     )
     @arg(
+        "--disaster-recovery-copy-for",
+        help="Cretes a disaster recovery copy for given source service. Only applicable for certain service types",
+    )
+    @arg(
         "--enable-termination-protection",
         action="store_true",
         default=False,
@@ -4062,6 +4066,13 @@ ssl.truststore.type=JKS
                         "source_service": self.args.read_replica_for,
                     }
                 )
+        elif self.args.disaster_recovery_copy_for:
+            service_integrations.append(
+                {
+                    "integration_type": "disaster_recovery",
+                    "source_service": self.args.disaster_recovery_copy_for,
+                }
+            )
         elif self.args.recovery_target_time and self.args.service_to_fork_from:
             user_config["service_to_fork_from"] = self.args.service_to_fork_from
             user_config["recovery_target_time"] = self.args.recovery_target_time
