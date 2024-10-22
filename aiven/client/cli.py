@@ -4301,6 +4301,11 @@ ssl.truststore.type=JKS
         action="store_true",
         help="Do not put the service into a project VPC even if the project has one in the selected cloud",
     )
+    @arg(
+        "--disaster-recovery-role",
+        help="Set disaster recovery role",
+        choices=["active", "passive", "failed"],
+    )
     @arg.force
     def service__update(self) -> None:
         """Update service settings"""
@@ -4356,6 +4361,7 @@ ssl.truststore.type=JKS
                 termination_protection=termination_protection,
                 project_vpc_id=project_vpc_id,
                 schema_registry_authorization=schema_registry_authorization,
+                disaster_recovery_role=self.args.disaster_recovery_role,
             )
         except client.Error as ex:
             try:
