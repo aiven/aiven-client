@@ -1506,7 +1506,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg.project
     @arg.service_name
     @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
-    @arg("--usage", choices=("primary", "replica"))
+    @arg("--usage", choices=("primary", "replica", "disaster_recovery"))
     @arg("-p", "--privatelink-connection-id")
     @arg("--replica", action="store_true")
     @arg("-u", "--username", default="avnadmin")
@@ -1521,7 +1521,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg.project
     @arg.service_name
     @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
-    @arg("--usage", choices=("primary", "replica"))
+    @arg("--usage", choices=("primary", "replica", "disaster_recovery"))
     @arg("-p", "--privatelink-connection-id")
     @arg("--replica", action="store_true")
     @arg("-u", "--username", default="avnadmin")
@@ -1535,7 +1535,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg.project
     @arg.service_name
     @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
-    @arg("--usage", choices=("primary", "replica"))
+    @arg("--usage", choices=("primary", "replica", "disaster_recovery"))
     @arg("-p", "--privatelink-connection-id")
     @arg("--replica", action="store_true")
     @arg("-u", "--username", default="avnadmin")
