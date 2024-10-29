@@ -9,6 +9,7 @@ from aiven.client.client import ResponseError, RetrySpec
 from http import HTTPStatus
 from typing import Any
 from unittest import mock
+from unittest.mock import patch
 
 import json
 import pytest
@@ -32,6 +33,7 @@ class MockResponse:
             self.content = b""
         self.headers = {} if headers is None else headers
         self.text = self.content.decode("utf-8")
+        self.reason = ""
 
     def json(self) -> Any:
         return self.json_data
@@ -167,3 +169,160 @@ class TestGetRetrySpec:
         client = AivenClient("foo.test")
         given_spec = RetrySpec(attempts=52)
         assert client._get_retry_spec(client.get, given_spec) is given_spec
+
+
+def test_byoc_tags_list() -> None:
+    aiven_client = AivenClient("test_base_url")
+
+    with patch.object(aiven_client.session, "put") as put_mock:
+        put_mock.return_value = MockResponse(
+            status_code=HTTPStatus.OK,
+            headers={"Content-Type": "application/json"},
+            json_data={
+                "custom_cloud_environment": {
+                    "cloud_provider": "aws",
+                    "cloud_region": "eu-west-2",
+                    "contact_emails": [],
+                    "custom_cloud_environment_id": "d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+                    "deployment_model": "standard",
+                    "reserved_cidr": "10.1.0.0/24",
+                    "display_name": "Another name",
+                    "state": "draft",
+                    "tags": {
+                        "key_1": "value_1",
+                        "key_2": "",
+                        "byoc_resource_tag:key_3": "value_3",
+                        "byoc_resource_tag:key_4": "",
+                        "byoc_resource_tag:key_5": "byoc_resource_tag:keep-the-whole-value-5",
+                    },
+                }
+            },
+        )
+
+        response = aiven_client.list_byoc_tags(
+            organization_id="org123456789a",
+            byoc_id="d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+        )
+
+        assert response == {
+            "tags": {
+                "key_1": "value_1",
+                "key_2": "",
+                "byoc_resource_tag:key_3": "value_3",
+                "byoc_resource_tag:key_4": "",
+                "byoc_resource_tag:key_5": "byoc_resource_tag:keep-the-whole-value-5",
+            },
+        }
+
+        put_mock.assert_called_once_with(
+            "test_base_url/v1/organization/org123456789a/custom-cloud-environments/d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+            headers={"content-type": "application/json"},
+            params=None,
+            data="{}",
+        )
+
+
+def test_byoc_tags_update() -> None:
+    aiven_client = AivenClient("test_base_url")
+
+    with patch.object(aiven_client.session, "put") as put_mock:
+        put_mock.return_value = MockResponse(
+            status_code=HTTPStatus.OK,
+            headers={"Content-Type": "application/json"},
+            json_data={
+                "custom_cloud_environment": {
+                    "cloud_provider": "aws",
+                    "cloud_region": "eu-west-2",
+                    "contact_emails": [],
+                    "custom_cloud_environment_id": "d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+                    "deployment_model": "standard",
+                    "reserved_cidr": "10.1.0.0/24",
+                    "display_name": "Another name",
+                    "state": "draft",
+                    "tags": {
+                        "byoc_resource_tag:key_1": "value_1",
+                        "byoc_resource_tag:key_2": "",
+                        "byoc_resource_tag:key_5": "byoc_resource_tag:keep-the-whole-value-5",
+                    },
+                }
+            },
+        )
+
+        response = aiven_client.update_byoc_tags(
+            organization_id="org123456789a",
+            byoc_id="d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+            tag_updates={
+                "byoc_resource_tag:key_1": "value_1",
+                "byoc_resource_tag:key_2": "",
+                "byoc_resource_tag:key_3": None,
+                "key_4": None,
+                "byoc_resource_tag:key_5": "byoc_resource_tag:keep-the-whole-value-5",
+            },
+        )
+
+        assert response == {"message": "tags updated"}
+
+        put_mock.assert_called_once_with(
+            "test_base_url/v1/organization/org123456789a/custom-cloud-environments/d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+            headers={"content-type": "application/json"},
+            params=None,
+            data=(
+                '{"tags": {'
+                '"byoc_resource_tag:key_1": "value_1", '
+                '"byoc_resource_tag:key_2": "", '
+                '"byoc_resource_tag:key_3": null, '
+                '"key_4": null, '
+                '"byoc_resource_tag:key_5": "byoc_resource_tag:keep-the-whole-value-5"}}'
+            ),
+        )
+
+
+def test_byoc_tags_replace() -> None:
+    aiven_client = AivenClient("test_base_url")
+
+    with patch.object(aiven_client.session, "put") as put_mock:
+        put_mock.return_value = MockResponse(
+            status_code=HTTPStatus.OK,
+            headers={"Content-Type": "application/json"},
+            json_data={
+                "custom_cloud_environment": {
+                    "cloud_provider": "aws",
+                    "cloud_region": "eu-west-2",
+                    "contact_emails": [],
+                    "custom_cloud_environment_id": "d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+                    "deployment_model": "standard",
+                    "reserved_cidr": "10.1.0.0/24",
+                    "display_name": "Another name",
+                    "state": "draft",
+                    "tags": {
+                        "byoc_resource_tag:key_1": "value_1",
+                        "byoc_resource_tag:key_2": "",
+                        "byoc_resource_tag:key_3": "byoc_resource_tag:keep-the-whole-value-3",
+                    },
+                }
+            },
+        )
+
+        response = aiven_client.replace_byoc_tags(
+            organization_id="org123456789a",
+            byoc_id="d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+            tags={
+                "byoc_resource_tag:key_1": "value_1",
+                "byoc_resource_tag:key_2": "",
+                "byoc_resource_tag:key_3": "byoc_resource_tag:keep-the-whole-value-3",
+            },
+        )
+
+        assert response == {"message": "tags updated"}
+
+        put_mock.assert_called_once_with(
+            "test_base_url/v1/organization/org123456789a/custom-cloud-environments/d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+            headers={"content-type": "application/json"},
+            params=None,
+            data=(
+                '{"tags": {'
+                '"byoc_resource_tag:key_1": "value_1", '
+                '"byoc_resource_tag:key_2": "", '
+                '"byoc_resource_tag:key_3": "byoc_resource_tag:keep-the-whole-value-3"}}'
+            ),
+        )

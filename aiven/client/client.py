@@ -2734,6 +2734,7 @@ class AivenClient(AivenClientBase):
         cloud_region: str | None,
         reserved_cidr: str | None,
         display_name: str | None,
+        tags: Mapping[str, str | None] | None,
     ) -> Mapping[Any, Any]:
         body = {
             key: value
@@ -2743,6 +2744,7 @@ class AivenClient(AivenClientBase):
                 "cloud_region": cloud_region,
                 "reserved_cidr": reserved_cidr,
                 "display_name": display_name,
+                "tags": tags,
             }.items()
             if value is not None
         }
@@ -2835,6 +2837,48 @@ class AivenClient(AivenClientBase):
             ),
             body={"accounts": accounts, "projects": projects},
         )
+
+    def list_byoc_tags(self, organization_id: str, byoc_id: str) -> Mapping:
+        output = self.byoc_update(
+            organization_id=organization_id,
+            byoc_id=byoc_id,
+            # Putting all arguments to `None` makes `byoc_update()` behave like a `GET BYOC BY ID` API which does not exist.
+            deployment_model=None,
+            cloud_provider=None,
+            cloud_region=None,
+            reserved_cidr=None,
+            display_name=None,
+            tags=None,
+        )
+        return {"tags": output.get("custom_cloud_environment", {}).get("tags", {})}
+
+    def update_byoc_tags(self, organization_id: str, byoc_id: str, tag_updates: Mapping[str, str | None]) -> Mapping:
+        self.byoc_update(
+            organization_id=organization_id,
+            byoc_id=byoc_id,
+            deployment_model=None,
+            cloud_provider=None,
+            cloud_region=None,
+            reserved_cidr=None,
+            display_name=None,
+            tags=tag_updates,
+        )
+        # There have been no errors raised
+        return {"message": "tags updated"}
+
+    def replace_byoc_tags(self, organization_id: str, byoc_id: str, tags: Mapping[str, str]) -> Mapping:
+        self.byoc_update(
+            organization_id=organization_id,
+            byoc_id=byoc_id,
+            deployment_model=None,
+            cloud_provider=None,
+            cloud_region=None,
+            reserved_cidr=None,
+            display_name=None,
+            tags=tags,
+        )
+        # There have been no errors raised
+        return {"message": "tags updated"}
 
     def alloydbomni_google_cloud_private_key_set(self, *, project: str, service: str, private_key: str) -> dict[str, Any]:
         return self.verify(
