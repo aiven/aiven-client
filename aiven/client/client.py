@@ -48,7 +48,7 @@ class Error(Exception):
     """Request error"""
 
     def __init__(self, response: Response, status: int = 520) -> None:
-        Exception.__init__(self, response.text)
+        Exception.__init__(self, f"{response.text}, status({type(status)})={str(status)}")
         self.response = response
         self.status = status
 

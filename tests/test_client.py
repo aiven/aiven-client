@@ -18,12 +18,12 @@ import pytest
 class MockResponse:
     def __init__(
         self,
-        status_code: int,
+        status_code: int | HTTPStatus,
         json_data: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
         content: bytes | None = None,
     ):
-        self.status_code = status_code
+        self.status_code = status_code.value if isinstance(status_code, HTTPStatus) else status_code
         self.json_data = json_data
         if content is not None:
             self.content = content
