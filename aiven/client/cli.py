@@ -20,7 +20,7 @@ from collections import Counter
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from http import HTTPStatus
-from typing import Any, Callable, Final, IO, Mapping, Protocol, Sequence
+from typing import Any, Callable, Final, IO, Mapping, Optional, Protocol, Sequence, TypeVar
 from urllib.parse import urlparse
 
 import errno
@@ -32,6 +32,8 @@ import requests
 import subprocess
 import sys
 import time
+
+S = TypeVar("S", str, Optional[str])  # Must be exactly str or str | None
 
 USER_GROUP_COLUMNS = [
     "user_group_name",
@@ -5951,6 +5953,7 @@ server_encryption_options:
             cloud_region=self.args.cloud_region,
             reserved_cidr=self.args.reserved_cidr,
             display_name=self.args.display_name,
+            tags=None,
         )
         self.print_response(output)
 
@@ -6056,6 +6059,52 @@ server_encryption_options:
                 projects=new_projects,
             )
         )
+
+    @staticmethod
+    def add_prefix_to_keys(prefix: str, tags: Mapping[str, S]) -> Mapping[str, S]:
+        return {f"{prefix}{k}": v for (k, v) in tags.items()}
+
+    @staticmethod
+    def remove_prefix_from_keys(prefix: str, tags: Mapping[str, str]) -> Mapping[str, str]:
+        return {(k.partition(prefix)[-1] if k.startswith(prefix) else k): v for (k, v) in tags.items()}
+
+    @arg.json
+    @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
+    @arg("--byoc-id", required=True, help="Identifier of the custom cloud environment that defines the BYOC cloud")
+    def byoc__tags__list(self) -> None:
+        """List BYOC tags"""
+        tags = self.client.list_byoc_tags(organization_id=self.args.organization_id, byoc_id=self.args.byoc_id)
+        # Remove the "byoc_resource_tag:" prefix from BYOC tag keys to print them as expected by the end user.
+        self._print_tags({"tags": self.remove_prefix_from_keys("byoc_resource_tag:", tags.get("tags", {}))})
+
+    @arg.json
+    @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
+    @arg("--byoc-id", required=True, help="Identifier of the custom cloud environment that defines the BYOC cloud")
+    @arg("--add-tag", help="Add a new tag (key=value)", action="append", default=[])
+    @arg("--remove-tag", help="Remove the named tag", action="append", default=[])
+    def byoc__tags__update(self) -> None:
+        """Add or remove BYOC tags"""
+        response = self.client.update_byoc_tags(
+            organization_id=self.args.organization_id,
+            byoc_id=self.args.byoc_id,
+            # Add the "byoc_resource_tag:" prefix to BYOC tag keys to make them cascade to the Bastion service.
+            tag_updates=self.add_prefix_to_keys("byoc_resource_tag:", self._tag_update_body_from_args()),
+        )
+        print(response["message"])
+
+    @arg.json
+    @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
+    @arg("--byoc-id", required=True, help="Identifier of the custom cloud environment that defines the BYOC cloud")
+    @arg("--tag", help="Tag for service (key=value)", action="append", default=[])
+    def byoc__tags__replace(self) -> None:
+        """Replace BYOC tags, deleting any old ones first"""
+        response = self.client.replace_byoc_tags(
+            organization_id=self.args.organization_id,
+            byoc_id=self.args.byoc_id,
+            # Add the "byoc_resource_tag:" prefix to BYOC tag keys to make them cascade to the Bastion service.
+            tags=self.add_prefix_to_keys("byoc_resource_tag:", self._tag_replace_body_from_args()),
+        )
+        print(response["message"])
 
     @arg.json
     @arg.project

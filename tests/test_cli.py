@@ -1787,6 +1787,7 @@ def test_byoc_update() -> None:
         cloud_region="eu-west-2",
         reserved_cidr="10.1.0.0/24",
         display_name="Another name",
+        tags=None,
     )
 
 
@@ -1863,4 +1864,131 @@ def test_byoc_delete() -> None:
     aiven_client.byoc_delete.assert_called_once_with(
         organization_id="org123456789a",
         byoc_id="d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+    )
+
+
+def test_add_prefix_to_keys() -> None:
+    prefix = "byoc_resource_tag:"
+    tags = {
+        "key_1": "value_1",
+        "key_2": "",
+        "key_3": None,
+        "byoc_resource_tag:key_4": "value_4",
+        "key_5": "byoc_resource_tag:keep-the-whole-value-5",
+    }
+    expected_output = {
+        "byoc_resource_tag:key_1": "value_1",
+        "byoc_resource_tag:key_2": "",
+        "byoc_resource_tag:key_3": None,
+        "byoc_resource_tag:byoc_resource_tag:key_4": "value_4",
+        "byoc_resource_tag:key_5": "byoc_resource_tag:keep-the-whole-value-5",
+    }
+    output = AivenCLI.add_prefix_to_keys(prefix, tags)
+    assert output == expected_output
+
+
+def test_remove_prefix_from_keys() -> None:
+    prefix = "byoc_resource_tag:"
+    tags = {
+        "byoc_resource_tag:key_1": "value_1",
+        "byoc_resource_tag:key_2": "",
+        "byoc_resource_tag:byoc_resource_tag:key_3": "value_3",
+        "key_4": "value_4",
+        "byoc_resource_tag:key_5": "byoc_resource_tag:keep-the-whole-value-5",
+    }
+    expected_output = {
+        "key_1": "value_1",
+        "key_2": "",
+        "byoc_resource_tag:key_3": "value_3",
+        "key_4": "value_4",
+        "key_5": "byoc_resource_tag:keep-the-whole-value-5",
+    }
+    output = AivenCLI.remove_prefix_from_keys(prefix, tags)
+    assert output == expected_output
+
+
+def test_byoc_tags_list() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.list_byoc_tags.return_value = {
+        "tags": {
+            "byoc_resource_tag:key_1": "value_1",
+            "byoc_resource_tag:key_2": "",
+            "byoc_resource_tag:key_3": "value_3",
+            "byoc_resource_tag:key_4": "",
+            "byoc_resource_tag:key_5": "byoc_resource_tag:keep-the-whole-value-5",
+        },
+    }
+    args = [
+        "byoc",
+        "tags",
+        "list",
+        "--organization-id=org123456789a",
+        "--byoc-id=d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.list_byoc_tags.assert_called_once_with(
+        organization_id="org123456789a",
+        byoc_id="d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+    )
+
+
+def test_byoc_tags_update() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.update_byoc_tags.return_value = {"message": "tags updated"}
+    args = [
+        "byoc",
+        "tags",
+        "update",
+        "--organization-id=org123456789a",
+        "--byoc-id=d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+        "--add-tag",
+        "key_1=value_1",
+        "--add-tag",
+        "key_2=",
+        "--remove-tag",
+        "key_3",
+        "--remove-tag",
+        "byoc_resource_tag:key_4",
+        "--add-tag",
+        "key_5=byoc_resource_tag:keep-the-whole-value-5",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.update_byoc_tags.assert_called_once_with(
+        organization_id="org123456789a",
+        byoc_id="d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+        tag_updates={
+            "byoc_resource_tag:key_1": "value_1",
+            "byoc_resource_tag:key_2": "",
+            "byoc_resource_tag:key_3": None,
+            "byoc_resource_tag:byoc_resource_tag:key_4": None,
+            "byoc_resource_tag:key_5": "byoc_resource_tag:keep-the-whole-value-5",
+        },
+    )
+
+
+def test_byoc_tags_replace() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.replace_byoc_tags.return_value = {"message": "tags updated"}
+    args = [
+        "byoc",
+        "tags",
+        "replace",
+        "--organization-id=org123456789a",
+        "--byoc-id=d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+        "--tag",
+        "key_1=value_1",
+        "--tag",
+        "key_2=",
+        "--tag",
+        "byoc_resource_tag:key_3=byoc_resource_tag:keep-the-whole-value-3",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.replace_byoc_tags.assert_called_once_with(
+        organization_id="org123456789a",
+        byoc_id="d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+        tags={
+            "byoc_resource_tag:key_1": "value_1",
+            "byoc_resource_tag:key_2": "",
+            "byoc_resource_tag:byoc_resource_tag:key_3": "byoc_resource_tag:keep-the-whole-value-3",
+        },
     )
