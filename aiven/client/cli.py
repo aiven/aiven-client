@@ -5349,7 +5349,7 @@ server_encryption_options:
         """List Flink applications"""
         self.print_response(
             self.client.flink_list_applications(
-                project=self.args.project,
+                project=self.get_project(),
                 service=self.args.service_name,
             ),
         )
@@ -5361,7 +5361,7 @@ server_encryption_options:
         """Create Flink application"""
         self.print_response(
             self.client.flink_create_application(
-                project=self.args.project,
+                project=self.get_project(),
                 service=self.args.service_name,
                 application_properties=self.args.application_properties,
             ),
@@ -5374,7 +5374,7 @@ server_encryption_options:
         """Get Flink application"""
         self.print_response(
             self.client.flink_get_application(
-                project=self.args.project,
+                project=self.get_project(),
                 service=self.args.service_name,
                 application_id=self.args.application_id,
             ),
@@ -5388,7 +5388,7 @@ server_encryption_options:
         """Update Flink application"""
         self.print_response(
             self.client.flink_update_application(
-                project=self.args.project,
+                project=self.get_project(),
                 service=self.args.service_name,
                 application_id=self.args.application_id,
                 application_properties=self.args.application_properties,
@@ -5402,7 +5402,7 @@ server_encryption_options:
         """Delete Flink application"""
         self.print_response(
             self.client.flink_delete_application(
-                project=self.args.project,
+                project=self.get_project(),
                 service=self.args.service_name,
                 application_id=self.args.application_id,
             ),
@@ -5416,7 +5416,7 @@ server_encryption_options:
         """Create Flink application version"""
         self.print_response(
             self.client.flink_create_application_version(
-                project=self.args.project,
+                project=self.get_project(),
                 service=self.args.service_name,
                 application_id=self.args.application_id,
                 application_version_properties=self.args.application_version_properties,
@@ -5431,7 +5431,7 @@ server_encryption_options:
         """Validate Flink application version"""
         self.print_response(
             self.client.flink_validate_application_version(
-                project=self.args.project,
+                project=self.get_project(),
                 service=self.args.service_name,
                 application_id=self.args.application_id,
                 application_version_properties=self.args.application_version_properties,
@@ -5446,7 +5446,7 @@ server_encryption_options:
         """Get Flink application version"""
         self.print_response(
             self.client.flink_get_application_version(
-                project=self.args.project,
+                project=self.get_project(),
                 service=self.args.service_name,
                 application_id=self.args.application_id,
                 application_version_id=self.args.application_version_id,
@@ -5461,7 +5461,7 @@ server_encryption_options:
         """Delete Flink application version"""
         self.print_response(
             self.client.flink_delete_application_version(
-                project=self.args.project,
+                project=self.get_project(),
                 service=self.args.service_name,
                 application_id=self.args.application_id,
                 application_version_id=self.args.application_version_id,
@@ -5475,7 +5475,7 @@ server_encryption_options:
         """List Flink application deployments"""
         self.print_response(
             self.client.flink_list_application_deployments(
-                project=self.args.project,
+                project=self.get_project(),
                 service=self.args.service_name,
                 application_id=self.args.application_id,
             ),
@@ -5489,7 +5489,7 @@ server_encryption_options:
         """Get Flink application deployment"""
         self.print_response(
             self.client.flink_get_application_deployment(
-                project=self.args.project,
+                project=self.get_project(),
                 service=self.args.service_name,
                 application_id=self.args.application_id,
                 deployment_id=self.args.deployment_id,
@@ -5504,7 +5504,7 @@ server_encryption_options:
         """Create Flink application deployment"""
         self.print_response(
             self.client.flink_create_application_deployment(
-                project=self.args.project,
+                project=self.get_project(),
                 service=self.args.service_name,
                 application_id=self.args.application_id,
                 deployment_properties=self.args.deployment_properties,
@@ -5519,7 +5519,7 @@ server_encryption_options:
         """Delete Flink application deployment"""
         self.print_response(
             self.client.flink_delete_application_deployment(
-                project=self.args.project,
+                project=self.get_project(),
                 service=self.args.service_name,
                 application_id=self.args.application_id,
                 deployment_id=self.args.deployment_id,
@@ -5534,7 +5534,7 @@ server_encryption_options:
         """Stop Flink application deployment"""
         self.print_response(
             self.client.flink_stop_application_deployment(
-                project=self.args.project,
+                project=self.get_project(),
                 service=self.args.service_name,
                 application_id=self.args.application_id,
                 deployment_id=self.args.deployment_id,
@@ -5549,7 +5549,7 @@ server_encryption_options:
         """Cancel Flink application deployment"""
         self.print_response(
             self.client.flink_cancel_application_deployment(
-                project=self.args.project,
+                project=self.get_project(),
                 service=self.args.service_name,
                 application_id=self.args.application_id,
                 deployment_id=self.args.deployment_id,
@@ -5562,7 +5562,7 @@ server_encryption_options:
         """List all the custom files for the specified service"""
         self.print_response(
             self.client.custom_file_list(
-                project=self.args.project,
+                project=self.get_project(),
                 service=self.args.service_name,
             ),
         )
@@ -5581,7 +5581,7 @@ server_encryption_options:
             raise argx.UserError("You need to specify `--target_filepath` or `--stdout_write` or both")
 
         result = self.client.custom_file_get(
-            project=self.args.project,
+            project=self.get_project(),
             service=self.args.service_name,
             file_id=self.args.file_id,
         )
@@ -5603,7 +5603,7 @@ server_encryption_options:
         with open(self.args.file_path, "rb") as f:
             self.print_response(
                 self.client.custom_file_upload(
-                    project=self.args.project,
+                    project=self.get_project(),
                     service=self.args.service_name,
                     file_type=self.args.file_type,
                     file_name=self.args.file_name,
@@ -5620,7 +5620,7 @@ server_encryption_options:
         with open(self.args.file_path, "rb") as f:
             self.print_response(
                 self.client.custom_file_update(
-                    project=self.args.project,
+                    project=self.get_project(),
                     service=self.args.service_name,
                     file_id=self.args.file_id,
                     file_object=f,
