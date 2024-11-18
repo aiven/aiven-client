@@ -2919,3 +2919,45 @@ class AivenClient(AivenClientBase):
                 "google_cloud_private_key",
             ),
         )
+
+    def service_kafka_native_acl_add(
+        self,
+        project: str,
+        service: str,
+        principal: str,
+        host: str,
+        resource_name: str,
+        resource_type: str,
+        resource_pattern_type: str,
+        operation: str,
+        permission_type: str,
+    ) -> Mapping:
+        return self.verify(
+            self.post,
+            self.build_path("project", project, "service", service, "kafka", "acl"),
+            body={
+                "principal": principal,
+                "host": host,
+                "resource_name": resource_name,
+                "resource_type": resource_type,
+                "pattern_type": resource_pattern_type,
+                "operation": operation,
+                "permission_type": permission_type,
+            },
+        )
+
+    def service_kafka_native_acl_list(
+        self,
+        project: str,
+        service: str,
+    ) -> dict[str, Any]:
+        return self.verify(
+            self.get,
+            self.build_path("project", project, "service", service, "kafka", "acl"),
+        )
+
+    def service_kafka_native_acl_delete(self, project: str, service: str, acl_id: str) -> Mapping:
+        return self.verify(
+            self.delete,
+            self.build_path("project", project, "service", service, "kafka", "acl", acl_id),
+        )

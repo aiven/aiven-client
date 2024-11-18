@@ -1992,3 +1992,133 @@ def test_byoc_tags_replace() -> None:
             "byoc_resource_tag:byoc_resource_tag:key_3": "byoc_resource_tag:keep-the-whole-value-3",
         },
     )
+
+
+@pytest.mark.parametrize(
+    "res_arg,res_type,res_name",
+    [
+        ("--topic", "Topic", "TopicABC"),
+        ("--group", "Group", "GroupDEF"),
+        ("--cluster", "Cluster", "kafka-cluster"),
+        ("--transactional-id", "TransactionalId", "Id123"),
+    ],
+)
+def test_service__kafka_acl_add_resource(res_arg: str, res_type: str, res_name: str) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.service_kafka_native_acl_add.return_value = {"message": "added"}
+    args = [
+        "service",
+        "kafka-acl-add",
+        "kafka-1",
+        "--project=project1",
+        "--principal=User:alice",
+        "--operation=Describe",
+    ]
+    if res_arg == "--cluster":
+        args.append(f"{res_arg}")
+    else:
+        args.append(f"{res_arg}={res_name}")
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.service_kafka_native_acl_add.assert_called_once_with(
+        project="project1",
+        service="kafka-1",
+        principal="User:alice",
+        host="*",
+        resource_name=res_name,
+        resource_type=res_type,
+        resource_pattern_type="LITERAL",
+        operation="Describe",
+        permission_type="ALLOW",
+    )
+
+
+@pytest.mark.parametrize("deny", [True, False])
+def test_service__kafka_acl_add_allow_deny(deny: bool) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.service_kafka_native_acl_add.return_value = {"message": "added"}
+    args = [
+        "service",
+        "kafka-acl-add",
+        "kafka-1",
+        "--project=project1",
+        "--principal=User:alice",
+        "--operation=Describe",
+        "--topic=TopicABC",
+    ]
+    if deny:
+        args.append("--deny")
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.service_kafka_native_acl_add.assert_called_once_with(
+        project="project1",
+        service="kafka-1",
+        principal="User:alice",
+        host="*",
+        resource_name="TopicABC",
+        resource_type="Topic",
+        resource_pattern_type="LITERAL",
+        operation="Describe",
+        permission_type="DENY" if deny else "ALLOW",
+    )
+
+
+@pytest.mark.parametrize("prefixed", [True, False])
+def test_service__kafka_acl_add_prefixed(prefixed: bool) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.service_kafka_native_acl_add.return_value = {"message": "added"}
+    args = [
+        "service",
+        "kafka-acl-add",
+        "kafka-1",
+        "--project=project1",
+        "--principal=User:alice",
+        "--operation=Describe",
+        "--topic=TopicABC",
+    ]
+    if prefixed:
+        args.append("--resource-pattern-type=PREFIXED")
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.service_kafka_native_acl_add.assert_called_once_with(
+        project="project1",
+        service="kafka-1",
+        principal="User:alice",
+        host="*",
+        resource_name="TopicABC",
+        resource_type="Topic",
+        resource_pattern_type="PREFIXED" if prefixed else "LITERAL",
+        operation="Describe",
+        permission_type="ALLOW",
+    )
+
+
+def test_service__kafka_acl_list() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.service_kafka_native_acl_list.return_value = {"kafka_acl": []}
+    args = [
+        "service",
+        "kafka-acl-list",
+        "kafka-1",
+        "--project=project1",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.service_kafka_native_acl_list.assert_called_once_with(
+        project="project1",
+        service="kafka-1",
+    )
+
+
+def test_service__kafka_acl_delete() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.service_kafka_native_acl_delete.return_value = {"message": "added"}
+    args = [
+        "service",
+        "kafka-acl-delete",
+        "kafka-1",
+        "acl4f549bfee6a",
+        "--project=project1",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.service_kafka_native_acl_delete.assert_called_once_with(
+        project="project1",
+        service="kafka-1",
+        acl_id="acl4f549bfee6a",
+    )

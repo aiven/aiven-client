@@ -2954,7 +2954,7 @@ ssl.truststore.type=JKS
         required=True,
     )
     def service__acl_add(self) -> None:
-        """Add a Kafka ACL entry"""
+        """Add an Aiven ACL for Kafka entry"""
         response = self.client.add_service_kafka_acl(
             project=self.get_project(),
             service=self.args.service_name,
@@ -2968,7 +2968,7 @@ ssl.truststore.type=JKS
     @arg.service_name
     @arg("acl_id", help="ID of the ACL entry to delete")
     def service__acl_delete(self) -> None:
-        """Delete a Kafka ACL entry"""
+        """Delete an Aiven ACL for Kafka entry"""
         response = self.client.delete_service_kafka_acl(
             project=self.get_project(), service=self.args.service_name, acl_id=self.args.acl_id
         )
@@ -2978,7 +2978,7 @@ ssl.truststore.type=JKS
     @arg.service_name
     @arg.json
     def service__acl_list(self) -> None:
-        """List Kafka ACL entries"""
+        """List Aiven ACL for Kafka entries"""
         service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
 
         layout = ["id", "username", "topic", "permission"]
@@ -6175,6 +6175,143 @@ server_encryption_options:
         else:
             layout = ["client_email", "private_key_id"]
             self.print_response(output, json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg.service_name
+    @arg(
+        "--operation",
+        help="Operation that is being allowed or denied.",
+        required=True,
+        choices=[
+            "Describe",
+            "DescribeConfigs",
+            "Alter",
+            "IdempotentWrite",
+            "Read",
+            "Delete",
+            "Create",
+            "ClusterAction",
+            "All",
+            "Write",
+            "AlterConfigs",
+            "CreateTokens",
+            "DescribeTokens",
+        ],
+    )
+    @arg(
+        "--topic",
+        help="Topic resource type to which ACL should be added",
+    )
+    @arg(
+        "--group",
+        help="Group resource type to which ACL should be added",
+    )
+    @arg(
+        "--cluster",
+        action="store_const",
+        const="kafka-cluster",
+        help="Group resource type to which ACL should be added",
+    )
+    @arg(
+        "--transactional-id",
+        help="TransactionalId resource type to which ACL should be added",
+    )
+    @arg(
+        "--resource-pattern-type",
+        help="The type of the resource pattern",
+        required=False,
+        choices=["LITERAL", "PREFIXED"],
+        default="LITERAL",
+    )
+    @arg(
+        "--deny",
+        help="Create a DENY rule (default is ALLOW)",
+        action="store_true",
+    )
+    @arg(
+        "--host",
+        help="The host for the ACLs, a value of '*' matches all hosts",
+        required=False,
+        default="*",
+    )
+    @arg(
+        "--principal",
+        help="The principal for the ACLs, must be in the form principalType:name",
+        required=True,
+    )
+    def service__kafka_acl_add(self) -> None:
+        """Add a Kafka-native ACL entry"""
+        mutually_exclusive_args = [
+            self.args.topic,
+            self.args.group,
+            self.args.cluster,
+            self.args.transactional_id,
+        ]
+        count = len(list(filter(lambda x: x is not None, mutually_exclusive_args)))
+        if count == 0:
+            raise argx.UserError("At least one of --topic --group --cluster --transactional-id must be specified")
+        if count > 1:
+            raise argx.UserError("Arguments --topic --group --cluster --transactional-id are mutually exclusive")
+        if self.args.topic is not None:
+            resource_name = self.args.topic
+            resource_type = "Topic"
+        elif self.args.group is not None:
+            resource_name = self.args.group
+            resource_type = "Group"
+        elif self.args.cluster is not None:
+            resource_name = self.args.cluster
+            resource_type = "Cluster"
+        elif self.args.transactional_id is not None:
+            resource_name = self.args.transactional_id
+            resource_type = "TransactionalId"
+
+        response = self.client.service_kafka_native_acl_add(
+            project=self.get_project(),
+            service=self.args.service_name,
+            principal=self.args.principal,
+            host=self.args.host,
+            resource_name=resource_name,
+            resource_type=resource_type,
+            resource_pattern_type=self.args.resource_pattern_type,
+            operation=self.args.operation,
+            permission_type="DENY" if self.args.deny else "ALLOW",
+        )
+        print(response["message"])
+
+    @arg.project
+    @arg.service_name
+    @arg.json
+    def service__kafka_acl_list(self) -> None:
+        """List Kafka-native ACL entries"""
+        response = self.client.service_kafka_native_acl_list(
+            project=self.get_project(),
+            service=self.args.service_name,
+        )
+        acls = response.get("kafka_acl", [])
+        layout = [
+            "id",
+            "permission_type",
+            "principal",
+            "operation",
+            "resource_type",
+            "pattern_type",
+            "resource_name",
+            "host",
+        ]
+        if acls:
+            self.print_response(acls, json=self.args.json, table_layout=layout)
+        else:
+            self.print_response([{k: "" for k in layout}], json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg.service_name
+    @arg("acl_id", help="ID of the ACL entry to delete")
+    def service__kafka_acl_delete(self) -> None:
+        """Delete a Kafka-native ACL entry"""
+        response = self.client.service_kafka_native_acl_delete(
+            project=self.get_project(), service=self.args.service_name, acl_id=self.args.acl_id
+        )
+        print(response["message"])
 
 
 if __name__ == "__main__":
