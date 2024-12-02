@@ -1,4 +1,4 @@
-short_ver = 4.4.0
+short_ver = 4.5.0
 release = 1
 PYTHON ?= python3
 PYTHON_DIRS = aiven tests
