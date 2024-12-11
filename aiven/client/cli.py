@@ -6210,7 +6210,7 @@ server_encryption_options:
         "--cluster",
         action="store_const",
         const="kafka-cluster",
-        help="Group resource type to which ACL should be added",
+        help="The ACL is applied to the cluster resource",
     )
     @arg(
         "--transactional-id",
