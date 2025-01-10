@@ -1607,6 +1607,8 @@ class AivenCLI(argx.CommandLineTool):
             command, params, env = self._build_psql_start_info(url)
         elif service_type == "rediss":
             command, params, env = self._build_redis_start_info(url)
+        elif service_type == "mysql":
+            command, params, env = self._build_mysql_start_info(url)
         else:
             raise argx.UserError(
                 "Unsupported service type {}. Only InfluxDB, PostgreSQL, and Redis are supported".format(service_type)
@@ -1639,6 +1641,18 @@ class AivenCLI(argx.CommandLineTool):
         match = re.match(pw_pattern, url)
         connect_info = re.sub(pw_pattern, "\\1@\\3", url)
         return "psql", [connect_info], {"PGPASSWORD": match.group(2) if match else None}
+
+    def _build_mysql_start_info(self, url: str) -> tuple[str, list, Mapping]:
+        info = urlparse(url)
+        params = [
+            "-h",
+            info.hostname,
+            "-P",
+            str(info.port),
+            "-u",
+            info.username,
+        ]
+        return "mysql", params, {"MYSQL_PWD": info.password}
 
     def _build_redis_start_info(self, url: str) -> tuple[str, list, Mapping]:
         info = urlparse(url)
