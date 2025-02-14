@@ -326,3 +326,28 @@ def test_byoc_tags_replace() -> None:
                 '"byoc_resource_tag:key_3": "byoc_resource_tag:keep-the-whole-value-3"}}'
             ),
         )
+
+
+def test_refresh_service_privatelink_aws() -> None:
+    aiven_client = AivenClient("test_base_url")
+
+    with patch.object(aiven_client.session, "post") as post_mock:
+        post_mock.return_value = MockResponse(
+            status_code=HTTPStatus.OK,
+            headers={"Content-Type": "application/json"},
+            json_data={"message": "refreshed"},
+        )
+
+        response = aiven_client.refresh_service_privatelink_aws(
+            project="new-project-name",
+            service="kafka-2921638b",
+        )
+
+        assert response == {"message": "refreshed"}
+
+        post_mock.assert_called_once_with(
+            "test_base_url/v1/project/new-project-name/service/kafka-2921638b/privatelink/aws/refresh",
+            headers={"content-type": "application/octet-stream"},
+            params=None,
+            data=None,
+        )
