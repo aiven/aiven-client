@@ -23,7 +23,7 @@ import sys
 
 # Optional shell completions
 try:
-    import argcomplete  # type: ignore
+    import argcomplete  # type: ignore[import-not-found]
 
     ARGCOMPLETE_INSTALLED = True
 except ImportError:

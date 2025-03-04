@@ -1492,6 +1492,10 @@ class AivenClient(AivenClientBase):
         path = self._privatelink_path(project, service, "aws")
         return self.verify(self.get, path)
 
+    def refresh_service_privatelink_aws(self, project: str, service: str) -> Mapping:
+        path = self._privatelink_path(project, service, "aws", "refresh")
+        return self.verify(self.post, path)
+
     def list_service_privatelink_aws_connections(self, project: str, service: str) -> Sequence[dict[str, Any]]:
         path = self._privatelink_path(project, service, "aws") + "/connections"
         return self.verify(self.get, path, result_key="connections")

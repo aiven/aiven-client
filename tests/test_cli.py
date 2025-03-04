@@ -2122,3 +2122,20 @@ def test_service__kafka_acl_delete() -> None:
         service="kafka-1",
         acl_id="acl4f549bfee6a",
     )
+
+
+def test_service__privatelink__aws__refresh() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.refresh_service_privatelink_aws.return_value = {"message": "refreshed"}
+    args = [
+        "service",
+        "privatelink",
+        "aws",
+        "refresh",
+        "kafka-2921638b",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.refresh_service_privatelink_aws.assert_called_once_with(
+        project="new-project-name",
+        service="kafka-2921638b",
+    )

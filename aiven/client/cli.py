@@ -1006,6 +1006,15 @@ class AivenCLI(argx.CommandLineTool):
 
     @arg.project
     @arg.service_name
+    def service__privatelink__aws__refresh(self) -> None:
+        """Refresh AWS PrivateLink to discover new endpoints"""
+        self.client.refresh_service_privatelink_aws(
+            project=self.get_project(),
+            service=self.args.service_name,
+        )
+
+    @arg.project
+    @arg.service_name
     @arg("--format", help="Format string for output")
     @arg.json
     def service__privatelink__aws__connection__list(self) -> None:
