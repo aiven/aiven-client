@@ -426,6 +426,22 @@ class AivenClient(AivenClientBase):
         body = {"operation": "set-access-control", "access_control": access_control}
         return self.verify(self.put, path, body=body)
 
+    def get_service_integration_endpoint(
+        self,
+        *,
+        project: str,
+        endpoint_id: str,
+        include_secrets: bool = False,
+    ) -> dict[str, Any]:
+        include_secrets_str = "true" if include_secrets else "false"
+        path = self.build_path("project", project, "integration_endpoint", endpoint_id)
+        return self.verify(
+            self.get,
+            path,
+            params={"include_secrets": include_secrets_str},
+            result_key="service_integration_endpoint",
+        )
+
     def get_service_integration_endpoints(self, project: str) -> Sequence[dict[str, Any]]:
         path = self.build_path("project", project, "integration_endpoint")
         return self.verify(self.get, path, result_key="service_integration_endpoints")
