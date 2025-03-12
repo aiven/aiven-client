@@ -6,7 +6,8 @@ from __future__ import annotations
 
 from aiven.client import AivenClient, argx
 from aiven.client.argx import UserError
-from aiven.client.cli import AivenCLI, ClientFactory, convert_str_to_value, EOL_ADVANCE_WARNING_TIME
+from aiven.client.base_cli import ClientFactory, convert_str_to_value, EOL_ADVANCE_WARNING_TIME
+from aiven.client.cli import AivenCLI
 from aiven.client.common import UNDEFINED
 from argparse import Namespace
 from contextlib import contextmanager
@@ -576,12 +577,12 @@ def test_version_eol_check() -> None:
     cli.confirm = mock.Mock()  # type: ignore
 
     # Test current time < EOL_WARNING time
-    with mock.patch("aiven.client.cli.get_current_date", return_value=fake_time_safe):
+    with mock.patch("aiven.client.common_cli.get_current_date", return_value=fake_time_safe):
         cli._do_version_eol_check(service_type, service_version)
         cli.confirm.assert_not_called()  # No confirmation should have been asked
 
     # Test current time > EOL_WARNING
-    with mock.patch("aiven.client.cli.get_current_date", return_value=fake_time_soon):
+    with mock.patch("aiven.client.common_cli.get_current_date", return_value=fake_time_soon):
         cli._do_version_eol_check(service_type, service_version)
         cli.confirm.assert_called()  # Confirmation should have been asked
 

@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from aiven.client import AivenClient
-from aiven.client.client import ResponseError, RetrySpec
+from aiven.client.base_client import ResponseError, RetrySpec
 from http import HTTPStatus
 from typing import Any
 from unittest import mock
@@ -48,7 +48,7 @@ class MockResponse:
 )
 def test_no_content_returned_from_api(response: MockResponse) -> None:
     aiven_client = AivenClient("")
-    with mock.patch("aiven.client.client.AivenClientBase._execute", return_value=response):
+    with mock.patch("aiven.client.base_client.AivenClientBase._execute", return_value=response):
         assert aiven_client.verify(aiven_client.post, "/") == {}
         assert aiven_client.verify(aiven_client.patch, "/") == {}
         assert aiven_client.verify(aiven_client.put, "/") == {}

@@ -5,12 +5,11 @@
 from __future__ import annotations
 
 from .pretty import TableLayout
-from aiven.client import envdefault, pretty
+from aiven.client import base_client, envdefault, pretty
 from argparse import Action, ArgumentParser, Namespace
 from os import PathLike
 from typing import Any, Callable, cast, Collection, Iterable, Mapping, NoReturn, Sequence, TextIO, TYPE_CHECKING, TypeVar
 
-import aiven.client.client
 import argparse
 import csv as csvlib
 import errno
@@ -372,7 +371,7 @@ class CommandLineTool:
         expected_errors: list[type[BaseException]] = [
             requests.exceptions.ConnectionError,
             UserError,
-            aiven.client.client.Error,
+            base_client.Error,
         ]
         for ext in self._extensions:  # note: _extensions includes self
             expected_errors.extend(ext.expected_errors())
