@@ -96,5 +96,103 @@ class AivenOpenSearchSecurityCLI(AivenBaseCLI):
         self.service__opensearch__security_management__reset()
 
 
-class AivenOpenSearchCLI(AivenOpenSearchSecurityCLI):
+class AivenOpenSearchCustomRepoCLI(AivenBaseCLI):
+    @arg.project
+    @arg.service_name
+    def service__opensearch__custom_repo_list(self) -> None:
+        """Show custom repository information"""
+        response = self.client.opensearch_custom_repo_list(
+            project=self.get_project(),
+            service=self.args.service_name,
+        )
+        self.print_response(response, json=True)
+
+    @arg.project
+    @arg.service_name
+    @arg("repository_name", help="Custom Repository name")
+    def service__opensearch__snapshot__in_progress(self) -> None:
+        """Show custom repository snapshots in-progress"""
+        response = self.client.opensearch_snapshot_in_progress(
+            project=self.get_project(),
+            service=self.args.service_name,
+            repository_name=self.args.repository_name,
+        )
+        self.print_response(response, json=True)
+
+    @arg.project
+    @arg.service_name
+    @arg("repository_name", help="Custom Repository name")
+    def service__opensearch__snapshot__list(self) -> None:
+        """Show custom repository snapshots list"""
+        response = self.client.opensearch_snapshot_list(
+            project=self.get_project(),
+            service=self.args.service_name,
+            repository_name=self.args.repository_name,
+        )
+        self.print_response(response, json=True)
+
+    @arg.project
+    @arg.service_name
+    @arg("repository_name", help="Custom Repository name")
+    @arg("snapshot_name", help="Snapshot name")
+    def service__opensearch__snapshot__show(self) -> None:
+        """Show custom repository snapshot info"""
+        response = self.client.opensearch_snapshot_show(
+            project=self.get_project(),
+            service=self.args.service_name,
+            repository_name=self.args.repository_name,
+            snapshot_name=self.args.snapshot_name,
+        )
+        self.print_response(response, json=True)
+
+    @arg.project
+    @arg.service_name
+    @arg("repository_name", help="Custom Repository name")
+    @arg("snapshot_name", help="Snapshot name")
+    def service__opensearch__snapshot__status(self) -> None:
+        """Show custom repository snapshot status"""
+        response = self.client.opensearch_snapshot_status(
+            project=self.get_project(),
+            service=self.args.service_name,
+            repository_name=self.args.repository_name,
+            snapshot_name=self.args.snapshot_name,
+        )
+        self.print_response(response, json=True)
+
+    @arg.project
+    @arg.service_name
+    @arg("repository_name", help="Custom Repository name")
+    @arg("snapshot_name", help="Snapshot name")
+    @arg(
+        "body",
+        help="Request body json, see https://opensearch.org/docs/latest/api-reference/snapshots/create-snapshot/",
+        default={},
+    )
+    def service__opensearch__snapshot__create(self) -> None:
+        """Create a snapshot in custom repository"""
+        response = self.client.opensearch_snapshot_create(
+            project=self.get_project(),
+            service=self.args.service_name,
+            repository_name=self.args.repository_name,
+            snapshot_name=self.args.snapshot_name,
+            body=self.args.body,
+        )
+        self.print_response(response, json=True)
+
+    @arg.project
+    @arg.service_name
+    @arg("repository_name", help="Custom Repository name")
+    @arg("snapshot_name", help="Snapshot name")
+    def service__opensearch__snapshot__delete(self) -> None:
+        """Delete a snapshot from custom repository"""
+        response = self.client.opensearch_snapshot_delete(
+            project=self.get_project(),
+            service=self.args.service_name,
+            repository_name=self.args.repository_name,
+            snapshot_name=self.args.snapshot_name,
+        )
+        self.print_response(response, json=True)
+
+
+class AivenOpenSearchCLI(AivenOpenSearchSecurityCLI, AivenOpenSearchCustomRepoCLI):
     pass

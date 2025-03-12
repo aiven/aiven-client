@@ -4,6 +4,8 @@
 # See the file `LICENSE` for details.
 from __future__ import annotations
 
+# Do not break existing imports e.g. from aiven.client.client import Error, ResponseError
+from aiven.client.base_client import Error, ResponseError  # noqa
 from aiven.client.common_client import AivenCommonClient
 from aiven.client.opensearch_client import AivenOpenSearchClient
 from typing import TYPE_CHECKING
