@@ -867,15 +867,17 @@ class AivenCLI(argx.CommandLineTool):
                     for name, spec in sorted(options.items()):
                         default = spec.get("default")
                         default_desc = "(default={!r})".format(default) if default is not None else ""
-                        description = ": {}".format(spec["description"]) if "description" in spec else ""
+                        description = spec.get("description", "")
+                        full_description = (
+                            "{}: {}".format(spec.get("title"), description) if "title" in spec else description
+                        )
                         types = spec["type"]
                         if isinstance(types, str) and types == "null":
                             print(
-                                "  {title}{description}\n"
+                                "  {full_description}\n"
                                 "     => --remove-option {name}".format(
                                     name=name,
-                                    title=spec["title"],
-                                    description=description,
+                                    full_description=full_description,
                                 )
                             )
                         else:
@@ -883,13 +885,12 @@ class AivenCLI(argx.CommandLineTool):
                                 types = [types]
                             type_str = " or ".join(t for t in types if t != "null")
                             print(
-                                "  {title}{description}\n"
+                                "  {full_description}\n"
                                 "     => -c {name}=<{type}>  {default}".format(
                                     name=name,
                                     type=type_str,
                                     default=default_desc,
-                                    title=spec["title"],
-                                    description=description,
+                                    full_description=full_description,
                                 )
                             )
 
