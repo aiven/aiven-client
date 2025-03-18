@@ -9,6 +9,7 @@ from . import argx
 from aiven.client.common_cli import AivenCommonCLI
 from aiven.client.opensearch_cli import AivenOpenSearchCLI
 from aiven.client.privatelink_cli import AivenPrivateLinkCLI
+from aiven.client.user_cli import AivenUserCLI
 
 
 class AivenCLI(

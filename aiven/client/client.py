@@ -10,6 +10,7 @@ from aiven.client.opensearch_client import AivenOpenSearchClient
 from typing import TYPE_CHECKING
 
 from aiven.client.privatelink_client import AivenPrivateLinkClient
+from aiven.client.user_client import AivenUserClient
 
 try:
     from .version import __version__
@@ -24,6 +25,7 @@ UNCHANGED = object()  # used as a sentinel value
 
 class AivenClient(
     AivenCommonClient,
+    AivenUserClient,
     AivenAccountOrganisationClient,
     AivenPrivateLinkClient,
     AivenOpenSearchClient,
