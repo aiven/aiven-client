@@ -126,7 +126,8 @@ def get_current_date() -> datetime:
 
 
 class ClientFactory(Protocol):
-    def __call__(self, base_url: str, show_http: bool, request_timeout: int | None) -> client.AivenClient: ...
+    def __call__(self, base_url: str, show_http: bool, request_timeout: int | None) -> client.AivenClient:
+        ...
 
 
 class AivenBaseCLI(argx.CommandLineTool):
@@ -295,3 +296,14 @@ class AivenBaseCLI(argx.CommandLineTool):
                 "Specify project: use --project in the command line or the default_project item in the config file."
             )
         return default_project
+
+    def _get_service_type(self) -> str:
+        return self.args.service_type.partition(":")[0]
+
+    def _get_plan(self) -> str:
+        maybe_plan = self.args.service_type.partition(":")[2]
+        if maybe_plan:
+            return maybe_plan
+        elif self.args.plan:
+            return self.args.plan
+        raise argx.UserError("No subscription plan given")

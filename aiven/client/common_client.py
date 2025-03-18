@@ -2044,38 +2044,6 @@ class AivenCommonClient(AivenClientBase):
             ),
         )
 
-    def sustainability_service_plan_emissions_project(
-        self, project: str, service_type: str, plan: str, cloud: str
-    ) -> dict[str, Any]:
-        return self.verify(
-            self.get,
-            self.build_path(
-                "project",
-                project,
-                "sustainability",
-                "emissions-project",
-                "service-types",
-                service_type,
-                "plans",
-                plan,
-                "clouds",
-                cloud,
-            ),
-        )
-
-    def sustainability_project_emissions_estimate(self, project: str, since: str, until: str) -> dict[str, Any]:
-        params = {"since": since, "until": until}
-        return self.verify(
-            self.get,
-            self.build_path(
-                "project",
-                project,
-                "sustainability",
-                "emissions",
-            ),
-            params=params,
-        )
-
     def byoc_create(
         self,
         *,

@@ -3,21 +3,24 @@
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
 from __future__ import annotations
-from typing import Callable
-from aiven.client.account_cli import AivenAccountOrganisationCLI
+
 from . import argx
+from aiven.client.account_cli import AivenAccountOrganisationCLI
 from aiven.client.common_cli import AivenCommonCLI
 from aiven.client.opensearch_cli import AivenOpenSearchCLI
 from aiven.client.privatelink_cli import AivenPrivateLinkCLI
+from aiven.client.sustainability_cli import AivenSustainabilityCLI
 from aiven.client.user_cli import AivenUserCLI
+from typing import Callable
 
 
 class AivenCLI(
     AivenCommonCLI,
     AivenAccountOrganisationCLI,
-    AivenUserCLI,
-    AivenPrivateLinkCLI,
     AivenOpenSearchCLI,
+    AivenPrivateLinkCLI,
+    AivenSustainabilityCLI,
+    AivenUserCLI,
 ):
     def pre_run(self, func: Callable[[], int | None]) -> None:
         self.client = self.client_factory(

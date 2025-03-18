@@ -315,7 +315,8 @@ class AivenCommonCLI(AivenBaseCLI):
                         types = spec["type"]
                         if isinstance(types, str) and types == "null":
                             print(
-                                "  {full_description}\n" "     => --remove-option {name}".format(
+                                "  {full_description}\n"
+                                "     => --remove-option {name}".format(
                                     name=name,
                                     full_description=full_description,
                                 )
@@ -325,7 +326,8 @@ class AivenCommonCLI(AivenBaseCLI):
                                 types = [types]
                             type_str = " or ".join(t for t in types if t != "null")
                             print(
-                                "  {full_description}\n" "     => -c {name}=<{type}>  {default}".format(
+                                "  {full_description}\n"
+                                "     => -c {name}=<{type}>  {default}".format(
                                     name=name,
                                     type=type_str,
                                     default=default_desc,
@@ -3043,17 +3045,6 @@ ssl.truststore.type=JKS
             delete=self.args.cidrs,
         )
 
-    def _get_service_type(self) -> str:
-        return self.args.service_type.partition(":")[0]
-
-    def _get_plan(self) -> str:
-        maybe_plan = self.args.service_type.partition(":")[2]
-        if maybe_plan:
-            return maybe_plan
-        elif self.args.plan:
-            return self.args.plan
-        raise argx.UserError("No subscription plan given")
-
     @arg.project
     @arg.service_name
     @arg("--group-name", help="service group (deprecated)")
@@ -3694,7 +3685,9 @@ server_encryption_options:
     keystore_password: {password}
     truststore: ./sstableloader.truststore.jks
     truststore_password: {password}
-""".format(password=self.args.password)
+""".format(
+                        password=self.args.password
+                    )
                 )
 
             # The Project CA signs the certificate used by the Cassandra native transport, aka the regular client port
@@ -4583,45 +4576,6 @@ server_encryption_options:
                     file_object=f,
                 ),
             )
-
-    @arg.project
-    @arg.cloud
-    @arg.json
-    @arg.service_type
-    @arg("-p", "--plan", help="subscription plan of service")
-    def sustainability__service_plan_emissions_project(self) -> None:
-        """Estimate emissions for a service plan"""
-        project = self.get_project()
-        service_type = self._get_service_type()
-        plan = self._get_plan()
-        cloud = self.args.cloud
-
-        estimate = self.client.sustainability_service_plan_emissions_project(
-            project=project, service_type=service_type, plan=plan, cloud=cloud
-        )
-        records = [{"measurement": k, "value": v} for k, v in estimate["emissions"].items()]
-
-        layout = ["measurement", "value"]
-
-        self.print_response(records, json=self.args.json, table_layout=layout)
-
-    @arg.project
-    @arg.json
-    @arg("--since", help="Period begin datestamp in format YYYYMMDD", required=True)
-    @arg("--until", help="Period begin datestamp in format YYYYMMDD", required=True)
-    def sustainability__project_emissions_estimate(self) -> None:
-        """Estimate emissions for a project"""
-        project = self.get_project()
-        since = self.args.since
-        until = self.args.until
-
-        estimate = self.client.sustainability_project_emissions_estimate(project=project, since=since, until=until)
-
-        records = [{"measurement": k, "value": v} for k, v in estimate["emissions"].items()]
-
-        layout = ["measurement", "value"]
-
-        self.print_response(records, json=self.args.json, table_layout=layout)
 
     @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
     @arg("--deployment-model", required=True, help="Deployment model for the BYOC cloud")
