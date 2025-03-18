@@ -2985,3 +2985,143 @@ class AivenClient(AivenClientBase):
             self.delete,
             self.build_path("project", project, "service", service, "kafka", "acl", acl_id),
         )
+
+    def list_organization_vpcs(self, organization_id: str) -> Mapping:
+        return self.verify(self.get, self.build_path("organization", organization_id, "vpcs"))
+
+    def get_organization_vpc(self, organization_id: str, organization_vpc_id: str) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "organization",
+                organization_id,
+                "vpcs",
+                organization_vpc_id,
+            ),
+        )
+
+    def create_organization_vpc(
+        self, organization_id: str, cloud: str, network_cidr: str, peering_connections: Sequence
+    ) -> Mapping:
+        body = {
+            "clouds": [
+                {
+                    "cloud_name": cloud,
+                    "network_cidr": network_cidr,
+                }
+            ],
+            "peering_connections": peering_connections,
+        }
+        return self.verify(
+            self.post,
+            self.build_path("organization", organization_id, "vpcs"),
+            body=body,
+        )
+
+    def delete_organization_vpc(self, organization_id: str, organization_vpc_id: str) -> Mapping:
+        return self.verify(
+            self.delete,
+            self.build_path(
+                "organization",
+                organization_id,
+                "vpcs",
+                organization_vpc_id,
+            ),
+        )
+
+    def get_organization_vpc_peering_connections(self, *, organization_id: str, vpc_id: str) -> Mapping[Any, Any]:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "organization",
+                organization_id,
+                "vpcs",
+                vpc_id,
+                "peering-connections",
+            ),
+        )
+
+    def organization_vpc_peering_connection_create(
+        self,
+        *,
+        organization_id: str,
+        vpc_id: str,
+        peer_cloud_account: str,
+        peer_vpc: str,
+        peer_region: str | None,
+        peer_resource_group: str | None,
+        peer_azure_app_id: str | None,
+        peer_azure_tenant_id: str | None,
+    ) -> Mapping[Any, Any]:
+        return self.verify(
+            self.post,
+            self.build_path(
+                "organization",
+                organization_id,
+                "vpcs",
+                vpc_id,
+                "peering-connections",
+            ),
+            body={
+                k: v
+                for k, v in {
+                    "peer_cloud_account": peer_cloud_account,
+                    "peer_vpc": peer_vpc,
+                    "peer_region": peer_region,
+                    "peer_resource_group": peer_resource_group,
+                    "peer_azure_app_id": peer_azure_app_id,
+                    "peer_azure_tenant_id": peer_azure_tenant_id,
+                }.items()
+                if v is not None
+            },
+        )
+
+    def organization_vpc_peering_connection_delete(
+        self, *, organization_id: str, vpc_id: str, peering_connection_id: str
+    ) -> Mapping[Any, Any]:
+        return self.verify(
+            self.delete,
+            self.build_path(
+                "organization",
+                organization_id,
+                "vpcs",
+                vpc_id,
+                "peering-connections",
+                peering_connection_id,
+            ),
+        )
+
+    def organization_vpc_clouds_list(self, *, organization_id: str) -> Mapping[Any, Any]:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "organization",
+                organization_id,
+                "vpc-clouds",
+            ),
+        )
+
+    def organization_vpc_user_peer_network_cidrs_update(
+        self,
+        *,
+        organization_id: str,
+        organization_vpc_id: str,
+        peering_connection_id: str,
+        add: Sequence[Mapping[str, str]] | None = None,
+        delete: Sequence[str] | None = None,
+    ) -> Mapping[Any, Any]:
+        path = self.build_path(
+            "organization",
+            organization_id,
+            "vpcs",
+            organization_vpc_id,
+            "peering-connections",
+            peering_connection_id,
+            "user-peer-network-cidrs",
+        )
+        body: dict[str, Any] = {}
+        if add:
+            body["add"] = add
+        if delete:
+            body["delete"] = delete
+        return self.verify(self.put, path, body=body)
