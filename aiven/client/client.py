@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from aiven.client.account_client import AivenAccountOrganisationClient
+from aiven.client.clickhouse_client import AivenClickhouseClient
 from aiven.client.common_client import AivenCommonClient
 from aiven.client.opensearch_client import AivenOpenSearchClient
 from aiven.client.privatelink_client import AivenPrivateLinkClient
@@ -26,6 +27,7 @@ UNCHANGED = object()  # used as a sentinel value
 class AivenClient(
     AivenCommonClient,
     AivenAccountOrganisationClient,
+    AivenClickhouseClient,
     AivenOpenSearchClient,
     AivenPrivateLinkClient,
     AivenSustainabilityClient,

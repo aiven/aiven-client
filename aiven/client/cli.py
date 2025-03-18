@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from . import argx
 from aiven.client.account_cli import AivenAccountOrganisationCLI
+from aiven.client.clickhouse_cli import AivenClickhouseCLI
 from aiven.client.common_cli import AivenCommonCLI
 from aiven.client.opensearch_cli import AivenOpenSearchCLI
 from aiven.client.privatelink_cli import AivenPrivateLinkCLI
@@ -17,6 +18,7 @@ from typing import Callable
 class AivenCLI(
     AivenCommonCLI,
     AivenAccountOrganisationCLI,
+    AivenClickhouseCLI,
     AivenOpenSearchCLI,
     AivenPrivateLinkCLI,
     AivenSustainabilityCLI,
