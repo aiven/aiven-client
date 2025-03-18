@@ -8,6 +8,7 @@ from aiven.client.account_cli import AivenAccountOrganisationCLI
 from . import argx
 from aiven.client.common_cli import AivenCommonCLI
 from aiven.client.opensearch_cli import AivenOpenSearchCLI
+from aiven.client.privatelink_cli import AivenPrivateLinkCLI
 
 
 class AivenCLI(
