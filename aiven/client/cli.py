@@ -3160,7 +3160,7 @@ ssl.truststore.type=JKS
 
     @arg.project
     @arg.service_name
-    def service__opensearch_security_management__status(self) -> None:
+    def service__opensearch__security_management__status(self) -> None:
         """Show status of the opensearch security"""
         response = self.client.opensearch_security_get(
             project=self.get_project(),
@@ -3182,7 +3182,14 @@ ssl.truststore.type=JKS
 
     @arg.project
     @arg.service_name
-    def service__opensearch_security_management__set(self) -> None:
+    def service__opensearch_security_management__status(self) -> None:
+        """Deprecated: Show status of the opensearch security"""
+        print("Deprected: `use service opensearch security-management status` instead")
+        self.service__opensearch__security_management__status()
+
+    @arg.project
+    @arg.service_name
+    def service__opensearch__security_management__set(self) -> None:
         """Set the password for the opensearch security management"""
         print("Opensearch Security Management is enabled by setting the password")
         print("for the security management user. Once enabled normal Aiven service")
@@ -3203,7 +3210,14 @@ ssl.truststore.type=JKS
 
     @arg.project
     @arg.service_name
-    def service__opensearch_security_management__reset(self) -> None:
+    def service__opensearch_security_management__set(self) -> None:
+        """Deprecated: Set the password for the opensearch security management"""
+        print("Deprected: `use service opensearch security-management set` instead")
+        self.service__opensearch__security_management__set()
+
+    @arg.project
+    @arg.service_name
+    def service__opensearch__security_management__reset(self) -> None:
         """Reset the password for the opensearch security management"""
         old_passwd = self.enter_password(
             prompt="Old Opensearch Security Manager password",
@@ -3221,6 +3235,13 @@ ssl.truststore.type=JKS
             new_password=new_passwd,
         )
         print(response.get("message"))
+
+    @arg.project
+    @arg.service_name
+    def service__opensearch_security_management__reset(self) -> None:
+        """Deprecated: Reset the password for the opensearch security management"""
+        print("Deprected: `use service opensearch security-management reset` instead")
+        self.service__opensearch__security_management__reset()
 
     @arg.project
     @arg.service_name
