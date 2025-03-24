@@ -2828,7 +2828,7 @@ ssl.truststore.type=JKS
     @arg("--format", help="Format string for output")
     @arg.json
     def service__task_get(self) -> None:
-        """Create a service task"""
+        """Get a service task"""
         response = self.client.get_service_task(
             project=self.get_project(),
             service=self.args.service_name,
