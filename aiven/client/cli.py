@@ -3160,7 +3160,7 @@ ssl.truststore.type=JKS
 
     @arg.project
     @arg.service_name
-    def service__opensearch_security_management__status(self) -> None:
+    def service__opensearch__security_management__status(self) -> None:
         """Show status of the opensearch security"""
         response = self.client.opensearch_security_get(
             project=self.get_project(),
@@ -3182,7 +3182,14 @@ ssl.truststore.type=JKS
 
     @arg.project
     @arg.service_name
-    def service__opensearch_security_management__set(self) -> None:
+    def service__opensearch_security_management__status(self) -> None:
+        """Deprecated: Show status of the opensearch security"""
+        print("Deprected: `use service opensearch security-management status` instead")
+        self.service__opensearch__security_management__status()
+
+    @arg.project
+    @arg.service_name
+    def service__opensearch__security_management__set(self) -> None:
         """Set the password for the opensearch security management"""
         print("Opensearch Security Management is enabled by setting the password")
         print("for the security management user. Once enabled normal Aiven service")
@@ -3203,7 +3210,14 @@ ssl.truststore.type=JKS
 
     @arg.project
     @arg.service_name
-    def service__opensearch_security_management__reset(self) -> None:
+    def service__opensearch_security_management__set(self) -> None:
+        """Deprecated: Set the password for the opensearch security management"""
+        print("Deprected: `use service opensearch security-management set` instead")
+        self.service__opensearch__security_management__set()
+
+    @arg.project
+    @arg.service_name
+    def service__opensearch__security_management__reset(self) -> None:
         """Reset the password for the opensearch security management"""
         old_passwd = self.enter_password(
             prompt="Old Opensearch Security Manager password",
@@ -3221,6 +3235,13 @@ ssl.truststore.type=JKS
             new_password=new_passwd,
         )
         print(response.get("message"))
+
+    @arg.project
+    @arg.service_name
+    def service__opensearch_security_management__reset(self) -> None:
+        """Deprecated: Reset the password for the opensearch security management"""
+        print("Deprected: `use service opensearch security-management reset` instead")
+        self.service__opensearch__security_management__reset()
 
     @arg.project
     @arg.service_name
@@ -6522,6 +6543,102 @@ server_encryption_options:
             project=self.get_project(), service=self.args.service_name, acl_id=self.args.acl_id
         )
         print(response["message"])
+
+    @arg.project
+    @arg.service_name
+    def service__opensearch__custom_repo_list(self) -> None:
+        """Show custom repository information"""
+        response = self.client.opensearch_custom_repo_list(
+            project=self.get_project(),
+            service=self.args.service_name,
+        )
+        self.print_response(response, json=True)
+
+    @arg.project
+    @arg.service_name
+    @arg("repository_name", help="Custom Repository name")
+    def service__opensearch__snapshot__in_progress(self) -> None:
+        """Show custom repository snapshots in-progress"""
+        response = self.client.opensearch_snapshot_in_progress(
+            project=self.get_project(),
+            service=self.args.service_name,
+            repository_name=self.args.repository_name,
+        )
+        self.print_response(response, json=True)
+
+    @arg.project
+    @arg.service_name
+    @arg("repository_name", help="Custom Repository name")
+    def service__opensearch__snapshot__list(self) -> None:
+        """Show custom repository snapshots list"""
+        response = self.client.opensearch_snapshot_list(
+            project=self.get_project(),
+            service=self.args.service_name,
+            repository_name=self.args.repository_name,
+        )
+        self.print_response(response, json=True)
+
+    @arg.project
+    @arg.service_name
+    @arg("repository_name", help="Custom Repository name")
+    @arg("snapshot_name", help="Snapshot name")
+    def service__opensearch__snapshot__show(self) -> None:
+        """Show custom repository snapshot info"""
+        response = self.client.opensearch_snapshot_show(
+            project=self.get_project(),
+            service=self.args.service_name,
+            repository_name=self.args.repository_name,
+            snapshot_name=self.args.snapshot_name,
+        )
+        self.print_response(response, json=True)
+
+    @arg.project
+    @arg.service_name
+    @arg("repository_name", help="Custom Repository name")
+    @arg("snapshot_name", help="Snapshot name")
+    def service__opensearch__snapshot__status(self) -> None:
+        """Show custom repository snapshot status"""
+        response = self.client.opensearch_snapshot_status(
+            project=self.get_project(),
+            service=self.args.service_name,
+            repository_name=self.args.repository_name,
+            snapshot_name=self.args.snapshot_name,
+        )
+        self.print_response(response, json=True)
+
+    @arg.project
+    @arg.service_name
+    @arg("repository_name", help="Custom Repository name")
+    @arg("snapshot_name", help="Snapshot name")
+    @arg(
+        "body",
+        help="Request body json, see https://opensearch.org/docs/latest/api-reference/snapshots/create-snapshot/",
+        default={},
+    )
+    def service__opensearch__snapshot__create(self) -> None:
+        """Create a snapshot in custom repository"""
+        response = self.client.opensearch_snapshot_create(
+            project=self.get_project(),
+            service=self.args.service_name,
+            repository_name=self.args.repository_name,
+            snapshot_name=self.args.snapshot_name,
+            body=self.args.body,
+        )
+        self.print_response(response, json=True)
+
+    @arg.project
+    @arg.service_name
+    @arg("repository_name", help="Custom Repository name")
+    @arg("snapshot_name", help="Snapshot name")
+    def service__opensearch__snapshot__delete(self) -> None:
+        """Delete a snapshot from custom repository"""
+        response = self.client.opensearch_snapshot_delete(
+            project=self.get_project(),
+            service=self.args.service_name,
+            repository_name=self.args.repository_name,
+            snapshot_name=self.args.snapshot_name,
+        )
+        self.print_response(response, json=True)
 
 
 if __name__ == "__main__":

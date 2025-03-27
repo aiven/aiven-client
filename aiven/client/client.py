@@ -3125,3 +3125,147 @@ class AivenClient(AivenClientBase):
         if delete:
             body["delete"] = delete
         return self.verify(self.put, path, body=body)
+
+    def opensearch_custom_repo_list(
+        self,
+        project: str,
+        service: str,
+    ) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "opensearch",
+                "_snapshot",
+            ),
+        )
+
+    def opensearch_snapshot_in_progress(
+        self,
+        project: str,
+        service: str,
+        repository_name: str,
+    ) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "opensearch",
+                "_snapshot",
+                repository_name,
+                "_status",
+            ),
+        )
+
+    def opensearch_snapshot_list(
+        self,
+        project: str,
+        service: str,
+        repository_name: str,
+    ) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "opensearch",
+                "_snapshot",
+                repository_name,
+                "_all",
+            ),
+        )
+
+    def opensearch_snapshot_show(
+        self,
+        project: str,
+        service: str,
+        repository_name: str,
+        snapshot_name: str,
+    ) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "opensearch",
+                "_snapshot",
+                repository_name,
+                snapshot_name,
+            ),
+        )
+
+    def opensearch_snapshot_status(
+        self,
+        project: str,
+        service: str,
+        repository_name: str,
+        snapshot_name: str,
+    ) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "opensearch",
+                "_snapshot",
+                repository_name,
+                snapshot_name,
+                "_status",
+            ),
+        )
+
+    def opensearch_snapshot_create(
+        self,
+        project: str,
+        service: str,
+        repository_name: str,
+        snapshot_name: str,
+        body: Mapping[str, Any],
+    ) -> Mapping:
+        return self.verify(
+            self.post,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "opensearch",
+                "_snapshot",
+                repository_name,
+                snapshot_name,
+            ),
+            body=body,
+        )
+
+    def opensearch_snapshot_delete(
+        self,
+        project: str,
+        service: str,
+        repository_name: str,
+        snapshot_name: str,
+    ) -> Mapping:
+        return self.verify(
+            self.delete,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "opensearch",
+                "_snapshot",
+                repository_name,
+                snapshot_name,
+            ),
+        )
