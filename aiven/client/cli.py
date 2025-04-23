@@ -2719,20 +2719,6 @@ ssl.truststore.type=JKS
                 has_remote_size = True
         is_tiered = "remote_storage_enable" in topic["config"] and topic["config"]["remote_storage_enable"]["value"]
 
-        if is_tiered and has_remote_size:
-            layout = [["partition", "isr", "size", "remote_size", "earliest_offset", "latest_offset", "groups"]]
-        else:
-            layout = [["partition", "isr", "size", "earliest_offset", "latest_offset", "groups"]]
-
-        self.print_response(
-            topic["partitions"],
-            format=self.args.format,
-            json=self.args.json,
-            table_layout=layout,
-        )
-        print()
-
-        layout = [["partition", "consumer_group", "offset", "lag"]]
         cgroups = []
         for p in topic["partitions"]:
             for cg in p["consumer_groups"]:
@@ -2749,15 +2735,35 @@ ssl.truststore.type=JKS
                     }
                 )
 
-        if not cgroups:
-            print("(No consumer groups)")
-        else:
+        if self.args.json:
+            # If JSON output is requested, output the entire object in a single step
             self.print_response(
-                cgroups,
+                {"partitions": topic["partitions"], "consumer_groups": cgroups},
+                json=True,
+            )
+        else:
+            if is_tiered and has_remote_size:
+                layout = [["partition", "isr", "size", "remote_size", "earliest_offset", "latest_offset", "groups"]]
+            else:
+                layout = [["partition", "isr", "size", "earliest_offset", "latest_offset", "groups"]]
+
+            self.print_response(
+                topic["partitions"],
                 format=self.args.format,
                 json=self.args.json,
                 table_layout=layout,
             )
+            print()
+
+            if not cgroups:
+                print("(No consumer groups)")
+            else:
+                self.print_response(
+                    cgroups,
+                    format=self.args.format,
+                    json=self.args.json,
+                    table_layout=[["partition", "consumer_group", "offset", "lag"]],
+                )
 
     @arg.project
     @arg.service_name
