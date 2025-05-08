@@ -6646,6 +6646,26 @@ server_encryption_options:
         )
         self.print_response(response, json=True)
 
+    @arg.project
+    @arg.service_name
+    @arg("repository_name", help="Custom Repository name")
+    @arg("snapshot_name", help="Snapshot name")
+    @arg(
+        "body",
+        help="Request body json, see https://opensearch.org/docs/latest/api-reference/snapshots/restore-snapshot/",
+        default={},
+    )
+    def service__opensearch__snapshot__restore(self) -> None:
+        """Restore a snapshot from custom repository"""
+        response = self.client.opensearch_snapshot_restore(
+            project=self.get_project(),
+            service=self.args.service_name,
+            repository_name=self.args.repository_name,
+            snapshot_name=self.args.snapshot_name,
+            body=self.args.body,
+        )
+        self.print_response(response, json=True)
+
 
 if __name__ == "__main__":
     AivenCLI().main()
