@@ -3269,3 +3269,27 @@ class AivenClient(AivenClientBase):
                 snapshot_name,
             ),
         )
+
+    def opensearch_snapshot_restore(
+        self,
+        project: str,
+        service: str,
+        repository_name: str,
+        snapshot_name: str,
+        body: Mapping[str, Any],
+    ) -> Mapping:
+        return self.verify(
+            self.post,
+            self.build_path(
+                "project",
+                project,
+                "service",
+                service,
+                "opensearch",
+                "_snapshot",
+                repository_name,
+                snapshot_name,
+                "_restore",
+            ),
+            body=body,
+        )
