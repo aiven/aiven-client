@@ -4025,7 +4025,7 @@ ssl.truststore.type=JKS
         requested_version = self._extract_user_config_version(service_type, user_config)
 
         if requested_version:
-            self._do_version_eol_check(service_type, requested_version)
+            self._do_version_eol_check(service_type, requested_version, project=project)
 
         service_integrations = []
 
@@ -4101,8 +4101,16 @@ ssl.truststore.type=JKS
 
         return service_def["user_config_schema"]
 
-    def _get_service_version_info(self, service_type: str, version: str) -> Mapping[str, Any]:
-        service_versions = self.client.get_service_versions()
+    def _get_service_versions(self, project: str | None = None) -> Sequence[Mapping[str, Any]]:
+        account_id = None
+        if project:
+            project_data = self.client.get_project(project=project)
+            account_id = project_data["account_id"]
+
+        return self.client.get_service_versions(account_id=account_id)
+
+    def _get_service_version_info(self, service_type: str, version: str, project: str | None = None) -> Mapping[str, Any]:
+        service_versions = self._get_service_versions(project=project)
 
         for service_version in service_versions:
             if service_version["service_type"] == service_type and service_version["major_version"] == version:
@@ -4132,9 +4140,9 @@ ssl.truststore.type=JKS
 
         return user_config.get(service_version_key)
 
-    def _do_version_eol_check(self, service_type: str, requested_version: str) -> None:
+    def _do_version_eol_check(self, service_type: str, requested_version: str, project: str | None = None) -> None:
         """Checks the specified service version against EOL times."""
-        service_version = self._get_service_version_info(service_type, requested_version)
+        service_version = self._get_service_version_info(service_type, requested_version, project=project)
         current_time = get_current_date()
 
         if not service_version["aiven_end_of_life_time"]:
@@ -4276,7 +4284,7 @@ ssl.truststore.type=JKS
         requested_version = self._extract_user_config_version(service_type, user_config)
 
         if requested_version:
-            self._do_version_eol_check(service_type, requested_version)
+            self._do_version_eol_check(service_type, requested_version, project=project)
 
         maintenance = self._get_maintainance()
         project_vpc_id = self._get_service_project_vpc_id()
@@ -5195,7 +5203,7 @@ server_encryption_options:
     @arg.json
     def service__versions(self) -> None:
         """List service versions"""
-        service_versions = self.client.get_service_versions()
+        service_versions = self._get_service_versions()
         layout = [
             "service_type",
             "major_version",

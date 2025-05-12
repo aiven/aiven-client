@@ -280,8 +280,11 @@ class AivenClientBase:
 class AivenClient(AivenClientBase):
     """Aiven Client with high-level operations"""
 
-    def get_service_versions(self) -> Sequence[Mapping[str, str]]:
-        return self.verify(self.get, "/service_versions", result_key="service_versions")
+    def get_service_versions(self, account_id: str | None = None) -> Sequence[Mapping[str, str]]:
+        path = "/service_versions"
+        if account_id:
+            path = self.build_path("account", account_id, "service_versions")
+        return self.verify(self.get, path, result_key="service_versions")
 
     def get_service_indexes(self, project: str, service: str) -> Sequence[dict[str, Any]]:
         return self.verify(
