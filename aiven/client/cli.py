@@ -303,16 +303,22 @@ class AivenCLI(argx.CommandLineTool):
         answer = input(prompt)
         return is_truthy(answer)
 
-    def get_project(self, raise_if_none: bool = True) -> str:
+    def get_project(self, raise_if_none: bool = True, fallback_to_default_project: bool = True) -> str:
         """Return project given as cmdline argument or the default project from config file"""
         if getattr(self.args, "project", None) and self.args.project:
             return self.args.project
-        default_project = self.config.get("default_project", "")
-        if raise_if_none and not default_project:
-            raise argx.UserError(
-                "Specify project: use --project in the command line or the default_project item in the config file."
-            )
-        return default_project
+
+        if fallback_to_default_project:
+            default_project = self.config.get("default_project", "")
+            if raise_if_none and not default_project:
+                raise argx.UserError(
+                    "Specify project: use --project in the command line or the default_project item in the config file."
+                )
+            return default_project
+        elif raise_if_none:
+            raise argx.UserError("A project is required. Use --project in the command line.")
+
+        return ""
 
     @no_auth
     @arg("pattern", nargs="*", help="command search pattern")
@@ -5201,9 +5207,11 @@ server_encryption_options:
         self.print_response(result=tickets, table_layout=layout, json=self.args.json)
 
     @arg.json
+    @arg.project
     def service__versions(self) -> None:
         """List service versions"""
-        service_versions = self._get_service_versions()
+        project = self.get_project(raise_if_none=False, fallback_to_default_project=False)
+        service_versions = self._get_service_versions(project=project)
         layout = [
             "service_type",
             "major_version",
