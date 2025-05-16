@@ -711,6 +711,7 @@ class AivenClient(AivenClientBase):
         remote_storage_enable: bool | None = None,
         local_retention_ms: int | None = None,
         local_retention_bytes: int | None = None,
+        inkless_enable: bool | None = None,
         tags: Sequence[Tag] | None = None,
     ) -> Mapping:
         body: dict[str, Any] = {
@@ -731,6 +732,8 @@ class AivenClient(AivenClientBase):
             config["local_retention_ms"] = local_retention_ms
         if local_retention_bytes is not None:
             config["local_retention_bytes"] = local_retention_bytes
+        if inkless_enable is not None:
+            config["inkless_enable"] = inkless_enable
         if config:
             body["config"] = config
 
