@@ -161,6 +161,8 @@ arg.local_retention_bytes = arg(
     type=int,
     help="Local retention limit in bytes in case of tiered storage (default: equals to total retention.bytes)",
 )
+arg.inkless_enable = arg("--inkless-enable", help="Enable inkless", action="store_true")
+arg.inkless_disable = arg("--inkless-disable", help="Disable inkless", action="store_true")
 arg.tag = arg(
     "--tag", dest="topic_option_tag", metavar="KEY[=VALUE]", action="append", help="Tag to add into topic metadata"
 )
