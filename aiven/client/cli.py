@@ -2866,6 +2866,8 @@ ssl.truststore.type=JKS
     @arg.remote_storage_disable
     @arg.local_retention_ms
     @arg.local_retention_bytes
+    @arg.inkless_enable
+    @arg.inkless_disable
     @arg.tag
     @arg(
         "--cleanup-policy",
@@ -2896,6 +2898,7 @@ ssl.truststore.type=JKS
             remote_storage_enable=self._remote_storage_enable(),
             local_retention_ms=self.args.local_retention_ms,
             local_retention_bytes=self.args.local_retention_bytes,
+            inkless_enable=self._inkless_enable(),
             tags=tags,
         )
         print(response)
@@ -2958,6 +2961,16 @@ ssl.truststore.type=JKS
         if self.args.remote_storage_enable:
             return True
         elif self.args.remote_storage_disable:
+            return False
+        else:
+            return None
+
+    def _inkless_enable(self) -> bool | None:
+        if self.args.inkless_enable and self.args.inkless_disable:
+            raise argx.UserError("Only set at most one of --inkless-enable and --inkless-disable")
+        if self.args.inkless_enable:
+            return True
+        elif self.args.inkless_disable:
             return False
         else:
             return None

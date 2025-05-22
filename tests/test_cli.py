@@ -155,6 +155,41 @@ def test_service_user_create() -> None:
                 "tags": [],
             },
         ),
+        (
+            ("service topic-create --project project1 --partitions 1 --replication 1 " + "--inkless-enable service1 topic1"),
+            {
+                "topic_name": "topic1",
+                "cleanup_policy": "delete",
+                "partitions": 1,
+                "replication": 1,
+                "min_insync_replicas": None,
+                "retention_bytes": None,
+                "retention_hours": None,
+                "config": {
+                    "inkless_enable": True,
+                },
+                "tags": [],
+            },
+        ),
+        (
+            (
+                "service topic-create --project project1 --partitions 1 --replication 1 "
+                + "--inkless-disable service1 topic1"
+            ),
+            {
+                "topic_name": "topic1",
+                "cleanup_policy": "delete",
+                "partitions": 1,
+                "replication": 1,
+                "min_insync_replicas": None,
+                "retention_bytes": None,
+                "retention_hours": None,
+                "config": {
+                    "inkless_enable": False,
+                },
+                "tags": [],
+            },
+        ),
     ],
 )
 def test_service_topic_create(command_line: str, expected_post_data: Mapping[str, str | int | None]) -> None:
