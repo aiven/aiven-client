@@ -2916,6 +2916,8 @@ ssl.truststore.type=JKS
     @arg.local_retention_ms
     @arg.local_retention_bytes
     @arg.tagupdate
+    @arg.inkless_enable
+    @arg.inkless_disable
     @arg.untag
     @arg("--replication", help="Replication factor", type=int, required=False)
     def service__topic_update(self) -> None:
@@ -2951,6 +2953,7 @@ ssl.truststore.type=JKS
             remote_storage_enable=self._remote_storage_enable(),
             local_retention_ms=self.args.local_retention_ms,
             local_retention_bytes=self.args.local_retention_bytes,
+            inkless_enable=self._inkless_enable(),
             tags=tags,
         )
         print(response["message"])

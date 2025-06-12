@@ -156,7 +156,7 @@ def test_service_user_create() -> None:
             },
         ),
         (
-            ("service topic-create --project project1 --partitions 1 --replication 1 " + "--inkless-enable service1 topic1"),
+            ("service topic-create --project project1 --partitions 1 --replication 1 --inkless-enable service1 topic1"),
             {
                 "topic_name": "topic1",
                 "cleanup_policy": "delete",
@@ -281,6 +281,40 @@ def test_service_topic_create(command_line: str, expected_post_data: Mapping[str
                 "retention_hours": None,
                 "config": {
                     "remote_storage_enable": False,
+                },
+            },
+        ),
+        (
+            (
+                # Update an existing inkless topic
+                "service topic-update --project project1 --partitions 1 --inkless-enable service1 topic1"
+            ),
+            {
+                "partitions": 1,
+                "replication": None,
+                "min_insync_replicas": None,
+                "retention_bytes": None,
+                "retention_hours": None,
+                "config": {
+                    # inkless is already enable, but it has to be set explicitly since partial update is not supported
+                    "inkless_enable": True,
+                },
+            },
+        ),
+        (
+            (
+                # Update an existing non-inkless topic on an inkless service
+                "service topic-update --project project1 --partitions 1 --inkless-disable service1 topic1"
+            ),
+            {
+                "partitions": 1,
+                "replication": None,
+                "min_insync_replicas": None,
+                "retention_bytes": None,
+                "retention_hours": None,
+                "config": {
+                    # inkless is already disable, but it has to be set explicitly since partial update is not supported
+                    "inkless_enable": False,
                 },
             },
         ),
