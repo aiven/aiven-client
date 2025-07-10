@@ -2567,6 +2567,105 @@ def test_application_user_delete() -> None:
     )
 
 
+def test_permissions_set() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.list_permissions.return_value = [
+        {
+            "create_time": "2023-10-01T12:00:00Z",
+            "permissions": ["organization:billing:read"],
+            "principal_id": "app-user-id",
+            "principal_type": "user",
+            "update_time": "2023-10-01T12:30:00Z",
+        },
+    ]
+    args = [
+        "permissions",
+        "set",
+        "--organization-id=org123456789a",
+        "--resource-type=organization",
+        "--principal-id=app-user-id",
+        "--principal-type=user",
+        "--permission=role:organization:admin",
+    ]
+    with mock.patch("builtins.input", return_value="y"):
+        build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.list_permissions.assert_called_once_with(
+        organization_id="org123456789a",
+        resource_type="organization",
+        resource_id="org123456789a",
+    )
+    aiven_client.update_permissions.assert_called_once_with(
+        organization_id="org123456789a",
+        resource_type="organization",
+        resource_id="org123456789a",
+        principal_id="app-user-id",
+        principal_type="user",
+        permissions=["role:organization:admin"],
+    )
+
+
+def test_permissions_list() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.list_permissions.return_value = [
+        {
+            "create_time": "2023-10-01T12:00:00Z",
+            "permissions": ["role:organization:admin"],
+            "principal_id": "app-user-id",
+            "principal_type": "user",
+            "update_time": "2023-10-01T12:30:00Z",
+        },
+    ]
+    args = [
+        "permissions",
+        "list",
+        "--organization-id=org123456789a",
+        "--resource-type=organization",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.list_permissions.assert_called_once_with(
+        organization_id="org123456789a",
+        resource_type="organization",
+        resource_id="org123456789a",
+    )
+
+
+def test_permissions_list_with_filter(capsys: pytest.CaptureFixture) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.list_permissions.return_value = [
+        {
+            "create_time": "2023-10-01T12:00:00Z",
+            "permissions": ["role:organization:admin"],
+            "principal_id": "app-user-id",
+            "principal_type": "user",
+            "update_time": "2023-10-01T12:30:00Z",
+        },
+        {
+            "create_time": "2023-10-01T12:00:00Z",
+            "permissions": ["role:organization:admin"],
+            "principal_id": "admin-group",
+            "principal_type": "user_group",
+            "update_time": "2023-10-01T12:30:00Z",
+        },
+    ]
+    args = [
+        "permissions",
+        "list",
+        "--organization-id=org123456789a",
+        "--resource-type=organization",
+        "--principal-id=app-user-id",
+        "--principal-type=user",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    captured = capsys.readouterr()
+    assert "app-user-id" in captured.out
+    assert "admin-group" not in captured.out
+    aiven_client.list_permissions.assert_called_once_with(
+        organization_id="org123456789a",
+        resource_type="organization",
+        resource_id="org123456789a",
+    )
+
+
 def test_application_user_token_create() -> None:
     aiven_client = mock.Mock(spec_set=AivenClient)
     aiven_client.create_application_user_token.return_value = {

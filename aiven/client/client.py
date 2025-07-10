@@ -1896,6 +1896,43 @@ class AivenClient(AivenClientBase):
     def delete_application_user(self, organization_id: str, user_id: str) -> None:
         self.verify(self.delete, self.build_path("organization", organization_id, "application-users", user_id))
 
+    def list_permissions(
+        self,
+        organization_id: str,
+        resource_type: str,
+        resource_id: str,
+    ) -> Sequence[dict[str, Any]]:
+        return self.verify(
+            self.get,
+            self.build_path("organization", organization_id, "permissions", resource_type, resource_id),
+            result_key="permissions",
+        )
+
+    def update_permissions(
+        self,
+        organization_id: str,
+        resource_type: str,
+        resource_id: str,
+        principal_id: str,
+        principal_type: str,
+        permissions: Sequence[str],
+    ) -> None:
+        body = {
+            "operation": "set",
+            "permissions": [
+                {
+                    "permissions": permissions,
+                    "principal_id": principal_id,
+                    "principal_type": principal_type,
+                }
+            ],
+        }
+        self.verify(
+            self.patch,
+            self.build_path("organization", organization_id, "permissions", resource_type, resource_id),
+            body=body,
+        )
+
     def create_application_user_token(
         self,
         organization_id: str,
