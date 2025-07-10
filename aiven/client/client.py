@@ -1869,6 +1869,72 @@ class AivenClient(AivenClientBase):
         }
         return self.verify(self.put, "/me/password", body=request)
 
+    def create_application_user(self, organization_id: str, name: str) -> Mapping:
+        body: dict[str, Any] = {
+            "name": name,
+        }
+        return self.verify(self.post, self.build_path("organization", organization_id, "application-users"), body=body)
+
+    def get_application_user(self, organization_id: str, user_id: str) -> Mapping:
+        return self.verify(self.get, self.build_path("organization", organization_id, "application-users", user_id))
+
+    def list_application_users(self, organization_id: str) -> Sequence[dict[str, Any]]:
+        return self.verify(
+            self.get, self.build_path("organization", organization_id, "application-users"), result_key="application_users"
+        )
+
+    def update_application_user(self, organization_id: str, user_id: str, name: str) -> Mapping:
+        body: dict[str, Any] = {
+            "name": name,
+        }
+        return self.verify(
+            self.patch,
+            self.build_path("organization", organization_id, "application-users", user_id),
+            body=body,
+        )
+
+    def delete_application_user(self, organization_id: str, user_id: str) -> None:
+        self.verify(self.delete, self.build_path("organization", organization_id, "application-users", user_id))
+
+    def create_application_user_token(
+        self,
+        organization_id: str,
+        user_id: str,
+        description: str,
+        extend_when_used: bool = False,
+        max_age_seconds: int | None = None,
+        scopes: Sequence[str] | None = None,
+        ip_allowlist: Sequence[str] | None = None,
+    ) -> Mapping:
+        body: dict[str, Any] = {
+            "description": description,
+        }
+        if max_age_seconds is not None:
+            body["max_age_seconds"] = max_age_seconds
+            body["extend_when_used"] = extend_when_used
+        if ip_allowlist:
+            body["ip_allowlist"] = ip_allowlist
+        if scopes:
+            body["scopes"] = scopes
+        return self.verify(
+            self.post,
+            self.build_path("organization", organization_id, "application-users", user_id, "access-tokens"),
+            body=body,
+        )
+
+    def list_application_user_tokens(self, organization_id: str, user_id: str) -> Sequence[dict[str, Any]]:
+        return self.verify(
+            self.get,
+            self.build_path("organization", organization_id, "application-users", user_id, "access-tokens"),
+            result_key="tokens",
+        )
+
+    def delete_application_user_token(self, organization_id: str, user_id: str, token_prefix: str) -> None:
+        self.verify(
+            self.delete,
+            self.build_path("organization", organization_id, "application-users", user_id, "access-tokens", token_prefix),
+        )
+
     def get_service_logs(
         self, project: str, service: str, sort_order: str | None = None, offset: str | None = None, limit: int = 100
     ) -> Mapping:
