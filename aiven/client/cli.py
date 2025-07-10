@@ -4936,6 +4936,175 @@ server_encryption_options:
                 raise argx.UserError("not authenticated: please login first with 'avn user login'")
 
     @arg.json
+    @arg.organization_id
+    @arg("--name", help="Application User name", required=True)
+    def application_user__create(self) -> None:
+        """Create an application user"""
+        app_user = self.client.create_application_user(
+            organization_id=self.args.organization_id,
+            name=self.args.name,
+        )
+        layout = [["name", "user_email", "user_id", "is_super_admin"]]
+        self.print_response(app_user, json=self.args.json, table_layout=layout, single_item=True)
+
+    @arg.json
+    @arg.organization_id
+    @arg("user_id", help="Application User ID")
+    def application_user__info(self) -> None:
+        """Get profile information for an application user"""
+        app_user = self.client.get_application_user(
+            organization_id=self.args.organization_id,
+            user_id=self.args.user_id,
+        )
+        layout = [["name", "user_email", "user_id", "is_super_admin"]]
+        self.print_response(app_user, json=self.args.json, table_layout=layout, single_item=True)
+
+    @arg.json
+    @arg.organization_id
+    def application_user__list(self) -> None:
+        """List application users for an organization"""
+        app_users = self.client.list_application_users(organization_id=self.args.organization_id)
+        layout = [["name", "user_email", "user_id", "is_super_admin"]]
+        self.print_response(app_users, json=self.args.json, table_layout=layout)
+
+    @arg.json
+    @arg.organization_id
+    @arg("user_id", help="Application User ID")
+    @arg("--name", help="Application User name", required=True)
+    def application_user__update(self) -> None:
+        """Update the profile information for an application user"""
+        app_user = self.client.update_application_user(
+            organization_id=self.args.organization_id,
+            user_id=self.args.user_id,
+            name=self.args.name,
+        )
+        layout = [["name", "user_email", "user_id", "is_super_admin"]]
+        self.print_response(app_user, json=self.args.json, table_layout=layout, single_item=True)
+
+    @arg.json
+    @arg.force
+    @arg.organization_id
+    @arg("user_id", help="Application User ID")
+    def application_user__delete(self) -> None:
+        """Permanently delete an application user"""
+        if not self.args.force:
+            self.print_boxed(
+                [
+                    "Deleting an application user cannot be undone and all associated tokens will be invalidated!",
+                ]
+            )
+
+        if not self.confirm("Confirm delete (y/N)?"):
+            raise argx.UserError("Aborted")
+
+        self.client.delete_application_user(organization_id=self.args.organization_id, user_id=self.args.user_id)
+        print(f"Application user {self.args.user_id} deleted successfully.")
+
+    @arg.json
+    @arg.organization_id
+    @arg("user_id", help="Application User ID")
+    @arg("--description", help="Token description", required=True)
+    @arg(
+        "--max-age-seconds",
+        type=int,
+        help="Time the token remains valid since creation (or since last use if extend_when_used is true) "
+        "expressed in seconds. The token will never expire if not specified",
+    )
+    @arg(
+        "--extend-when-used",
+        action="store_true",
+        default=False,
+        help="Extend token expiration time when token is used. Only applicable if max_age_seconds is specified",
+    )
+    @arg(
+        "--ip-allowlist",
+        action="append",
+        default=[],
+        help="IP allowlist for the token. Can be specified multiple times to add multiple IPs or CIDRs",
+    )
+    @arg(
+        "--scopes",
+        action="append",
+        default=[],
+        help="Scopes for the token. Can be specified multiple times to add multiple scopes",
+    )
+    def application_user__token__create(self) -> None:
+        """Creates a token for an application user."""
+        if self.args.extend_when_used and not self.args.max_age_seconds:
+            raise argx.UserError("extend_when_used can only be used if max_age_seconds is specified")
+        token_info = self.client.create_application_user_token(
+            organization_id=self.args.organization_id,
+            user_id=self.args.user_id,
+            description=self.args.description,
+            max_age_seconds=self.args.max_age_seconds,
+            extend_when_used=self.args.extend_when_used,
+            ip_allowlist=self.args.ip_allowlist,
+            scopes=self.args.scopes,
+        )
+        layout = [["full_token", "token_prefix"]]
+        self.print_boxed(
+            [
+                "Copy and safely store the full token value. You cannot get the token later.",
+            ]
+        )
+        self.print_response(token_info, json=self.args.json, table_layout=layout, single_item=True)
+
+    @arg.json
+    @arg.organization_id
+    @arg("user_id", help="Application User ID")
+    @arg("--verbose", action="store_true", default=False, help="Show more details")
+    def application_user__token__list(self) -> None:
+        """List all tokens for an application user."""
+        tokens = self.client.list_application_user_tokens(
+            organization_id=self.args.organization_id,
+            user_id=self.args.user_id,
+        )
+        layout = [
+            "token_prefix",
+            "description",
+            "last_used_time",
+            "expiry_time",
+            "currently_active",
+        ]
+        if self.args.verbose:
+            layout.extend(
+                [
+                    "create_time",
+                    "created_manually",
+                    "extend_when_used",
+                    "ip_allowlist",
+                    "last_ip",
+                    "last_user_agent_human_readable",
+                    "max_age_seconds",
+                    "scopes",
+                ]
+            )
+        self.print_response(tokens, json=self.args.json, table_layout=layout)
+
+    @arg.json
+    @arg.force
+    @arg.organization_id
+    @arg("user_id", help="Application User ID")
+    @arg("token_prefix", help="Token prefix to delete")
+    def application_user__token__revoke(self) -> None:
+        """Permanently revoke the specified token for the application user."""
+        if not self.args.force:
+            self.print_boxed(
+                [
+                    "Revoking an application user's access token cannot be undone!",
+                ]
+            )
+
+        if not self.confirm("Confirm revoke (y/N)?"):
+            raise argx.UserError("Aborted")
+        self.client.delete_application_user_token(
+            organization_id=self.args.organization_id,
+            user_id=self.args.user_id,
+            token_prefix=self.args.token_prefix,
+        )
+        print(f"Token {self.args.token_prefix} (application user id: {self.args.user_id}) revoked successfully.")
+
+    @arg.json
     @arg.project
     def credits__list(self) -> None:
         """List claimed credits"""
