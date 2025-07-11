@@ -5142,6 +5142,112 @@ server_encryption_options:
         print(f"Token {self.args.token_prefix} (application user id: {self.args.user_id}) revoked successfully.")
 
     @arg.json
+    @arg.force
+    @arg.organization_id
+    @arg("--resource-type", choices=["organization", "organization_unit", "project"], help="Resource type", required=True)
+    @arg("--resource-id", help="Resource ID, required if resource_type is not 'organization'")
+    @arg("--principal-id", help="Principal ID to which permissions are assigned")
+    @arg("--principal-type", choices=["user", "user_group"], help="Principal type to which permissions are assigned")
+    @arg(
+        "--permission",
+        action="append",
+        dest="permissions",
+        default=[],
+        metavar="PERMISSION",
+        help="Permissions to assign. Can be specified multiple times to add multiple permissions",
+    )
+    def permissions__set(self) -> None:
+        """Set (replacing the previous assignment for the target principal) permissions
+        for the given principal (in the context of the given resource)"""
+        if self.args.resource_type != "organization" and not self.args.resource_id:
+            raise argx.UserError(f"resource_id is required when resource_type is '{self.args.resource_type}'")
+
+        if not self.args.permissions and not self.args.force:
+            self.print_boxed(
+                [
+                    f"You are going to remove all permissions for principal "
+                    f"{self.args.principal_id} (principal_type={self.args.principal_type}).",
+                ]
+            )
+            if not self.confirm("Do you want to proceed (y/N)?"):
+                raise argx.UserError("Aborted")
+
+        resource_id = self.args.organization_id if self.args.resource_type == "organization" else self.args.resource_id
+        if not self.args.force:
+            _current_permissions = self.client.list_permissions(
+                organization_id=self.args.organization_id,
+                resource_type=self.args.resource_type,
+                resource_id=resource_id,
+            )
+            current_permissions = set()
+            for perm in self._filter_permissions_by_principal(_current_permissions):
+                current_permissions.update(perm["permissions"])
+            new_permissions = set(self.args.permissions)
+            removed = current_permissions - new_permissions
+            added = new_permissions - current_permissions
+            if removed:
+                print("The following permissions are going to be removed:")
+                for rem_perm in removed:
+                    print(f"- {rem_perm}")
+            if added:
+                print("The following permissions are going to be added:")
+                for add_perm in added:
+                    print(f"+ {add_perm}")
+
+            if added or removed:
+                if not self.confirm("Do you want to proceed (y/N)?"):
+                    raise argx.UserError("Aborted")
+
+        self.client.update_permissions(
+            organization_id=self.args.organization_id,
+            resource_type=self.args.resource_type,
+            resource_id=resource_id,
+            principal_id=self.args.principal_id,
+            principal_type=self.args.principal_type,
+            permissions=self.args.permissions,
+        )
+        print("Done")
+
+    def _filter_permissions_by_principal(self, permissions: Sequence[dict[str, Any]]) -> Sequence[dict[str, Any]]:
+        return [
+            permission
+            for permission in permissions
+            if (
+                (self.args.principal_id is None or permission["principal_id"] == self.args.principal_id)
+                and (self.args.principal_type is None or permission["principal_type"] == self.args.principal_type)
+            )
+        ]
+
+    @arg.json
+    @arg.organization_id
+    @arg("--resource-type", choices=["organization", "organization_unit", "project"], help="Resource type", required=True)
+    @arg("--resource-id", help="Resource ID, required if resource_type is not 'organization'")
+    @arg("--principal-id", help="Filter results to only list permissions for the given principal ID")
+    @arg(
+        "--principal-type",
+        choices=["user", "user_group"],
+        help="Filter results to only list permissions for the given principal type",
+    )
+    def permissions__list(self) -> None:
+        """List permissions"""
+        if self.args.resource_type != "organization" and not self.args.resource_id:
+            raise argx.UserError(f"resource_id is required when resource_type is '{self.args.resource_type}'")
+        resource_id = self.args.organization_id if self.args.resource_type == "organization" else self.args.resource_id
+        permissions = self.client.list_permissions(
+            organization_id=self.args.organization_id,
+            resource_type=self.args.resource_type,
+            resource_id=resource_id,
+        )
+        if self.args.principal_id or self.args.principal_type:
+            permissions = self._filter_permissions_by_principal(permissions)
+
+        if not permissions:
+            print("No permissions found")
+            return
+        layout = [["principal_id", "principal_type", "permissions"]]
+        self.print_response(permissions, json=self.args.json, table_layout=layout)
+
+    @arg.json
     @arg.project
     def credits__list(self) -> None:
         """List claimed credits"""

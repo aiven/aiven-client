@@ -192,6 +192,24 @@ View project management event log::
 
 .. _services:
 
+Working with Permissions
+-----------------------
+
+List organization permissions for a given resource type (one of "organization", "organization_unit", or "project")::
+
+  $ avn permissions list --organization <organization_id> --resource-type <resource_type>
+
+Set permissions for a given principal in the scope of resource type and resource ID::
+
+  $ avn permissions set --organization <organization_id> --resource-type <resource_type> --resource-id <resource_id> --principal-id <principal_id> --principal-type <principal_type> --permission <permission1> --permission <permission2>
+
+Note that setting permissions will override any existing permissions for the specified resource type and resource ID.
+
+For example the following commands will set the permissions for the project with ID "proj1" to assign role "developer" to the user with ID "user1", and let them to be an "operator" for project "proj2"::
+
+  $ avn permissions set --organization <organization_id> --resource-type project --resource-id proj1 --permission developer --principal-id user1 --principal-type user
+  $ avn permissions set --organization <organization_id> --resource-type project --resource-id proj2 --permission operator --principal-id user1 --principal-type user
+
 Explore Existing Services
 -------------------------
 
