@@ -5082,6 +5082,43 @@ server_encryption_options:
         self.print_response(tokens, json=self.args.json, table_layout=layout)
 
     @arg.json
+    @arg.organization_id
+    @arg("--verbose", action="store_true", default=False, help="Show more details")
+    @arg("user_id", help="Application User ID")
+    @arg("token_prefix", help="Token prefix to get info for")
+    def application_user__token__info(self) -> None:
+        """Show info on the specified token for an application user."""
+        tokens = self.client.list_application_user_tokens(
+            organization_id=self.args.organization_id,
+            user_id=self.args.user_id,
+        )
+        token = next((token for token in tokens if token["token_prefix"] == self.args.token_prefix), None)
+        if not token:
+            raise argx.UserError(f"Token with prefix '{self.args.token_prefix}' not found for user {self.args.user_id}")
+
+        layout = [
+            "token_prefix",
+            "description",
+            "last_used_time",
+            "expiry_time",
+            "currently_active",
+        ]
+        if self.args.verbose:
+            layout.extend(
+                [
+                    "create_time",
+                    "created_manually",
+                    "extend_when_used",
+                    "ip_allowlist",
+                    "last_ip",
+                    "last_user_agent_human_readable",
+                    "max_age_seconds",
+                    "scopes",
+                ]
+            )
+        self.print_response(token, json=self.args.json, table_layout=layout, single_item=True)
+
+    @arg.json
     @arg.force
     @arg.organization_id
     @arg("user_id", help="Application User ID")

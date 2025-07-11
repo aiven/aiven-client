@@ -2699,6 +2699,74 @@ def test_application_user_token_list() -> None:
     )
 
 
+def test_application_user_token_info() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.list_application_user_tokens.return_value = [
+        {
+            "token_prefix": "token-prefix",
+            "create_time": "2023-10-01T12:00:00Z",
+            "created_manually": True,
+            "currently_active": True,
+            "description": "token-description",
+            "expiry_time": "2024-10-01T12:00:00Z",
+            "extend_when_used": False,
+            "ip_allowlist": ["192.168.0.0/24"],
+            "last_ip": "127.0.0.1",
+            "last_used_time": "2023-10-01T12:30:00Z",
+            "last_user_agent_human_readable": "Mozilla/5.0",
+            "max_age_seconds": 3600,
+            "scopes": ["read", "write"],
+        },
+    ]
+    args = [
+        "application-user",
+        "token",
+        "info",
+        "--organization-id=org123456789a",
+        "app-user-id",
+        "token-prefix",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.list_application_user_tokens.assert_called_once_with(
+        organization_id="org123456789a",
+        user_id="app-user-id",
+    )
+
+
+def test_application_user_token_info_not_found() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.list_application_user_tokens.return_value = [
+        {
+            "token_prefix": "token-prefix",
+            "create_time": "2023-10-01T12:00:00Z",
+            "created_manually": True,
+            "currently_active": True,
+            "description": "token-description",
+            "expiry_time": "2024-10-01T12:00:00Z",
+            "extend_when_used": False,
+            "ip_allowlist": ["192.168.0.0/24"],
+            "last_ip": "127.0.0.1",
+            "last_used_time": "2023-10-01T12:30:00Z",
+            "last_user_agent_human_readable": "Mozilla/5.0",
+            "max_age_seconds": 3600,
+            "scopes": ["read", "write"],
+        },
+    ]
+    args = [
+        "application-user",
+        "token",
+        "info",
+        "--organization-id=org123456789a",
+        "app-user-id",
+        "token-not-found",
+    ]
+    assert 1 == build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.list_application_user_tokens.assert_called_once_with(
+        organization_id="org123456789a",
+        user_id="app-user-id",
+    )
+
+
 def test_application_user_token_revoke() -> None:
     aiven_client = mock.Mock(spec_set=AivenClient)
     args = [
