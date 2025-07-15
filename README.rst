@@ -193,7 +193,7 @@ View project management event log::
 .. _services:
 
 Working with Permissions
------------------------
+------------------------
 
 List organization permissions for a given resource type (one of "organization", "organization_unit", or "project")::
 
