@@ -4215,7 +4215,7 @@ ssl.truststore.type=JKS
                 )
             ) from ex
 
-    def _get_maintainance(self) -> Mapping[str, str] | None:
+    def _get_maintenance(self) -> Mapping[str, str] | None:
         maintenance = {}
         if self.args.maintenance_dow:
             maintenance["dow"] = self.args.maintenance_dow
@@ -4249,7 +4249,6 @@ ssl.truststore.type=JKS
             "friday",
             "saturday",
             "sunday",
-            "never",
         ],
     )
     @arg(
@@ -4308,7 +4307,7 @@ ssl.truststore.type=JKS
         if requested_version:
             self._do_version_eol_check(service_type, requested_version, project=project)
 
-        maintenance = self._get_maintainance()
+        maintenance = self._get_maintenance()
         project_vpc_id = self._get_service_project_vpc_id()
         termination_protection = None
         if self.args.enable_termination_protection and self.args.disable_termination_protection:
