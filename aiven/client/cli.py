@@ -4249,7 +4249,6 @@ ssl.truststore.type=JKS
             "friday",
             "saturday",
             "sunday",
-            "never",
         ],
     )
     @arg(
