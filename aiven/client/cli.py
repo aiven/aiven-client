@@ -2866,8 +2866,8 @@ ssl.truststore.type=JKS
     @arg.remote_storage_disable
     @arg.local_retention_ms
     @arg.local_retention_bytes
-    @arg.inkless_enable
-    @arg.inkless_disable
+    @arg.diskless_enable
+    @arg.diskless_disable
     @arg.tag
     @arg(
         "--cleanup-policy",
@@ -2898,7 +2898,7 @@ ssl.truststore.type=JKS
             remote_storage_enable=self._remote_storage_enable(),
             local_retention_ms=self.args.local_retention_ms,
             local_retention_bytes=self.args.local_retention_bytes,
-            inkless_enable=self._inkless_enable(),
+            diskless_enable=self._diskless_enable(),
             tags=tags,
         )
         print(response)
@@ -2916,8 +2916,8 @@ ssl.truststore.type=JKS
     @arg.local_retention_ms
     @arg.local_retention_bytes
     @arg.tagupdate
-    @arg.inkless_enable
-    @arg.inkless_disable
+    @arg.diskless_enable
+    @arg.diskless_disable
     @arg.untag
     @arg("--replication", help="Replication factor", type=int, required=False)
     def service__topic_update(self) -> None:
@@ -2953,7 +2953,7 @@ ssl.truststore.type=JKS
             remote_storage_enable=self._remote_storage_enable(),
             local_retention_ms=self.args.local_retention_ms,
             local_retention_bytes=self.args.local_retention_bytes,
-            inkless_enable=self._inkless_enable(),
+            diskless_enable=self._diskless_enable(),
             tags=tags,
         )
         print(response["message"])
@@ -2968,12 +2968,12 @@ ssl.truststore.type=JKS
         else:
             return None
 
-    def _inkless_enable(self) -> bool | None:
-        if self.args.inkless_enable and self.args.inkless_disable:
-            raise argx.UserError("Only set at most one of --inkless-enable and --inkless-disable")
-        if self.args.inkless_enable:
+    def _diskless_enable(self) -> bool | None:
+        if self.args.diskless_enable and self.args.diskless_disable:
+            raise argx.UserError("Only set at most one of --diskless-enable and --diskless-disable")
+        if self.args.diskless_enable:
             return True
-        elif self.args.inkless_disable:
+        elif self.args.diskless_disable:
             return False
         else:
             return None
