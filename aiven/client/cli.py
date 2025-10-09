@@ -1620,7 +1620,8 @@ class AivenCLI(argx.CommandLineTool):
         if service_type == "influxdb":
             command, params, env = self._build_influx_start_info(url)
         elif service_type == "postgres":
-            command, params, env = self._build_psql_start_info(url)
+            use_docker = os.environ.get("AVN_PSQL_DOCKER", "0") == "1"
+            command, params, env = self._build_psql_start_info(url, service, use_docker=use_docker)
         elif service_type == "rediss":
             command, params, env = self._build_redis_start_info(url)
         elif service_type == "mysql":
@@ -1652,11 +1653,25 @@ class AivenCLI(argx.CommandLineTool):
         ]
         return "influx", params, {"INFLUX_PASSWORD": info.password}
 
-    def _build_psql_start_info(self, url: str) -> tuple[str, list, Mapping]:
+    def _build_psql_start_info(
+        self,
+        url: str,
+        service: dict[str, Any],
+        use_docker: bool,
+    ) -> tuple[str, list, Mapping]:
         pw_pattern = "([a-z\\+]+://[^:]+):([^@]+)@(.*)"
         match = re.match(pw_pattern, url)
         connect_info = re.sub(pw_pattern, "\\1@\\3", url)
-        return "psql", [connect_info], {"PGPASSWORD": match.group(2) if match else None}
+        env = {
+            "PGPASSWORD": match.group(2) if match else None,
+        }
+
+        if use_docker:
+            pg_version = service["user_config"]["pg_version"]
+
+            return "docker", ["run", "--rm", "-it", "postgres:{}".format(pg_version), "psql", connect_info], env
+
+        return "psql", [connect_info], env
 
     def _build_mysql_start_info(self, url: str) -> tuple[str, list, Mapping]:
         info = urlparse(url)
