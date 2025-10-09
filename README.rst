@@ -40,6 +40,14 @@ Pypi installation is the recommended route for most users::
   $ python3 -m pip install aiven-client
 
 
+Run without installing
+----------------------
+
+Use `uvx` from Astral's `uv` tool to run the CLI without installing it::
+
+  $ uvx --from aiven-client avn --help
+
+
 Build an RPM Package
 --------------------
 
