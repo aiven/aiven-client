@@ -1506,7 +1506,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg.project
     @arg.service_name
     @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
-    @arg("--usage", choices=("primary", "replica"))
+    @arg("--usage", choices=("primary", "replica", "disaster_recovery"))
     @arg("-p", "--privatelink-connection-id")
     @arg("--replica", action="store_true")
     @arg("-u", "--username", default="avnadmin")
@@ -1521,7 +1521,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg.project
     @arg.service_name
     @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
-    @arg("--usage", choices=("primary", "replica"))
+    @arg("--usage", choices=("primary", "replica", "disaster_recovery"))
     @arg("-p", "--privatelink-connection-id")
     @arg("--replica", action="store_true")
     @arg("-u", "--username", default="avnadmin")
@@ -1535,7 +1535,7 @@ class AivenCLI(argx.CommandLineTool):
     @arg.project
     @arg.service_name
     @arg("-r", "--route", choices=("dynamic", "privatelink", "public"))
-    @arg("--usage", choices=("primary", "replica"))
+    @arg("--usage", choices=("primary", "replica", "disaster_recovery"))
     @arg("-p", "--privatelink-connection-id")
     @arg("--replica", action="store_true")
     @arg("-u", "--username", default="avnadmin")
@@ -4023,6 +4023,10 @@ ssl.truststore.type=JKS
         help="Creates a read replica for given source service. Only applicable for certain service types",
     )
     @arg(
+        "--disaster-recovery-copy-for",
+        help="Cretes a disaster recovery copy for given source service. Only applicable for certain service types",
+    )
+    @arg(
         "--enable-termination-protection",
         action="store_true",
         default=False,
@@ -4062,6 +4066,13 @@ ssl.truststore.type=JKS
                         "source_service": self.args.read_replica_for,
                     }
                 )
+        elif self.args.disaster_recovery_copy_for:
+            service_integrations.append(
+                {
+                    "integration_type": "disaster_recovery",
+                    "source_service": self.args.disaster_recovery_copy_for,
+                }
+            )
         elif self.args.recovery_target_time and self.args.service_to_fork_from:
             user_config["service_to_fork_from"] = self.args.service_to_fork_from
             user_config["recovery_target_time"] = self.args.recovery_target_time
@@ -4290,6 +4301,11 @@ ssl.truststore.type=JKS
         action="store_true",
         help="Do not put the service into a project VPC even if the project has one in the selected cloud",
     )
+    @arg(
+        "--disaster-recovery-role",
+        help="Set disaster recovery role",
+        choices=["active", "passive", "failed"],
+    )
     @arg.force
     def service__update(self) -> None:
         """Update service settings"""
@@ -4345,6 +4361,7 @@ ssl.truststore.type=JKS
                 termination_protection=termination_protection,
                 project_vpc_id=project_vpc_id,
                 schema_registry_authorization=schema_registry_authorization,
+                disaster_recovery_role=self.args.disaster_recovery_role,
             )
         except client.Error as ex:
             try:

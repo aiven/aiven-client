@@ -1472,6 +1472,7 @@ class AivenClient(AivenClientBase):
         termination_protection: bool | None = None,
         project_vpc_id: object | str = UNDEFINED,
         schema_registry_authorization: bool | None = None,
+        disaster_recovery_role: str | None = None,
     ) -> Mapping:
         user_config = user_config or {}
         body: dict[str, Any] = {}
@@ -1495,6 +1496,8 @@ class AivenClient(AivenClientBase):
             body["termination_protection"] = termination_protection
         if schema_registry_authorization is not None:
             body["schema_registry_authz"] = schema_registry_authorization
+        if disaster_recovery_role is not None:
+            body["disaster_recovery_role"] = disaster_recovery_role
         path = self.build_path("project", project, "service", service)
         return self.verify(self.put, path, body=body, result_key="service")
 
