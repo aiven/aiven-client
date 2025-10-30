@@ -3352,6 +3352,14 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.service_name
     @arg.connector_name
+    def service__connector__stop(self) -> None:
+        """Stop a Kafka connector"""
+        project_name = self.get_project()
+        self.client.stop_kafka_connector(project_name, self.args.service_name, self.args.connector)
+
+    @arg.project
+    @arg.service_name
+    @arg.connector_name
     def service__connector__resume(self) -> None:
         """Resume a Kafka connector"""
         project_name = self.get_project()

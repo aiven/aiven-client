@@ -1007,6 +1007,18 @@ class AivenClient(AivenClientBase):
         )
         return self.verify(self.post, path)
 
+    def stop_kafka_connector(self, project: str, service: str, connector_name: str) -> Mapping:
+        path = self.build_path(
+            "project",
+            project,
+            "service",
+            service,
+            "connectors",
+            connector_name,
+            "stop",
+        )
+        return self.verify(self.post, path)
+
     def resume_kafka_connector(self, project: str, service: str, connector_name: str) -> Mapping:
         path = self.build_path(
             "project",
