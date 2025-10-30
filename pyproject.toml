@@ -27,7 +27,6 @@ dependencies = [
     'requests>=2.2.1; sys_platform == "linux"',
     'requests>=2.9.1; sys_platform != "linux"',
     "requests-toolbelt>=0.9.0",
-    "certifi>=2015.11.20.1",
 ]
 [project.optional-dependencies]
 dev = [
@@ -36,7 +35,6 @@ dev = [
     # Lock types-requests to the same major version used in downstream build environments
     "types-requests>=2.26.1,<3.0",
     "pytest",
-    "click",
     # Lock ruff to the same major version used in downstream build environments
     "ruff>=0.15.11",
 ]

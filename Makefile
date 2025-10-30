@@ -46,18 +46,14 @@ clean:
 build-dep-fedora:
 	sudo dnf install -y --best --allowerasing \
 		python3-devel \
-		python3-certifi \
 		python3-hatch-vcs \
 		python3-hatchling \
-		python3-PyMySQL \
-		python3-wheel \
 		python3-mypy \
 		python3-pytest \
 		python3-requests \
 		python3-requests-toolbelt \
 		python3-ruff \
 		python3-types-requests \
-		python3-setuptools_scm \
 		rpmdevtools \
 		tar
 
