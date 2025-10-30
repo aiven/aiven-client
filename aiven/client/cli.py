@@ -17,10 +17,11 @@ from aiven.client.speller import suggest
 from argparse import ArgumentParser
 from ast import literal_eval
 from collections import Counter
+from collections.abc import Mapping, Sequence
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from http import HTTPStatus
-from typing import Any, Callable, Final, IO, Mapping, Optional, Protocol, Sequence, TypeVar
+from typing import Any, Callable, Final, IO, Optional, Protocol, TypeVar
 from urllib.parse import urlparse
 
 import errno
