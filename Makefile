@@ -62,6 +62,7 @@ build-dep-fedora:
 		python3-types-requests \
 		python3-setuptools_scm \
 		rpmdevtools \
+		ruff \
 		tar
 
 rpm:
