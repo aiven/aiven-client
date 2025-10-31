@@ -52,7 +52,6 @@ build-dep-fedora:
 		python3-certifi \
 		python3-hatch-vcs \
 		python3-hatchling \
-		python3-PyMySQL \
 		python3-wheel \
 		python3-flake8 \
 		python3-isort \
@@ -63,6 +62,7 @@ build-dep-fedora:
 		python3-types-requests \
 		python3-setuptools_scm \
 		rpmdevtools \
+		ruff \
 		tar
 
 rpm:
