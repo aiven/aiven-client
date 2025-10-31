@@ -90,6 +90,9 @@ profile = "black"
 target-version = "py39"
 line-length = 125
 src = ["aiven", "tests"]
+extend-exclude = [
+  "aiven/client/version.py",  # Auto-generated file
+]
 
 [tool.ruff.lint]
 extend-select = [
