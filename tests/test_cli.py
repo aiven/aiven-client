@@ -9,11 +9,12 @@ from aiven.client.argx import UserError
 from aiven.client.cli import AivenCLI, ClientFactory, convert_str_to_value, EOL_ADVANCE_WARNING_TIME
 from aiven.client.common import UNDEFINED
 from argparse import Namespace
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pytest import CaptureFixture, LogCaptureFixture
 from requests import Session
-from typing import Any, cast, Iterator, Mapping
+from typing import Any, cast
 from unittest import mock
 from unittest.mock import ANY, MagicMock
 

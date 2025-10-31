@@ -7,8 +7,9 @@ from __future__ import annotations
 from .pretty import TableLayout
 from aiven.client import envdefault, pretty
 from argparse import Action, ArgumentParser, Namespace
+from collections.abc import Collection, Iterable, Mapping, Sequence
 from os import PathLike
-from typing import Any, Callable, cast, Collection, Iterable, Mapping, NoReturn, Sequence, TextIO, TYPE_CHECKING, TypeVar
+from typing import Any, Callable, cast, NoReturn, TextIO, TYPE_CHECKING, TypeVar
 
 import aiven.client.client
 import argparse
@@ -168,11 +169,9 @@ class Arg:
 
     if TYPE_CHECKING:
 
-        def __getattr__(self, name: str) -> Callable:
-            ...
+        def __getattr__(self, name: str) -> Callable: ...
 
-        def __setattr__(self, name: str, value: Callable) -> None:
-            ...
+        def __setattr__(self, name: str, value: Callable) -> None: ...
 
 
 arg = Arg()

@@ -5,7 +5,8 @@
 """Pretty-print JSON objects and lists as tables"""
 from __future__ import annotations
 
-from typing import Any, cast, Collection, Iterator, List, Mapping, TextIO, Tuple, Union
+from collections.abc import Collection, Iterator, Mapping
+from typing import Any, cast, TextIO, Union
 
 import datetime
 import decimal
@@ -16,7 +17,7 @@ import json
 import sys
 
 ResultType = Collection[Mapping[str, Any]]
-TableLayout = Collection[Union[List[str], Tuple[str], str]]
+TableLayout = Collection[Union[list[str], tuple[str], str]]
 
 
 class CustomJsonEncoder(json.JSONEncoder):
@@ -158,7 +159,7 @@ def yield_table(  # noqa
     if table_layout is None:
         table_layout = sorted(widths)
     if not isinstance(next(iter(table_layout), []), (list, tuple)):
-        table_layout = [cast(List[str], table_layout)]
+        table_layout = [cast(list[str], table_layout)]
 
     horizontal_fields: Collection[str] = next(iter(table_layout), [])
     if header:

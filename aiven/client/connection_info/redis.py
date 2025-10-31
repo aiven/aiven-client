@@ -3,8 +3,9 @@ from __future__ import annotations
 
 from ._utils import find_component, find_user, format_uri
 from .common import ConnectionInfoError
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any
 
 
 @dataclass

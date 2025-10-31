@@ -5,7 +5,8 @@
 from __future__ import annotations
 
 from aiven.client.pretty import flatten_list, format_item, print_table, ResultType, TableLayout, yield_table
-from typing import Any, Collection
+from collections.abc import Collection
+from typing import Any
 
 import datetime
 import decimal

@@ -3,7 +3,8 @@ from __future__ import annotations
 
 from .common import ConnectionInfoError
 from aiven.client.common import UNDEFINED
-from typing import Any, Mapping, Sequence, TypeVar
+from collections.abc import Mapping, Sequence
+from typing import Any, TypeVar
 
 import ipaddress
 import urllib.parse
