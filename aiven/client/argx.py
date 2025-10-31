@@ -169,11 +169,9 @@ class Arg:
 
     if TYPE_CHECKING:
 
-        def __getattr__(self, name: str) -> Callable:
-            ...
+        def __getattr__(self, name: str) -> Callable: ...
 
-        def __setattr__(self, name: str, value: Callable) -> None:
-            ...
+        def __setattr__(self, name: str, value: Callable) -> None: ...
 
 
 arg = Arg()

@@ -144,8 +144,7 @@ def get_current_date() -> datetime:
 
 
 class ClientFactory(Protocol):
-    def __call__(self, base_url: str, show_http: bool, request_timeout: int | None) -> client.AivenClient:
-        ...
+    def __call__(self, base_url: str, show_http: bool, request_timeout: int | None) -> client.AivenClient: ...
 
 
 class AivenCLI(argx.CommandLineTool):
