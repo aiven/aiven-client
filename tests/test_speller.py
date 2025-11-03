@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from aiven.client.speller import suggest
-from typing import Container
+from collections.abc import Container
 
 import pytest
 

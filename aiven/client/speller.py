@@ -4,7 +4,7 @@
 # MIT license: www.opensource.org/licenses/mit-license.php
 from __future__ import annotations
 
-from typing import Container, Iterable, Iterator
+from collections.abc import Container, Iterable, Iterator
 
 
 def suggest(word_to_check: str, known_words: Container[str]) -> str | None:
