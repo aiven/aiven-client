@@ -24,7 +24,7 @@ SERVICE_TYPES = [
     "m3aggregator",
     "mysql",
     "pg",
-    "redis",
+    "valkey",
     "sw",
     "flink",
 ]

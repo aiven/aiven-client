@@ -12,7 +12,7 @@ from aiven.client.common import UNDEFINED
 from aiven.client.connection_info.common import Store
 from aiven.client.connection_info.kafka import KafkaCertificateConnectionInfo, KafkaSASLConnectionInfo
 from aiven.client.connection_info.pg import PGConnectionInfo
-from aiven.client.connection_info.redis import RedisConnectionInfo
+from aiven.client.connection_info.valkey import ValkeyConnectionInfo
 from aiven.client.speller import suggest
 from argparse import ArgumentParser
 from ast import literal_eval
@@ -1578,11 +1578,11 @@ class AivenCLI(argx.CommandLineTool):
     @arg("--replica", action="store_true")
     @arg("-u", "--username", default="default")
     @arg("-d", "--db")
-    def service__connection_info__redis__uri(self) -> None:
-        """Redis connection string"""
+    def service__connection_info__valkey__uri(self) -> None:
+        """Valkey connection string"""
         service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
 
-        ci = RedisConnectionInfo.from_service(
+        ci = ValkeyConnectionInfo.from_service(
             service,
             route=self._get_route_from_args(),
             usage=self._get_usage_from_args(),
@@ -1617,13 +1617,15 @@ class AivenCLI(argx.CommandLineTool):
             command, params, env = self._build_influx_start_info(url)
         elif service_type == "postgres":
             command, params, env = self._build_psql_start_info(url)
-        elif service_type == "rediss":
-            command, params, env = self._build_redis_start_info(url)
+        elif service_type == "valkey":
+            command, params, env = self._build_valkey_start_info(url)
         elif service_type == "mysql":
             command, params, env = self._build_mysql_start_info(url)
         else:
             raise argx.UserError(
-                "Unsupported service type {}. Only InfluxDB, PostgreSQL, and Redis are supported".format(service_type)
+                "Unsupported service type {}. Only InfluxDB, PostgreSQL, MySQL, and Valkey are supported".format(
+                    service_type
+                )
             )
 
         try:
@@ -1666,7 +1668,7 @@ class AivenCLI(argx.CommandLineTool):
         ]
         return "mysql", params, {"MYSQL_PWD": info.password}
 
-    def _build_redis_start_info(self, url: str) -> tuple[str, list, Mapping]:
+    def _build_valkey_start_info(self, url: str) -> tuple[str, list, Mapping]:
         info = urlparse(url)
         params = [
             "--tls",
@@ -1677,7 +1679,7 @@ class AivenCLI(argx.CommandLineTool):
             "--user",
             info.username,
         ]
-        return "redis-cli", params, {"REDISCLI_AUTH": info.password}
+        return "valkey-cli", params, {"VALKEYCLI_AUTH": info.password}
 
     @arg.project
     @arg.service_name

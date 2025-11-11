@@ -9,7 +9,7 @@ from typing import Any
 
 
 @dataclass
-class RedisConnectionInfo:
+class ValkeyConnectionInfo:
     host: str
     port: int
     username: str
@@ -26,10 +26,10 @@ class RedisConnectionInfo:
         privatelink_connection_id: object | str,
         username: str,
         db: str,
-    ) -> RedisConnectionInfo:
-        if service["service_type"] != "redis":
+    ) -> ValkeyConnectionInfo:
+        if service["service_type"] != "valkey":
             raise ConnectionInfoError(
-                "Cannot format redis connection info for service type {service_type}".format_map(service)
+                "Cannot format Valkey connection info for service type {service_type}".format_map(service)
             )
 
         info = find_component(
@@ -38,7 +38,7 @@ class RedisConnectionInfo:
         host = info["host"]
         port = info["port"]
         if username == "default":
-            password = service["connection_info"]["redis_password"]
+            password = service["connection_info"]["valkey_password"]
         else:
             user = find_user(service, username)
             password = user.get("password")
