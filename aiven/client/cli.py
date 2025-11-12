@@ -12,7 +12,7 @@ from aiven.client.common import UNDEFINED
 from aiven.client.connection_info.common import Store
 from aiven.client.connection_info.kafka import KafkaCertificateConnectionInfo, KafkaSASLConnectionInfo
 from aiven.client.connection_info.pg import PGConnectionInfo
-from aiven.client.connection_info.redis import RedisConnectionInfo
+from aiven.client.connection_info.valkey import ValkeyConnectionInfo
 from aiven.client.speller import suggest
 from argparse import ArgumentParser
 from ast import literal_eval
@@ -43,11 +43,7 @@ USER_GROUP_COLUMNS = [
 ]
 EOL_ADVANCE_WARNING_TIME = timedelta(weeks=26)  # Give 6 months advance notice for EOL services
 
-REDIS_VALKEY_ACL_ARGS = [
-    "redis_acl_keys",
-    "redis_acl_commands",
-    "redis_acl_categories",
-    "redis_acl_channels",
+VALKEY_ACL_ARGS = [
     "valkey_acl_keys",
     "valkey_acl_commands",
     "valkey_acl_categories",
@@ -1582,11 +1578,11 @@ class AivenCLI(argx.CommandLineTool):
     @arg("--replica", action="store_true")
     @arg("-u", "--username", default="default")
     @arg("-d", "--db")
-    def service__connection_info__redis__uri(self) -> None:
-        """Redis connection string"""
+    def service__connection_info__valkey__uri(self) -> None:
+        """Valkey connection string"""
         service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
 
-        ci = RedisConnectionInfo.from_service(
+        ci = ValkeyConnectionInfo.from_service(
             service,
             route=self._get_route_from_args(),
             usage=self._get_usage_from_args(),
@@ -1621,13 +1617,15 @@ class AivenCLI(argx.CommandLineTool):
             command, params, env = self._build_influx_start_info(url)
         elif service_type == "postgres":
             command, params, env = self._build_psql_start_info(url)
-        elif service_type == "rediss":
-            command, params, env = self._build_redis_start_info(url)
+        elif service_type == "valkey":
+            command, params, env = self._build_valkey_start_info(url)
         elif service_type == "mysql":
             command, params, env = self._build_mysql_start_info(url)
         else:
             raise argx.UserError(
-                "Unsupported service type {}. Only InfluxDB, PostgreSQL, and Redis are supported".format(service_type)
+                "Unsupported service type {}. Only InfluxDB, PostgreSQL, MySQL, and Valkey are supported".format(
+                    service_type
+                )
             )
 
         try:
@@ -1670,7 +1668,7 @@ class AivenCLI(argx.CommandLineTool):
         ]
         return "mysql", params, {"MYSQL_PWD": info.password}
 
-    def _build_redis_start_info(self, url: str) -> tuple[str, list, Mapping]:
+    def _build_valkey_start_info(self, url: str) -> tuple[str, list, Mapping]:
         info = urlparse(url)
         params = [
             "--tls",
@@ -1681,7 +1679,7 @@ class AivenCLI(argx.CommandLineTool):
             "--user",
             info.username,
         ]
-        return "redis-cli", params, {"REDISCLI_AUTH": info.password}
+        return "valkey-cli", params, {"VALKEYCLI_AUTH": info.password}
 
     @arg.project
     @arg.service_name
@@ -1838,7 +1836,7 @@ class AivenCLI(argx.CommandLineTool):
 
     def _parse_access_control(self) -> Mapping[str, Any]:
         arg_vars = vars(self.args)
-        result = {key: arg_vars[key].split() for key in REDIS_VALKEY_ACL_ARGS if arg_vars[key] is not None}
+        result = {key: arg_vars[key].split() for key in VALKEY_ACL_ARGS if arg_vars[key] is not None}
         for key in ["m3_group"]:
             value = arg_vars[key]
             if value is not None:
@@ -1849,10 +1847,6 @@ class AivenCLI(argx.CommandLineTool):
     @arg.service_name
     @arg("--username", help="Service user username", required=True)
     @arg("--m3-group", help="Service user group")
-    @arg("--redis-acl-keys", help="ACL rules for keys (Redis only)")
-    @arg("--redis-acl-commands", help="ACL rules for commands (Redis only)")
-    @arg("--redis-acl-categories", help="ACL rules for command categories (Redis only)")
-    @arg("--redis-acl-channels", help="ACL rules for channels (Redis only)")
     @arg("--valkey-acl-keys", help="ACL rules for keys (Valkey only)")
     @arg("--valkey-acl-commands", help="ACL rules for commands (Valkey only)")
     @arg("--valkey-acl-categories", help="ACL rules for command categories (Valkey only)")
@@ -1891,13 +1885,13 @@ class AivenCLI(argx.CommandLineTool):
         """List service users"""
         service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
         layout = [["username", "type"]]
-        if service["service_type"] == "redis":
+        if service["service_type"] == "valkey":
             layout[0].extend(
                 [
-                    "access_control.redis_acl_keys",
-                    "access_control.redis_acl_commands",
-                    "access_control.redis_acl_categories",
-                    "access_control.redis_acl_channels",
+                    "access_control.valkey_acl_keys",
+                    "access_control.valkey_acl_commands",
+                    "access_control.valkey_acl_categories",
+                    "access_control.valkey_acl_channels",
                 ]
             )
         self.print_response(
@@ -1918,12 +1912,7 @@ class AivenCLI(argx.CommandLineTool):
             project=self.get_project(), service=self.args.service_name, username=self.args.username
         )
         layout = [["username", "type"]]
-        for field in (
-            "redis_acl_keys",
-            "redis_acl_commands",
-            "redis_acl_categories",
-            "redis_acl_channels",
-        ):
+        for field in VALKEY_ACL_ARGS:
             if field in user.get("access_control", {}):
                 layout[0].append(f"access_control.{field}")
         self.print_response(user, single_item=True, format=self.args.format, json=self.args.json, table_layout=layout)
@@ -2098,17 +2087,13 @@ ssl.truststore.type=JKS
     @arg.service_name
     @arg("--username", help="Service user username", required=True)
     @arg("--m3-group", help="Service user group")
-    @arg("--redis-acl-keys", help="ACL rules for keys (Redis only)")
-    @arg("--redis-acl-commands", help="ACL rules for commands (Redis only)")
-    @arg("--redis-acl-categories", help="ACL rules for command categories (Redis only)")
-    @arg("--redis-acl-channels", help="ACL rules for channels (Redis only)")
     @arg("--valkey-acl-keys", help="ACL rules for keys (Valkey only)")
     @arg("--valkey-acl-commands", help="ACL rules for commands (Valkey only)")
     @arg("--valkey-acl-categories", help="ACL rules for command categories (Valkey only)")
     @arg("--valkey-acl-channels", help="ACL rules for channels (Valkey only)")
     @arg.json
     def service__user_set_access_control(self) -> None:
-        """Set Redis/Valkey service user access control"""
+        """Set Valkey service user access control"""
         access_control = self._parse_access_control()
         self.client.set_service_user_access_control(
             project=self.get_project(),

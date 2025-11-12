@@ -200,10 +200,10 @@ def test_yield_table() -> None:
         },
         {
             "access_control": {
-                "redis_acl_categories": ["+@all"],
-                "redis_acl_channels": ["*"],
-                "redis_acl_commands": ["+get", "-set"],
-                "redis_acl_keys": ["key1", "key2"],
+                "valkey_acl_categories": ["+@all"],
+                "valkey_acl_channels": ["*"],
+                "valkey_acl_commands": ["+get", "-set"],
+                "valkey_acl_keys": ["key1", "key2"],
             },
             "password": "qwertyuiop",
             "type": "regular",
@@ -220,18 +220,18 @@ def test_yield_table() -> None:
         "myuser    regular",
     ]
 
-    one_row_layout_redis = [["username", "type", "access_control.redis_acl_keys"]]
-    result = yield_table(rows, table_layout=one_row_layout_redis)
+    one_row_layout_valkey = [["username", "type", "access_control.valkey_acl_keys"]]
+    result = yield_table(rows, table_layout=one_row_layout_valkey)
     assert list(result) == [
-        "USERNAME  TYPE     ACCESS_CONTROL.REDIS_ACL_KEYS",
-        "========  =======  =============================",
+        "USERNAME  TYPE     ACCESS_CONTROL.VALKEY_ACL_KEYS",
+        "========  =======  ==============================",
         "avnadmin  primary",
         "myuser    regular  key1, key2",
     ]
 
     vertical_layout_both: TableLayout = [
         ["username", "type"],
-        "access_control.redis_acl_keys",
+        "access_control.valkey_acl_keys",
         "access_control.pg_allow_replication",
     ]
     result = yield_table(rows, table_layout=vertical_layout_both)
@@ -242,5 +242,5 @@ def test_yield_table() -> None:
         "    access_control.pg_allow_replication = true",
         "",
         "myuser    regular",
-        "    access_control.redis_acl_keys = key1, key2",
+        "    access_control.valkey_acl_keys = key1, key2",
     ]
