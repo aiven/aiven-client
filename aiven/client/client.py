@@ -3313,3 +3313,110 @@ class AivenClient(AivenClientBase):
         if cloud_name is not None:
             params["cloud_name"] = cloud_name
         return self.verify(self.get, path, result_key="rates", params=params)
+
+    def project_cmks_accessors(
+        self,
+        project: str,
+    ) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "project",
+                project,
+                "secrets",
+                "cmks",
+                "accessors",
+            ),
+        )
+
+    def project_cmks_list(
+        self,
+        project: str,
+    ) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "project",
+                project,
+                "secrets",
+                "cmks",
+            ),
+        )
+
+    def project_cmks_get(
+        self,
+        project: str,
+        cmk_id: str,
+    ) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "project",
+                project,
+                "secrets",
+                "cmks",
+                cmk_id,
+            ),
+        )
+
+    def project_cmks_create(
+        self,
+        project: str,
+        provider: str,
+        resource: str,
+        default_cmk: bool | None = None,
+    ) -> Mapping:
+        body: dict[str, Any] = {
+            "provider": provider,
+            "resource": resource,
+        }
+        if default_cmk is not None:
+            body["default_cmk"] = default_cmk
+
+        return self.verify(
+            self.post,
+            self.build_path(
+                "project",
+                project,
+                "secrets",
+                "cmks",
+            ),
+            body=body,
+        )
+
+    def project_cmks_update(
+        self,
+        project: str,
+        cmk_id: str,
+        default_cmk: bool | None = None,
+    ) -> Mapping:
+        body = {}
+        if default_cmk is not None:
+            body["default_cmk"] = default_cmk
+        return self.verify(
+            self.post,
+            self.build_path(
+                "project",
+                project,
+                "secrets",
+                "cmks",
+                cmk_id,
+            ),
+            body=body,
+        )
+
+    def project_cmks_delete(
+        self,
+        project: str,
+        cmk_id: str,
+    ) -> Mapping:
+        return self.verify(
+            self.delete,
+            self.build_path(
+                "project",
+                project,
+                "secrets",
+                "cmks",
+                cmk_id,
+            ),
+        )
