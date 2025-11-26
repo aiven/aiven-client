@@ -7019,6 +7019,97 @@ server_encryption_options:
         )
         self.print_response(response, json=True)
 
+    @arg.project
+    @arg.json
+    def project__cmks__accessors(self) -> None:
+        """List project customer managed key accessors"""
+        response = self.client.project_cmks_accessors(
+            project=self.get_project(),
+        )
+        if self.args.json:
+            self.print_response(response, json=self.args.json)
+        else:
+            # Using custom formatting here, as accessor fields could change
+            print("PROVIDER  DETAILS")
+            print("========  =======")
+            for provider in response["accessors"]:
+                details = f"\n{'':8}  ".join(f"{k}  {v}" for k, v in response["accessors"][provider].items())
+                print(f"{provider:8}  {details}")
+
+    @arg.project
+    @arg.json
+    def project__cmks__list(self) -> None:
+        """List project customer managed keys (CMKs)"""
+        response = self.client.project_cmks_list(
+            project=self.get_project(),
+        )
+        if self.args.json:
+            self.print_response(response, json=self.args.json)
+        else:
+            layout = ["id", "status", "cloud", "resource"]
+            self.print_response(response["cmks"], json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg("--cmk-id", help="CMK Identifier", required=True)
+    @arg.json
+    def project__cmks__get(self) -> None:
+        """Get details on a customer managed keys (CMKs)"""
+        response = self.client.project_cmks_get(
+            project=self.get_project(),
+            cmk_id=self.args.cmk_id,
+        )
+        if self.args.json:
+            self.print_response(response, json=self.args.json)
+        else:
+            layout = ["property", "value"]
+            fields = [
+                {
+                    "property": k,
+                    "value": v,
+                }
+                for k, v in response["cmk"].items()
+            ]
+            self.print_response(fields, json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg("--provider", choices=["gcp", "aws", "oci"], required=True)
+    @arg("--resource", help="Resource name", required=True)
+    @arg.json
+    def project__cmks__create(self) -> None:
+        """Define a project customer managed key (CMK)"""
+        response = self.client.project_cmks_create(
+            project=self.get_project(),
+            provider=self.args.provider,
+            resource=self.args.resource,
+        )
+        if self.args.json:
+            self.print_response(response, json=self.args.json)
+        else:
+            layout = ["property", "value"]
+            fields = [
+                {
+                    "property": k,
+                    "value": v,
+                }
+                for k, v in response["cmk"].items()
+            ]
+            self.print_response(fields, json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg("--cmk-id", help="CMK Identifier", required=True)
+    @arg.json
+    def project__cmks__delete(self) -> None:
+        """Delete a customer managed keys (CMKs)"""
+        response = self.client.project_cmks_delete(
+            project=self.get_project(),
+            cmk_id=self.args.cmk_id,
+        )
+        if self.args.json:
+            self.print_response(response, json=self.args.json)
+        else:
+            cmk_id = response["cmk"]["id"]
+            print(f"Deleted CMK '{cmk_id}'")
+
 
 if __name__ == "__main__":
     AivenCLI().main()
