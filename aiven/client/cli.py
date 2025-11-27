@@ -1617,7 +1617,7 @@ class AivenCLI(argx.CommandLineTool):
             command, params, env = self._build_influx_start_info(url)
         elif service_type == "postgres":
             command, params, env = self._build_psql_start_info(url)
-        elif service_type == "valkey":
+        elif service_type in {"rediss", "valkeys"}:
             command, params, env = self._build_valkey_start_info(url)
         elif service_type == "mysql":
             command, params, env = self._build_mysql_start_info(url)
@@ -1679,7 +1679,8 @@ class AivenCLI(argx.CommandLineTool):
             "--user",
             info.username,
         ]
-        return "valkey-cli", params, {"VALKEYCLI_AUTH": info.password}
+
+        return "valkey-cli", params, {"REDISCLI_AUTH": info.password}
 
     @arg.project
     @arg.service_name

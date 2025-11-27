@@ -16,7 +16,7 @@ from pytest import CaptureFixture, LogCaptureFixture
 from requests import Session
 from typing import Any, cast
 from unittest import mock
-from unittest.mock import ANY, MagicMock
+from unittest.mock import ANY, MagicMock, patch
 
 import json
 import pytest
@@ -2884,3 +2884,22 @@ def test_application_user_token_revoke() -> None:
         user_id="app-user-id",
         token_prefix="token-prefix",
     )
+
+
+@pytest.mark.parametrize(
+    "url,command",
+    [
+        ("rediss://default:pwd@myservice-bar.aivencloud.com:12692", "valkey-cli"),
+        ("valkeys://default:pwd@myservice-bar.aivencloud.com:12692", "valkey-cli"),
+        ("postgres://aiven:pwd@myservice-bar.aivencloud.com:12692/defaultdb?sslmode=require", "psql"),
+        ("mysql://aiven:pwd@myservice-bar.aivencloud.com:12692/defaultdb?ssl-mode=REQUIRED", "mysql"),
+    ],
+)
+def test_service_cli(url: str, command: str) -> None:
+    aiven_client = mock.Mock(spec=AivenClient)
+    aiven_client.auth_token = "token"
+    aiven_client.get_service.return_value = {"service_uri": url}
+    with patch("os.execvpe") as mock_exec:
+        build_aiven_cli(aiven_client).run(args=["service", "cli", "myservice"])
+        command_called, _, _ = mock_exec.call_args[0]
+        assert command_called == command
