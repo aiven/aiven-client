@@ -1613,9 +1613,7 @@ class AivenCLI(argx.CommandLineTool):
 
         match = re.match("([a-z]+\\+)?([a-z]+)://", url)
         service_type = match and match.group(2)
-        if service_type == "influxdb":
-            command, params, env = self._build_influx_start_info(url)
-        elif service_type == "postgres":
+        if service_type == "postgres":
             command, params, env = self._build_psql_start_info(url)
         elif service_type == "valkey":
             command, params, env = self._build_valkey_start_info(url)
@@ -1623,9 +1621,7 @@ class AivenCLI(argx.CommandLineTool):
             command, params, env = self._build_mysql_start_info(url)
         else:
             raise argx.UserError(
-                "Unsupported service type {}. Only InfluxDB, PostgreSQL, MySQL, and Valkey are supported".format(
-                    service_type
-                )
+                "Unsupported service type {}. Only PostgreSQL, MySQL, and Valkey are supported".format(service_type)
             )
 
         try:
@@ -1634,21 +1630,6 @@ class AivenCLI(argx.CommandLineTool):
             if e.errno != errno.ENOENT:
                 raise
             raise argx.UserError("Executable '{}' is not available, cannot launch {} client".format(command, service_type))
-
-    def _build_influx_start_info(self, url: str) -> tuple[str, list, Mapping]:
-        info = urlparse(url)
-        params = [
-            "-host",
-            info.hostname,
-            "-port",
-            str(info.port),
-            "-database",
-            info.path.lstrip("/"),
-            "-username",
-            info.username,
-            "-ssl",
-        ]
-        return "influx", params, {"INFLUX_PASSWORD": info.password}
 
     def _build_psql_start_info(self, url: str) -> tuple[str, list, Mapping]:
         pw_pattern = "([a-z\\+]+://[^:]+):([^@]+)@(.*)"
