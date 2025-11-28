@@ -15,7 +15,6 @@ SERVICE_TYPES = [
     "cassandra",
     "elasticsearch",
     "grafana",
-    "influxdb",
     "kafka",
     "kafka_connect",
     "kafka_mirrormaker",
