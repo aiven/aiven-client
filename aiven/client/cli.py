@@ -1615,8 +1615,10 @@ class AivenCLI(argx.CommandLineTool):
         service_type = match and match.group(2)
         if service_type == "postgres":
             command, params, env = self._build_psql_start_info(url)
-        elif service_type == "valkey":
+        elif service_type in {"rediss", "valkeys"}:
             command, params, env = self._build_valkey_start_info(url)
+        elif service_type in {"redis", "valkey"}:
+            command, params, env = self._build_valkey_start_info(url, tls=False)
         elif service_type == "mysql":
             command, params, env = self._build_mysql_start_info(url)
         else:
@@ -1649,10 +1651,9 @@ class AivenCLI(argx.CommandLineTool):
         ]
         return "mysql", params, {"MYSQL_PWD": info.password}
 
-    def _build_valkey_start_info(self, url: str) -> tuple[str, list, Mapping]:
+    def _build_valkey_start_info(self, url: str, tls: bool = True) -> tuple[str, list, Mapping]:
         info = urlparse(url)
         params = [
-            "--tls",
             "-h",
             info.hostname,
             "-p",
@@ -1660,7 +1661,10 @@ class AivenCLI(argx.CommandLineTool):
             "--user",
             info.username,
         ]
-        return "valkey-cli", params, {"VALKEYCLI_AUTH": info.password}
+        if tls:
+            params.append("--tls")
+
+        return "valkey-cli", params, {"REDISCLI_AUTH": info.password}
 
     @arg.project
     @arg.service_name
