@@ -2891,6 +2891,8 @@ def test_application_user_token_revoke() -> None:
     [
         ("rediss://default:pwd@myservice-bar.aivencloud.com:12692", "valkey-cli"),
         ("valkeys://default:pwd@myservice-bar.aivencloud.com:12692", "valkey-cli"),
+        ("redis://default:pwd@myservice-bar.aivencloud.com:12691", "valkey-cli"),
+        ("valkey://default:pwd@myservice-bar.aivencloud.com:12691", "valkey-cli"),
         ("postgres://aiven:pwd@myservice-bar.aivencloud.com:12692/defaultdb?sslmode=require", "psql"),
         ("mysql://aiven:pwd@myservice-bar.aivencloud.com:12692/defaultdb?ssl-mode=REQUIRED", "mysql"),
     ],
