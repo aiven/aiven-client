@@ -3409,3 +3409,84 @@ class AivenClient(AivenClientBase):
             ),
             body=body,
         )
+
+    def project_cmks_accessors(
+        self,
+        project: str,
+    ) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "project",
+                project,
+                "secrets",
+                "cmks",
+                "accessors",
+            ),
+        )
+
+    def project_cmks_list(
+        self,
+        project: str,
+    ) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "project",
+                project,
+                "secrets",
+                "cmks",
+            ),
+        )
+
+    def project_cmks_get(
+        self,
+        project: str,
+        cmk_id: str,
+    ) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "project",
+                project,
+                "secrets",
+                "cmks",
+                cmk_id,
+            ),
+        )
+
+    def project_cmks_create(
+        self,
+        project: str,
+        provider: str,
+        resource: str,
+    ) -> Mapping:
+        return self.verify(
+            self.post,
+            self.build_path(
+                "project",
+                project,
+                "secrets",
+                "cmks",
+            ),
+            body={
+                "cloud": provider,
+                "resource": resource,
+            },
+        )
+
+    def project_cmks_delete(
+        self,
+        project: str,
+        cmk_id: str,
+    ) -> Mapping:
+        return self.verify(
+            self.delete,
+            self.build_path(
+                "project",
+                project,
+                "secrets",
+                "cmks",
+                cmk_id,
+            ),
+        )
