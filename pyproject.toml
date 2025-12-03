@@ -46,7 +46,6 @@ dev = [
     "pytest",
     # Lock isort to the same major version used in downstream build environments
     "isort>=6.1.0,<7.0",
-    "click",
     "ruff",
 ]
 
