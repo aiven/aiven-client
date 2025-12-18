@@ -1921,7 +1921,8 @@ def test_byoc_provision_args() -> None:
     aiven_client.byoc_provision.assert_not_called()
 
 
-def test_byoc_delete() -> None:
+@pytest.mark.parametrize("force", (False, True))
+def test_byoc_delete(force: bool) -> None:
     aiven_client = mock.Mock(spec_set=AivenClient)
     aiven_client.byoc_delete.return_value = {"message": "deleting"}
     args = [
@@ -1930,10 +1931,13 @@ def test_byoc_delete() -> None:
         "--organization-id=org123456789a",
         "--byoc-id=d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
     ]
+    if force:
+        args.append("--force")
     build_aiven_cli(aiven_client).run(args=args)
     aiven_client.byoc_delete.assert_called_once_with(
         organization_id="org123456789a",
         byoc_id="d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+        force=force,
     )
 
 
