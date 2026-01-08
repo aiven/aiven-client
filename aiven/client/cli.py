@@ -2838,6 +2838,8 @@ ssl.truststore.type=JKS
     @arg.local_retention_bytes
     @arg.diskless_enable
     @arg.diskless_disable
+    @arg.unclean_leader_election_enable
+    @arg.unclean_leader_election_disable
     @arg.tag
     @arg(
         "--cleanup-policy",
@@ -2869,6 +2871,7 @@ ssl.truststore.type=JKS
             local_retention_ms=self.args.local_retention_ms,
             local_retention_bytes=self.args.local_retention_bytes,
             diskless_enable=self._diskless_enable(),
+            unclean_leader_election_enable=self._unclean_leader_election_enable(),
             tags=tags,
         )
         print(response)
@@ -2888,6 +2891,8 @@ ssl.truststore.type=JKS
     @arg.tagupdate
     @arg.diskless_enable
     @arg.diskless_disable
+    @arg.unclean_leader_election_enable
+    @arg.unclean_leader_election_disable
     @arg.untag
     @arg("--replication", help="Replication factor", type=int, required=False)
     def service__topic_update(self) -> None:
@@ -2924,6 +2929,7 @@ ssl.truststore.type=JKS
             local_retention_ms=self.args.local_retention_ms,
             local_retention_bytes=self.args.local_retention_bytes,
             diskless_enable=self._diskless_enable(),
+            unclean_leader_election_enable=self._unclean_leader_election_enable(),
             tags=tags,
         )
         print(response["message"])
@@ -2944,6 +2950,18 @@ ssl.truststore.type=JKS
         if self.args.diskless_enable:
             return True
         elif self.args.diskless_disable:
+            return False
+        else:
+            return None
+
+    def _unclean_leader_election_enable(self) -> bool | None:
+        if self.args.unclean_leader_election_enable and self.args.unclean_leader_election_disable:
+            raise argx.UserError(
+                "Only set at most one of --unclean-leader-election-enable and --unclean-leader-election-disable"
+            )
+        if self.args.unclean_leader_election_enable:
+            return True
+        elif self.args.unclean_leader_election_disable:
             return False
         else:
             return None

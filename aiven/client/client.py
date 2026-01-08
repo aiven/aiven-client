@@ -701,6 +701,7 @@ class AivenClient(AivenClientBase):
         local_retention_ms: int | None = None,
         local_retention_bytes: int | None = None,
         diskless_enable: bool | None = None,
+        unclean_leader_election_enable: bool | None = None,
         tags: Sequence[Tag] | None = None,
     ) -> Mapping:
         body: dict[str, Any] = {
@@ -723,6 +724,8 @@ class AivenClient(AivenClientBase):
             config["local_retention_bytes"] = local_retention_bytes
         if diskless_enable is not None:
             config["diskless_enable"] = diskless_enable
+        if unclean_leader_election_enable is not None:
+            config["unclean_leader_election_enable"] = unclean_leader_election_enable
         if config:
             body["config"] = config
 
@@ -749,6 +752,7 @@ class AivenClient(AivenClientBase):
         local_retention_bytes: int | None = None,
         replication: int | None = None,
         diskless_enable: bool | None = None,
+        unclean_leader_election_enable: bool | None = None,
         tags: Sequence[str] | None = None,
     ) -> Mapping:
         body: dict[str, Any] = {
@@ -769,6 +773,8 @@ class AivenClient(AivenClientBase):
             config["local_retention_bytes"] = local_retention_bytes
         if diskless_enable is not None:
             config["diskless_enable"] = diskless_enable
+        if unclean_leader_election_enable is not None:
+            config["unclean_leader_election_enable"] = unclean_leader_election_enable
         if config:
             body["config"] = config
 

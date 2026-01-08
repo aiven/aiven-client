@@ -163,6 +163,12 @@ arg.local_retention_bytes = arg(
 )
 arg.diskless_enable = arg("--diskless-enable", help="Enable diskless", action="store_true")
 arg.diskless_disable = arg("--diskless-disable", help="Disable diskless", action="store_true")
+arg.unclean_leader_election_enable = arg(
+    "--unclean-leader-election-enable", help="Enable unclean leader election", action="store_true"
+)
+arg.unclean_leader_election_disable = arg(
+    "--unclean-leader-election-disable", help="Disable unclean leader election", action="store_true"
+)
 arg.tag = arg(
     "--tag", dest="topic_option_tag", metavar="KEY[=VALUE]", action="append", help="Tag to add into topic metadata"
 )
