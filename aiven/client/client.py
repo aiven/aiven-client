@@ -2923,10 +2923,11 @@ class AivenClient(AivenClientBase):
             body=body,
         )
 
-    def byoc_delete(self, *, organization_id: str, byoc_id: str) -> Mapping[Any, Any]:
+    def byoc_delete(self, *, organization_id: str, byoc_id: str, force: bool = False) -> Mapping[Any, Any]:
         return self.verify(
             self.delete,
             self.build_path("organization", organization_id, "custom-cloud-environments", byoc_id),
+            params={"force": str(force).lower()},
         )
 
     def byoc_terraform_get_template(self, *, organization_id: str, byoc_id: str) -> str:

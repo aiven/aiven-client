@@ -6579,9 +6579,16 @@ server_encryption_options:
 
     @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
     @arg("--byoc-id", required=True, help="Identifier of the custom cloud environment that defines the BYOC cloud")
+    @arg(
+        "--force",
+        action="store_true",
+        help="Complete deletion of the BYOC cloud even if deleting remaining instances in the cloud fails",
+    )
     def byoc__delete(self) -> None:
         """Delete a Bring Your Own Cloud cloud."""
-        output = self.client.byoc_delete(organization_id=self.args.organization_id, byoc_id=self.args.byoc_id)
+        output = self.client.byoc_delete(
+            organization_id=self.args.organization_id, byoc_id=self.args.byoc_id, force=self.args.force
+        )
         self.print_response(output)
 
     @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
