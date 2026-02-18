@@ -6875,6 +6875,109 @@ ssl.truststore.type=JKS
         accessors = self.client.list_cmk_accessors(project=project)
         self.print_response(accessors, json=True)
 
+    @arg.json
+    @arg.organization_id
+    @arg("--source-project", help="Project of the source service, if other than the default")
+    @arg("source_service")
+    @arg("--destination-project", help="Project of the destination service, if ofher than the default")
+    @arg("destination_service")
+    @arg("--auto-validation-delay-days", type=int, help="Validate upgrade automatically after this many days")
+    def upgrade_pipeline__step__create(self) -> None:
+        """Create an upgrade pipeline step"""
+        default_project = self.get_project()
+        response = self.client.upgrade_pipeline_step_create(
+            organization_id=self.args.organization_id,
+            source_project_name=self.args.source_project or default_project,
+            source_service_name=self.args.source_service,
+            destination_project_name=self.args.destination_project or default_project,
+            destination_service_name=self.args.destination_service,
+            auto_validation_delay_days=self.args.auto_validation_delay_days,
+        )
+        layout = [
+            "step_id",
+            "source_project_name",
+            "source_service_name",
+            "destination_project_name",
+            "destination_service_name",
+            "auto_validation_delay_days",
+        ]
+        self.print_response([response], json=self.args.json, table_layout=layout)
+
+    @arg.json
+    @arg.organization_id
+    @arg("step_id", help="Upgrade step ID")
+    @arg("--auto-validation-delay-days", type=int, help="Validate upgrade automatically after this many days")
+    def upgrade_pipeline__step__update(self) -> None:
+        """Update an upgrade pipeline step"""
+        response = self.client.upgrade_pipeline_step_update(
+            organization_id=self.args.organization_id,
+            step_id=self.args.step_id,
+            auto_validation_delay_days=self.args.auto_validation_delay_days,
+        )
+        layout = [
+            "step_id",
+            "source_project_name",
+            "source_service_name",
+            "destination_project_name",
+            "destination_service_name",
+            "auto_validation_delay_days",
+        ]
+        self.print_response([response], json=self.args.json, table_layout=layout)
+
+    @arg.json
+    @arg.organization_id
+    @arg("step_id", help="Upgrade step ID")
+    def upgrade_pipeline__step__delete(self) -> None:
+        """Delete an upgrade pipeline step"""
+        response = self.client.upgrade_pipeline_step_delete(
+            organization_id=self.args.organization_id, step_id=self.args.step_id
+        )
+        self.print_response(response, json=self.args.json, table_layout=[])
+
+    @arg.json
+    @arg.organization_id
+    @arg("step_id", help="Upgrade step ID")
+    def upgrade_pipeline__step__get(self) -> None:
+        """Get an upgrade pipeline step"""
+        response = self.client.upgrade_pipeline_step_get(
+            organization_id=self.args.organization_id, step_id=self.args.step_id
+        )
+        layout = [
+            "step_id",
+            "source_project_name",
+            "source_service_name",
+            "destination_project_name",
+            "destination_service_name",
+            "auto_validation_delay_days",
+        ]
+        self.print_response([response], json=self.args.json, table_layout=layout)
+
+    @arg.json
+    @arg.organization_id
+    def upgrade_pipeline__step__list(self) -> None:
+        """List upgrade pipeline steps"""
+        response = self.client.upgrade_pipeline_step_list(organization_id=self.args.organization_id)
+        layout = [
+            "step_id",
+            "source_project_name",
+            "source_service_name",
+            "destination_project_name",
+            "destination_service_name",
+            "auto_validation_delay_days",
+        ]
+        self.print_response(response["steps"], json=self.args.json, table_layout=layout)
+
+    @arg.json
+    @arg.project
+    @arg.service_name
+    @arg("--comment", help="Validate upgrade step with this comment")
+    def upgrade_pipeline__step__validate_for_service(self) -> None:
+        """Validate currently running service version for upgrade pipeline"""
+        project_name = self.get_project()
+        self.client.upgrade_pipeline_step_validate(
+            project_name=project_name, service_name=self.args.service_name, comment=self.args.comment
+        )
+
 
 if __name__ == "__main__":
     AivenCLI().main()
