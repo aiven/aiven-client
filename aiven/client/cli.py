@@ -2895,6 +2895,12 @@ ssl.truststore.type=JKS
     @arg.unclean_leader_election_disable
     @arg.untag
     @arg("--replication", help="Replication factor", type=int, required=False)
+    @arg(
+        "--cleanup-policy",
+        help="Topic cleanup policy",
+        choices=["delete", "compact"],
+        required=False,
+    )
     def service__topic_update(self) -> None:
         """Update a Kafka topic"""
 
@@ -2925,6 +2931,7 @@ ssl.truststore.type=JKS
             retention_bytes=self.args.retention_bytes,
             retention_hours=self.args.retention,
             retention_ms=self.args.retention_ms,
+            cleanup_policy=self.args.cleanup_policy,
             remote_storage_enable=self._remote_storage_enable(),
             local_retention_ms=self.args.local_retention_ms,
             local_retention_bytes=self.args.local_retention_bytes,

@@ -383,6 +383,31 @@ def test_service_topic_create(command_line: str, expected_post_data: Mapping[str
                 },
             },
         ),
+        (
+            ("service topic-update --project project1 --partitions 3 --cleanup-policy delete service1 topic1"),
+            {
+                "partitions": 3,
+                "replication": None,
+                "min_insync_replicas": None,
+                "retention_bytes": None,
+                "retention_hours": None,
+                "cleanup_policy": "delete",
+            },
+        ),
+        (
+            (
+                "service topic-update --project project1 --partitions 3 --cleanup-policy compact "
+                + "--min-insync-replicas 2 service1 topic1"
+            ),
+            {
+                "partitions": 3,
+                "replication": None,
+                "min_insync_replicas": 2,
+                "retention_bytes": None,
+                "retention_hours": None,
+                "cleanup_policy": "compact",
+            },
+        ),
     ],
 )
 def test_service_topic_update(command_line: str, expected_put_data: Mapping[str, str | int | None]) -> None:

@@ -754,6 +754,7 @@ class AivenClient(AivenClientBase):
         diskless_enable: bool | None = None,
         unclean_leader_election_enable: bool | None = None,
         tags: Sequence[str] | None = None,
+        cleanup_policy: str | None = None,
     ) -> Mapping:
         body: dict[str, Any] = {
             "partitions": partitions,
@@ -762,6 +763,8 @@ class AivenClient(AivenClientBase):
             "retention_bytes": retention_bytes,
             "retention_hours": retention_hours,
         }
+        if cleanup_policy is not None:
+            body["cleanup_policy"] = cleanup_policy
         config = {}
         if retention_ms is not None:
             config["retention_ms"] = retention_ms
