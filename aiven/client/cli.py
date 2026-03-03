@@ -2752,7 +2752,6 @@ ssl.truststore.type=JKS
     @arg(
         "--target-version",
         help="Upgrade target version",
-        type=int,
         required=False,
     )
     @arg(
