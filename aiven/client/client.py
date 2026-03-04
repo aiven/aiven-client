@@ -3419,3 +3419,25 @@ class AivenClient(AivenClientBase):
             ),
             body=body,
         )
+
+    def get_inkless_offerings(self, organization_id: str, project: str) -> Sequence[dict[str, Any]]:
+        path = self.build_path("organization", organization_id, "projects", project, "inkless", "offerings")
+        return self.verify(self.get, path, result_key="offerings")
+
+    def get_inkless_offering_rates(
+        self,
+        organization_id: str,
+        project: str,
+        offering_name: str | None = None,
+        cloud_provider: str | None = None,
+        cloud_name: str | None = None,
+    ) -> Sequence[dict[str, Any]]:
+        if cloud_provider is None:
+            raise ValueError("cloud_provider is required")
+        path = self.build_path("organization", organization_id, "projects", project, "inkless", "pricing", "rates")
+        params = {"cloud_provider": cloud_provider}
+        if offering_name is not None:
+            params["offering_name"] = offering_name
+        if cloud_name is not None:
+            params["cloud_name"] = cloud_name
+        return self.verify(self.get, path, result_key="rates", params=params)

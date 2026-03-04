@@ -3,6 +3,7 @@
 # This file is under the Apache License, Version 2.0.
 # See the file `LICENSE` for details.
 """Pretty-print JSON objects and lists as tables"""
+
 from __future__ import annotations
 
 from collections.abc import Collection, Iterator, Mapping
