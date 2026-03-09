@@ -7,6 +7,10 @@ from __future__ import annotations
 from aiven.client.argx import arg, CommandLineTool
 from functools import cached_property
 from typing import Callable, NoReturn
+from unittest import mock
+
+import io
+import json
 
 
 class TestCLI(CommandLineTool):
@@ -104,3 +108,82 @@ def test_descriptors_are_not_eagerly_evaluated() -> None:
     calls: list[Callable] = []
     cli.add_cmds(calls.append)
     assert calls == [cli.example_command]
+
+
+class TestPrintResponseAutoJson:
+    """When stdout is not a TTY, print_response should emit JSON by default."""
+
+    def _make_tool(self) -> CommandLineTool:
+        tool = CommandLineTool("test")
+        tool.args = mock.Mock()
+        tool.args.no_auto_json = False
+        tool.args.fields = None
+        return tool
+
+    def test_non_tty_emits_json(self) -> None:
+        """When file is non-TTY and json=False, output should still be JSON."""
+        tool = self._make_tool()
+        buf = io.StringIO()
+        buf.isatty = lambda: False  # type: ignore[assignment]
+        tool.print_response(
+            [{"name": "svc1", "plan": "hobby"}],
+            json=False,
+            file=buf,
+        )
+        output = buf.getvalue()
+        parsed = json.loads(output)
+        assert parsed == [{"name": "svc1", "plan": "hobby"}]
+
+    def test_tty_emits_table(self) -> None:
+        """When file is a TTY and json=False, output should be a table."""
+        tool = self._make_tool()
+        buf = io.StringIO()
+        buf.isatty = lambda: True  # type: ignore[assignment]
+        tool.print_response(
+            [{"name": "svc1", "plan": "hobby"}],
+            json=False,
+            file=buf,
+        )
+        output = buf.getvalue()
+        assert "name" in output.lower()
+        assert not output.strip().startswith("[")
+
+    def test_explicit_json_true_always_emits_json(self) -> None:
+        """When json=True explicitly, always emit JSON regardless of TTY."""
+        tool = self._make_tool()
+        buf = io.StringIO()
+        buf.isatty = lambda: True  # type: ignore[assignment]
+        tool.print_response(
+            [{"name": "svc1"}],
+            json=True,
+            file=buf,
+        )
+        parsed = json.loads(buf.getvalue())
+        assert parsed == [{"name": "svc1"}]
+
+    def test_no_auto_json_flag_disables_detection(self) -> None:
+        """--no-auto-json should preserve table output even in non-TTY."""
+        tool = self._make_tool()
+        tool.args.no_auto_json = True
+        buf = io.StringIO()
+        buf.isatty = lambda: False  # type: ignore[assignment]
+        tool.print_response(
+            [{"name": "svc1", "plan": "hobby"}],
+            json=False,
+            file=buf,
+        )
+        output = buf.getvalue()
+        assert not output.strip().startswith("[")
+
+    def test_format_string_overrides_auto_json(self) -> None:
+        """When --format is given, it takes priority over auto-JSON."""
+        tool = self._make_tool()
+        buf = io.StringIO()
+        buf.isatty = lambda: False  # type: ignore[assignment]
+        tool.print_response(
+            [{"name": "svc1"}],
+            json=False,
+            format="{name}",
+            file=buf,
+        )
+        assert buf.getvalue().strip() == "svc1"

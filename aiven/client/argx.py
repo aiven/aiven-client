@@ -234,6 +234,12 @@ class CommandLineTool:
             default=envdefault.AIVEN_CLIENT_CONFIG,
         )
         self.parser.add_argument("--version", action="version", version="aiven-client {}".format(__version__))
+        self.parser.add_argument(
+            "--no-auto-json",
+            help="Disable automatic JSON output in non-TTY (piped) contexts",
+            action="store_true",
+            default=False,
+        )
         self.subparsers = self.parser.add_subparsers(title="command categories", dest="command", help="", metavar="")
         self.args: Namespace = Namespace()
 
@@ -327,6 +333,12 @@ class CommandLineTool:
         """print request response in chosen format"""
         if file is None:
             file = sys.stdout
+
+        # Auto-detect non-TTY: emit JSON when piped, unless explicitly disabled
+        no_auto_json = getattr(self.args, "no_auto_json", False)
+        if not json and not no_auto_json and not csv and format is None:
+            if hasattr(file, "isatty") and not file.isatty():
+                json = True
 
         if format is not None:
             for item in self._to_mapping_collection(result, single_item=single_item):
