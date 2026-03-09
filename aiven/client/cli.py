@@ -7035,6 +7035,58 @@ server_encryption_options:
         )
         self.print_response(response, json=True)
 
+    @arg.json
+    @arg.organization_id
+    @arg.project
+    @arg("--ingress", type=int, help="Filter offerings by ingress throughput estimate")
+    def inkless__offering__list(self) -> None:
+        """List inkless saas offerings for a project"""
+        if self.args.ingress is not None and self.args.ingress < 0:
+            raise argx.UserError("--ingress must be a positive number")
+        project = self.get_project()
+        offerings = self.client.get_inkless_offerings(
+            organization_id=self.args.organization_id,
+            project=project,
+        )
+        offerings = sorted(offerings, key=lambda x: x.get("compute_tier", 0))
+        if self.args.ingress is not None:
+            offerings = [offering for offering in offerings if offering.get("max_ingress_mbps", 0) >= self.args.ingress]
+        layout = [
+            ["offering_name", "max_ingress_mbps", "max_egress_mbps"],
+        ]
+        self.print_response(offerings, json=self.args.json, table_layout=layout)
+
+    @arg.json
+    @arg.organization_id
+    @arg.project
+    @arg("--cloud-provider", required=True, help="Filter by cloud provider")
+    @arg("--offering-name", help="Filter by offering name (e.g., inkless-professional-3x-8-1)")
+    @arg("--cloud-name", help="Filter by cloud name")
+    def inkless__offering__rates(self) -> None:
+        """Get pricing rates for an inkless saas offering(s) in a cloud"""
+        project = self.get_project()
+        rates = self.client.get_inkless_offering_rates(
+            organization_id=self.args.organization_id,
+            project=project,
+            offering_name=self.args.offering_name,
+            cloud_provider=self.args.cloud_provider,
+            cloud_name=self.args.cloud_name,
+        )
+        rates = sorted(rates, key=lambda x: float(x.get("compute_fee", "0") or "0"))
+        layout = [
+            [
+                "offering_name",
+                "cloud_name",
+                "compute_fee",
+                "storage_hourly_price_per_gb_usd",
+                "classic_ingress_hourly_price_per_gb_usd",
+                "classic_egress_hourly_price_per_gb_usd",
+                "diskless_ingress_hourly_price_per_gb_usd",
+                "diskless_egress_hourly_price_per_gb_usd",
+            ],
+        ]
+        self.print_response(rates, json=self.args.json, table_layout=layout)
+
 
 if __name__ == "__main__":
     AivenCLI().main()
