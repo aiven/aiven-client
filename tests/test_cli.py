@@ -3030,3 +3030,16 @@ class TestDryRun:
         aiven_client.delete_project.assert_not_called()
         captured = capsys.readouterr()
         assert "my-project" in captured.out
+
+
+class TestResourceIdValidation:
+    """Resource ID validation should reject dangerous names."""
+
+    def test_service_terminate_rejects_path_traversal(self) -> None:
+        aiven_client = mock.Mock(spec_set=AivenClient)
+        cli = build_aiven_cli(aiven_client)
+        with mock_config({"default_project": "myproject"}):
+            with pytest.raises(SystemExit) as exc_info:
+                cli.run(args=["service", "terminate", "--force", "../etc/passwd"])
+            assert exc_info.value.code == EXIT_CODE_INVALID_USAGE
+        aiven_client.delete_service.assert_not_called()

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from . import argx, client, units
 from aiven.client import AivenClient, envdefault
-from aiven.client.cliarg import arg
+from aiven.client.cliarg import arg, validated_resource_id
 from aiven.client.client import Tag
 from aiven.client.common import UNDEFINED
 from aiven.client.connection_info.common import Store
@@ -3626,7 +3626,7 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.force
     @arg.dry_run
-    @arg("service_name", help="Service name", nargs="+")
+    @arg("service_name", help="Service name", nargs="+", type=validated_resource_id("service_name"))
     def service__terminate(self) -> None:
         """Terminate service"""
         if self.args.dry_run:
