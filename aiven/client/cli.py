@@ -3631,7 +3631,7 @@ ssl.truststore.type=JKS
         """Terminate service"""
         if self.args.dry_run:
             for name in self.args.service_name:
-                print("dry-run: would terminate service {!r} in project {!r}".format(name, self.get_project()))
+                print(f"dry-run: would terminate service {name!r} in project {self.get_project()!r}")
             return
 
         if not self.args.force and os.environ.get("AIVEN_FORCE") != "true":
@@ -4401,7 +4401,7 @@ ssl.truststore.type=JKS
     def project__delete(self) -> None:
         """Delete a project"""
         if self.args.dry_run:
-            print("dry-run: would delete project {!r}".format(self.args.project_name))
+            print(f"dry-run: would delete project {self.args.project_name!r}")
             return
 
         self.client.delete_project(project=self.args.project_name)
@@ -6106,7 +6106,7 @@ server_encryption_options:
     def organization__delete(self) -> None:
         """Delete an organization"""
         if self.args.dry_run:
-            print("dry-run: would delete organization {!r}".format(self.args.organization_id))
+            print(f"dry-run: would delete organization {self.args.organization_id!r}")
             return
 
         if not self.args.force:
