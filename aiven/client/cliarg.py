@@ -118,6 +118,12 @@ arg.disk_space_mb = arg(
     "--disk-space-gib", dest="disk_space_mb", type=lambda value: int(value) * 1024, help="Disk space for data storage (GiB)"
 )
 arg.email = arg("email", help="User email address")
+arg.dry_run = arg(
+    "--dry-run",
+    help="Show what would be done without executing the action",
+    action="store_true",
+    default=False,
+)
 arg.force = arg(
     "-f",
     "--force",

@@ -2998,3 +2998,35 @@ def test_service_cli(url: str, command: str) -> None:
         build_aiven_cli(aiven_client).run(args=["service", "cli", "myservice"])
         command_called, _, _ = mock_exec.call_args[0]
         assert command_called == command
+
+
+class TestDryRun:
+    """--dry-run should print the action without executing it."""
+
+    def test_service_terminate_dry_run(self, capsys: CaptureFixture[str]) -> None:
+        aiven_client = mock.Mock(spec_set=AivenClient)
+        cli = build_aiven_cli(aiven_client)
+        with mock_config({"default_project": "myproject"}):
+            result = cli.run(args=["service", "terminate", "--force", "--dry-run", "my-service"])
+        assert result is None
+        aiven_client.delete_service.assert_not_called()
+        captured = capsys.readouterr()
+        assert "my-service" in captured.out
+        assert "dry-run" in captured.out.lower() or "dry_run" in captured.out.lower()
+
+    def test_service_terminate_without_dry_run(self) -> None:
+        aiven_client = mock.Mock(spec_set=AivenClient)
+        cli = build_aiven_cli(aiven_client)
+        with mock_config({"default_project": "myproject"}):
+            result = cli.run(args=["service", "terminate", "--force", "my-service"])
+        aiven_client.delete_service.assert_called_once()
+
+    def test_project_delete_dry_run(self, capsys: CaptureFixture[str]) -> None:
+        aiven_client = mock.Mock(spec_set=AivenClient)
+        cli = build_aiven_cli(aiven_client)
+        with mock_config({}):
+            result = cli.run(args=["project", "delete", "--dry-run", "my-project"])
+        assert result is None
+        aiven_client.delete_project.assert_not_called()
+        captured = capsys.readouterr()
+        assert "my-project" in captured.out
