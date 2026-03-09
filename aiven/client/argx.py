@@ -240,6 +240,11 @@ class CommandLineTool:
             action="store_true",
             default=False,
         )
+        self.parser.add_argument(
+            "--fields",
+            help="Comma-separated list of fields to include in output (e.g. --fields name,plan,state)",
+            default=None,
+        )
         self.subparsers = self.parser.add_subparsers(title="command categories", dest="command", help="", metavar="")
         self.args: Namespace = Namespace()
 
@@ -318,6 +323,16 @@ class CommandLineTool:
             assert isinstance(obj, Collection)
             return cast(Collection[Mapping[str, Any]], obj)
 
+    def _apply_field_filter(
+        self, result: Collection[Mapping[str, Any]]
+    ) -> Collection[Mapping[str, Any]]:
+        """Filter result dicts to only include requested fields."""
+        fields_str = getattr(self.args, "fields", None)
+        if not fields_str:
+            return result
+        fields = {f.strip() for f in fields_str.split(",")}
+        return [{k: v for k, v in item.items() if k in fields} for item in result]
+
     def print_response(
         self,
         result: Mapping[str, Any] | Collection[Mapping[str, Any]],
@@ -340,13 +355,16 @@ class CommandLineTool:
             if hasattr(file, "isatty") and not file.isatty():
                 json = True
 
+        # Apply field filtering if --fields was provided
+        result_collection = self._to_mapping_collection(result, single_item=single_item)
+        result_collection = self._apply_field_filter(result_collection)
+
         if format is not None:
-            for item in self._to_mapping_collection(result, single_item=single_item):
+            for item in result_collection:
                 print(format.format(**item), file=file)
         elif json:
-            assert isinstance(result, (Collection, Mapping))
             print(
-                jsonlib.dumps(result, indent=4, sort_keys=True, cls=pretty.CustomJsonEncoder),
+                jsonlib.dumps(list(result_collection), indent=4, sort_keys=True, cls=pretty.CustomJsonEncoder),
                 file=file,
             )
         elif csv:
@@ -361,11 +379,11 @@ class CommandLineTool:
             writer = csvlib.DictWriter(file, extrasaction="ignore", fieldnames=fields)
             if header:
                 writer.writeheader()
-            for item in self._to_mapping_collection(result, single_item=single_item):
+            for item in result_collection:
                 writer.writerow(item)
         else:
             pretty.print_table(
-                self._to_mapping_collection(result, single_item=single_item),
+                result_collection,
                 drop_fields=drop_fields,
                 table_layout=table_layout,
                 header=header,

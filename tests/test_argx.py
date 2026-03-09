@@ -248,3 +248,64 @@ class TestStructuredErrorOutput:
         parsed = json.loads(buf.getvalue())
         assert parsed["error"] is True
         assert parsed["status"] == 403
+
+
+class TestFieldsFiltering:
+    """--fields should filter output to only requested keys."""
+
+    def _make_tool(self, fields: str | None = None) -> CommandLineTool:
+        tool = CommandLineTool("test")
+        tool.args = mock.Mock()
+        tool.args.no_auto_json = True
+        tool.args.fields = fields
+        return tool
+
+    def test_fields_filters_json_output(self) -> None:
+        tool = self._make_tool(fields="name,plan")
+        buf = io.StringIO()
+        buf.isatty = lambda: True  # type: ignore[assignment]
+        tool.print_response(
+            [{"name": "svc1", "plan": "hobby", "state": "RUNNING", "cloud": "aws"}],
+            json=True,
+            file=buf,
+        )
+        parsed = json.loads(buf.getvalue())
+        assert parsed == [{"name": "svc1", "plan": "hobby"}]
+
+    def test_fields_filters_table_output(self) -> None:
+        tool = self._make_tool(fields="name,plan")
+        buf = io.StringIO()
+        buf.isatty = lambda: True  # type: ignore[assignment]
+        tool.print_response(
+            [{"name": "svc1", "plan": "hobby", "state": "RUNNING"}],
+            json=False,
+            file=buf,
+        )
+        output = buf.getvalue()
+        assert "svc1" in output
+        assert "RUNNING" not in output
+
+    def test_no_fields_returns_all(self) -> None:
+        tool = self._make_tool(fields=None)
+        buf = io.StringIO()
+        buf.isatty = lambda: True  # type: ignore[assignment]
+        tool.print_response(
+            [{"name": "svc1", "state": "RUNNING"}],
+            json=True,
+            file=buf,
+        )
+        parsed = json.loads(buf.getvalue())
+        assert parsed == [{"name": "svc1", "state": "RUNNING"}]
+
+    def test_fields_single_item(self) -> None:
+        tool = self._make_tool(fields="name")
+        buf = io.StringIO()
+        buf.isatty = lambda: True  # type: ignore[assignment]
+        tool.print_response(
+            {"name": "svc1", "plan": "hobby"},
+            json=True,
+            single_item=True,
+            file=buf,
+        )
+        parsed = json.loads(buf.getvalue())
+        assert parsed == [{"name": "svc1"}]
