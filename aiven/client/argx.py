@@ -329,7 +329,13 @@ class CommandLineTool:
         if not fields_str:
             return result
         fields = {f.strip() for f in fields_str.split(",")}
-        return [{k: v for k, v in item.items() if k in fields} for item in result]
+        result_list = list(result)
+        if result_list:
+            available = set(result_list[0].keys())
+            missing = fields - available
+            if missing:
+                self.log.warning("--fields: requested fields not found in data: %s", ", ".join(sorted(missing)))
+        return [{k: v for k, v in item.items() if k in fields} for item in result_list]
 
     def _should_emit_json(self, json: bool, csv: bool, format: str | None, file: TextIO) -> bool:
         """Determine whether output should be JSON.
