@@ -5985,6 +5985,7 @@ server_encryption_options:
                 project=self.get_project(),
                 service=self.args.service_name,
             ),
+            single_item=True,
         )
 
     @arg.project
@@ -6029,6 +6030,7 @@ server_encryption_options:
                     file_name=self.args.file_name,
                     file_object=f,
                 ),
+                single_item=True,
             )
 
     @arg.project
@@ -6045,6 +6047,7 @@ server_encryption_options:
                     file_id=self.args.file_id,
                     file_object=f,
                 ),
+                single_item=True,
             )
 
     @arg.json

@@ -1767,7 +1767,10 @@ def test_custom_files_get_none(capsys: CaptureFixture[str]) -> None:
     )
     aiven_client.custom_file_get.assert_not_called()
     captured = capsys.readouterr()
-    assert captured.out.strip() == ""
+    # In non-TTY (test) mode, errors are emitted as JSON to stdout
+    error_output = json.loads(captured.out)
+    assert error_output["error"] is True
+    assert "target_filepath" in error_output["message"]
     with pytest.raises(argx.UserError):
         aiven_cli.service__custom_file__get()
 
