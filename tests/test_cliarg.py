@@ -6,7 +6,9 @@ from __future__ import annotations
 
 from _pytest.logging import LogCaptureFixture
 from aiven.client.argx import CommandLineTool
-from aiven.client.cliarg import arg
+from aiven.client.cliarg import arg, validated_resource_id
+
+import pytest
 
 
 def test_user_config_json_error_json(caplog: LogCaptureFixture) -> None:
@@ -92,3 +94,21 @@ def test_user_config_success() -> None:
     test_class = T("avn")
     ret = test_class.run(args=user_config_arg)
     assert ret is None
+
+
+class TestValidatedResourceId:
+    """validated_resource_id should be usable as an argparse type."""
+
+    def test_valid_name_passes_through(self) -> None:
+        validator = validated_resource_id("service_name")
+        assert validator("my-service") == "my-service"
+
+    def test_path_traversal_raises(self) -> None:
+        validator = validated_resource_id("service_name")
+        with pytest.raises(ValueError):
+            validator("../etc/passwd")
+
+    def test_empty_string_raises(self) -> None:
+        validator = validated_resource_id("service_name")
+        with pytest.raises(ValueError):
+            validator("")

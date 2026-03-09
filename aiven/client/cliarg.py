@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from .argx import arg, CommandLineTool, UserError
+from .validation import validate_resource_id
 from functools import wraps
 from typing import Any, Callable, TypeVar
 
@@ -16,7 +17,18 @@ __all__ = [
     "get_json_config",
     "json_path_or_string",
     "user_config_json",
+    "validated_resource_id",
 ]
+
+
+def validated_resource_id(field_name: str) -> Callable[[str], str]:
+    """Return an argparse type function that validates resource IDs."""
+
+    def _validate(value: str) -> str:
+        return validate_resource_id(value, field_name)
+
+    _validate.__name__ = f"resource_id({field_name})"
+    return _validate
 
 
 def get_json_config(path_or_string: str) -> dict[str, Any]:
@@ -132,7 +144,7 @@ arg.force = arg(
     default=False,
 )
 arg.group_id_positional = arg("group_id", help="Organization user group identifier")
-arg.index_name = arg("index_name", help="Index name")
+arg.index_name = arg("index_name", help="Index name", type=validated_resource_id("index_name"))
 arg.json = arg("--json", help="Raw json output", action="store_true", default=False)
 arg.min_insync_replicas = arg(
     "--min-insync-replicas",
@@ -188,11 +200,11 @@ arg.tagupdate = arg(
 arg.untag = arg(
     "--untag", dest="topic_option_untag", metavar="KEY", action="append", help="Tag to delete from topic metadata"
 )
-arg.service_name = arg("service_name", help="Service name")
+arg.service_name = arg("service_name", help="Service name", type=validated_resource_id("service_name"))
 arg.service_name_mandatory = arg("service_name", help="Service name", required=True)
 arg.service_type = arg("-t", "--service-type", help="Type of service (see 'service types')")
 arg.static_ip_id = arg("static_ip_id", help="Static IP address ID")
-arg.ns_name = arg("ns_name", help="Namespace name")
+arg.ns_name = arg("ns_name", help="Namespace name", type=validated_resource_id("ns_name"))
 arg.ns_type = arg("--ns-type", help="Namespace type ('aggregated' or 'unaggregated')", required=True)
 arg.ns_retention_mandatory = arg(
     "--ns-retention", help="Namespace retention period (written like 30m/25h etc)", required=True
@@ -209,7 +221,7 @@ arg.ns_writes_to_commitlog = arg("--ns-writes-to-commitlog", help="Namespace wri
 arg.team_name = arg("--team-name", help="Team  name", required=True)
 arg.team_id = arg("--team-id", help="Team identifier", required=True)
 arg.timeout = arg("--timeout", type=int, help="Wait for up to N seconds (default: infinite)")
-arg.topic = arg("topic", help="Topic name")
+arg.topic = arg("topic", help="Topic name", type=validated_resource_id("topic"))
 arg.user_config = arg(
     "-c",
     dest="user_config",
