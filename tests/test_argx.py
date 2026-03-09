@@ -308,4 +308,36 @@ class TestFieldsFiltering:
             file=buf,
         )
         parsed = json.loads(buf.getvalue())
-        assert parsed == [{"name": "svc1"}]
+        assert isinstance(parsed, dict)
+        assert parsed == {"name": "svc1"}
+
+    def test_single_item_json_emits_object_not_array(self) -> None:
+        """single_item=True with json=True must emit {}, not [{}]."""
+        tool = self._make_tool(fields=None)
+        buf = io.StringIO()
+        buf.isatty = lambda: True  # type: ignore[assignment]
+        tool.print_response(
+            {"name": "svc1", "plan": "hobby"},
+            json=True,
+            single_item=True,
+            file=buf,
+        )
+        parsed = json.loads(buf.getvalue())
+        # Must be a dict, not a list
+        assert isinstance(parsed, dict)
+        assert parsed == {"name": "svc1", "plan": "hobby"}
+
+    def test_single_item_json_with_fields_emits_object(self) -> None:
+        """single_item=True + json=True + --fields must emit filtered {}."""
+        tool = self._make_tool(fields="name")
+        buf = io.StringIO()
+        buf.isatty = lambda: True  # type: ignore[assignment]
+        tool.print_response(
+            {"name": "svc1", "plan": "hobby"},
+            json=True,
+            single_item=True,
+            file=buf,
+        )
+        parsed = json.loads(buf.getvalue())
+        assert isinstance(parsed, dict)
+        assert parsed == {"name": "svc1"}

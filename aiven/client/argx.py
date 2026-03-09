@@ -366,8 +366,11 @@ class CommandLineTool:
             for item in result_collection:
                 print(format.format(**item), file=file)
         elif json:
+            output: Any = list(result_collection)
+            if single_item and len(output) == 1:
+                output = output[0]
             print(
-                jsonlib.dumps(list(result_collection), indent=4, sort_keys=True, cls=pretty.CustomJsonEncoder),
+                jsonlib.dumps(output, indent=4, sort_keys=True, cls=pretty.CustomJsonEncoder),
                 file=file,
             )
         elif csv:
