@@ -4,9 +4,9 @@
 # See the file `LICENSE` for details.
 from __future__ import annotations
 
-import pytest
-
 from aiven.client.validation import validate_resource_id
+
+import pytest
 
 
 class TestValidateResourceId:

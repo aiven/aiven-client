@@ -8,6 +8,7 @@ Rejects patterns commonly produced by LLM hallucinations:
 path traversal, percent-encoded segments, embedded query params,
 control characters, and empty/whitespace-only strings.
 """
+
 from __future__ import annotations
 
 import re
@@ -29,32 +30,20 @@ def validate_resource_id(value: str, field_name: str) -> str:
     Returns the value unchanged if valid.
     """
     if not value or not value.strip():
-        raise ValueError(
-            f"Invalid resource identifier for {field_name!r}: must not be empty"
-        )
+        raise ValueError(f"Invalid resource identifier for {field_name!r}: must not be empty")
 
     if ".." in value:
-        raise ValueError(
-            f"Invalid resource identifier for {field_name!r}: "
-            f"path traversal sequence '..' is not allowed"
-        )
+        raise ValueError(f"Invalid resource identifier for {field_name!r}: " f"path traversal sequence '..' is not allowed")
 
     if _PERCENT_ENCODED_RE.search(value):
-        raise ValueError(
-            f"Invalid resource identifier for {field_name!r}: "
-            f"percent-encoded characters are not allowed"
-        )
+        raise ValueError(f"Invalid resource identifier for {field_name!r}: " f"percent-encoded characters are not allowed")
 
     if _QUERY_FRAGMENT_RE.search(value):
         raise ValueError(
-            f"Invalid resource identifier for {field_name!r}: "
-            f"query parameters '?' and fragments '#' are not allowed"
+            f"Invalid resource identifier for {field_name!r}: " f"query parameters '?' and fragments '#' are not allowed"
         )
 
     if _CONTROL_CHAR_RE.search(value):
-        raise ValueError(
-            f"Invalid resource identifier for {field_name!r}: "
-            f"control characters are not allowed"
-        )
+        raise ValueError(f"Invalid resource identifier for {field_name!r}: " f"control characters are not allowed")
 
     return value

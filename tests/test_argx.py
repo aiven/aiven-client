@@ -4,6 +4,7 @@
 # See the file `LICENSE` for details.
 from __future__ import annotations
 
+from aiven.client import client as aiven_client
 from aiven.client.argx import arg, CommandLineTool, UserError
 from functools import cached_property
 from typing import Callable, NoReturn
@@ -233,11 +234,10 @@ class TestStructuredErrorOutput:
 
     def test_client_error_includes_status(self) -> None:
         """client.Error should include HTTP status in JSON error."""
-        from aiven.client import client as aiven_client
-
+        http_forbidden = 403
         resp = mock.Mock()
         resp.text = '{"message": "forbidden"}'
-        error = aiven_client.Error(resp, status=403)
+        error = aiven_client.Error(resp, status=http_forbidden)
         tool = self._make_tool_that_raises(error)
         buf = io.StringIO()
         buf.isatty = lambda: False  # type: ignore[assignment]
@@ -247,7 +247,7 @@ class TestStructuredErrorOutput:
         assert exit_code == 1
         parsed = json.loads(buf.getvalue())
         assert parsed["error"] is True
-        assert parsed["status"] == 403
+        assert parsed["status"] == http_forbidden
 
 
 class TestFieldsFiltering:

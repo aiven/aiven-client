@@ -3631,9 +3631,7 @@ ssl.truststore.type=JKS
         """Terminate service"""
         if self.args.dry_run:
             for name in self.args.service_name:
-                print(
-                    "dry-run: would terminate service {!r} in project {!r}".format(name, self.get_project())
-                )
+                print("dry-run: would terminate service {!r} in project {!r}".format(name, self.get_project()))
             return
 
         if not self.args.force and os.environ.get("AIVEN_FORCE") != "true":
@@ -4647,8 +4645,7 @@ ssl.truststore.type=JKS
             # keystore/truststore files from default locations, and failing when they do not exist, even if the actual
             # certificates/keys in them would not be used
             with open(os.path.join(self.args.target_directory, "cassandra.yaml"), "w", encoding="utf-8") as fp:
-                fp.write(
-                    """\
+                fp.write("""\
 client_encryption_options:
     enabled: true
     optional: false
@@ -4662,10 +4659,7 @@ server_encryption_options:
     keystore_password: {password}
     truststore: ./sstableloader.truststore.jks
     truststore_password: {password}
-""".format(
-                        password=self.args.password
-                    )
-                )
+""".format(password=self.args.password))
 
             # The Project CA signs the certificate used by the Cassandra native transport, aka the regular client port
             # The internode CA signs the certificate used by SSL storage port, aka the internode port used to stream data
@@ -6059,13 +6053,11 @@ server_encryption_options:
     def organization__create(self) -> None:
         """Create new organization"""
         if not self.args.force:
-            confirmation_result = self.confirm(
-                "Settings like billing details and authentication methods \
+            confirmation_result = self.confirm("Settings like billing details and authentication methods \
     cannot be shared across multiple organizations.\
     \nWhen you create a new organization, you must configure each of these settings manually.\
     \n\nTo use your current settings, create an organizational unit within this organization instead.\
-    \n\nI understand and want to create a new organization (y/N)? "
-            )
+    \n\nI understand and want to create a new organization (y/N)? ")
 
             if not confirmation_result:
                 raise argx.UserError("Aborted")

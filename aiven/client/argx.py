@@ -323,9 +323,7 @@ class CommandLineTool:
             assert isinstance(obj, Collection)
             return cast(Collection[Mapping[str, Any]], obj)
 
-    def _apply_field_filter(
-        self, result: Collection[Mapping[str, Any]]
-    ) -> Collection[Mapping[str, Any]]:
+    def _apply_field_filter(self, result: Collection[Mapping[str, Any]]) -> Collection[Mapping[str, Any]]:
         """Filter result dicts to only include requested fields."""
         fields_str = getattr(self.args, "fields", None)
         if not fields_str:
@@ -350,10 +348,15 @@ class CommandLineTool:
             file = sys.stdout
 
         # Auto-detect non-TTY: emit JSON when piped, unless explicitly disabled
-        no_auto_json = getattr(self.args, "no_auto_json", False)
-        if not json and not no_auto_json and not csv and format is None:
-            if hasattr(file, "isatty") and not file.isatty():
-                json = True
+        if (
+            not json
+            and not getattr(self.args, "no_auto_json", False)
+            and not csv
+            and format is None
+            and hasattr(file, "isatty")
+            and not file.isatty()
+        ):
+            json = True
 
         # Apply field filtering if --fields was provided
         result_collection = self._to_mapping_collection(result, single_item=single_item)
