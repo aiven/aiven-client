@@ -201,7 +201,9 @@ arg.untag = arg(
     "--untag", dest="topic_option_untag", metavar="KEY", action="append", help="Tag to delete from topic metadata"
 )
 arg.service_name = arg("service_name", help="Service name", type=validated_resource_id("service_name"))
-arg.service_name_mandatory = arg("service_name", help="Service name", required=True, type=validated_resource_id("service_name"))
+arg.service_name_mandatory = arg(
+    "service_name", help="Service name", required=True, type=validated_resource_id("service_name")
+)
 arg.service_type = arg("-t", "--service-type", help="Type of service (see 'service types')")
 arg.static_ip_id = arg("static_ip_id", help="Static IP address ID")
 arg.ns_name = arg("ns_name", help="Namespace name", type=validated_resource_id("ns_name"))
