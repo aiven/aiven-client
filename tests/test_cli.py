@@ -3032,7 +3032,7 @@ class TestDryRun:
         aiven_client = mock.Mock(spec_set=AivenClient)
         cli = build_aiven_cli(aiven_client)
         with mock_config({"default_project": "myproject"}):
-            result = cli.run(args=["service", "terminate", "--force", "my-service"])
+            cli.run(args=["service", "terminate", "--force", "my-service"])
         aiven_client.delete_service.assert_called_once()
 
     def test_project_delete_dry_run(self, capsys: CaptureFixture[str]) -> None:
