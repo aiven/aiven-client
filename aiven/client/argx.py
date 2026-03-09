@@ -358,14 +358,19 @@ class CommandLineTool:
         ):
             json = True
 
-        # Apply field filtering if --fields was provided
+        # Convert to collection for all output paths
         result_collection = self._to_mapping_collection(result, single_item=single_item)
-        result_collection = self._apply_field_filter(result_collection)
 
+        # format= uses raw data (field filtering does not apply)
         if format is not None:
             for item in result_collection:
                 print(format.format(**item), file=file)
-        elif json:
+            return
+
+        # Apply field filtering for json/csv/table output
+        result_collection = self._apply_field_filter(result_collection)
+
+        if json:
             output: Any = list(result_collection)
             if single_item and len(output) == 1:
                 output = output[0]

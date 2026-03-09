@@ -341,3 +341,17 @@ class TestFieldsFiltering:
         parsed = json.loads(buf.getvalue())
         assert isinstance(parsed, dict)
         assert parsed == {"name": "svc1"}
+
+    def test_fields_does_not_break_format_string(self) -> None:
+        """--fields should not filter when format= is used."""
+        tool = self._make_tool(fields="name")
+        buf = io.StringIO()
+        buf.isatty = lambda: True  # type: ignore[assignment]
+        # format references 'plan' which is NOT in --fields
+        tool.print_response(
+            [{"name": "svc1", "plan": "hobby"}],
+            json=False,
+            format="{name} {plan}",
+            file=buf,
+        )
+        assert buf.getvalue().strip() == "svc1 hobby"
