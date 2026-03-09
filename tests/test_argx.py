@@ -125,7 +125,7 @@ class TestPrintResponseAutoJson:
         """When file is non-TTY and json=False, output should still be JSON."""
         tool = self._make_tool()
         buf = io.StringIO()
-        buf.isatty = lambda: False  # type: ignore[assignment]
+        buf.isatty = lambda: False  # type: ignore[method-assign]
         tool.print_response(
             [{"name": "svc1", "plan": "hobby"}],
             json=False,
@@ -139,7 +139,7 @@ class TestPrintResponseAutoJson:
         """When file is a TTY and json=False, output should be a table."""
         tool = self._make_tool()
         buf = io.StringIO()
-        buf.isatty = lambda: True  # type: ignore[assignment]
+        buf.isatty = lambda: True  # type: ignore[method-assign]
         tool.print_response(
             [{"name": "svc1", "plan": "hobby"}],
             json=False,
@@ -153,7 +153,7 @@ class TestPrintResponseAutoJson:
         """When json=True explicitly, always emit JSON regardless of TTY."""
         tool = self._make_tool()
         buf = io.StringIO()
-        buf.isatty = lambda: True  # type: ignore[assignment]
+        buf.isatty = lambda: True  # type: ignore[method-assign]
         tool.print_response(
             [{"name": "svc1"}],
             json=True,
@@ -167,7 +167,7 @@ class TestPrintResponseAutoJson:
         tool = self._make_tool()
         tool.args.no_auto_json = True
         buf = io.StringIO()
-        buf.isatty = lambda: False  # type: ignore[assignment]
+        buf.isatty = lambda: False  # type: ignore[method-assign]
         tool.print_response(
             [{"name": "svc1", "plan": "hobby"}],
             json=False,
@@ -180,7 +180,7 @@ class TestPrintResponseAutoJson:
         """When --format is given, it takes priority over auto-JSON."""
         tool = self._make_tool()
         buf = io.StringIO()
-        buf.isatty = lambda: False  # type: ignore[assignment]
+        buf.isatty = lambda: False  # type: ignore[method-assign]
         tool.print_response(
             [{"name": "svc1"}],
             json=False,
@@ -198,8 +198,8 @@ class TestStructuredErrorOutput:
         tool.args = mock.Mock()
         tool.args.config = "/dev/null"
         tool.args.no_auto_json = False
-        tool.run_actual = mock.Mock(side_effect=exception)  # type: ignore[assignment]
-        tool.parse_args = mock.Mock()  # type: ignore[assignment]
+        tool.run_actual = mock.Mock(side_effect=exception)  # type: ignore[method-assign]
+        tool.parse_args = mock.Mock()  # type: ignore[method-assign]
         return tool
 
     def _run_tool(self, tool: CommandLineTool, buf: io.StringIO) -> int | None:
@@ -210,7 +210,7 @@ class TestStructuredErrorOutput:
         """UserError should produce JSON error on non-TTY stdout."""
         tool = self._make_tool_that_raises(UserError("project not found"))
         buf = io.StringIO()
-        buf.isatty = lambda: False  # type: ignore[assignment]
+        buf.isatty = lambda: False  # type: ignore[method-assign]
 
         exit_code = self._run_tool(tool, buf)
 
@@ -225,7 +225,7 @@ class TestStructuredErrorOutput:
         """UserError should NOT produce JSON on TTY stdout (backward compat)."""
         tool = self._make_tool_that_raises(UserError("project not found"))
         buf = io.StringIO()
-        buf.isatty = lambda: True  # type: ignore[assignment]
+        buf.isatty = lambda: True  # type: ignore[method-assign]
 
         exit_code = self._run_tool(tool, buf)
 
@@ -240,7 +240,7 @@ class TestStructuredErrorOutput:
         error = aiven_client.Error(resp, status=http_forbidden)
         tool = self._make_tool_that_raises(error)
         buf = io.StringIO()
-        buf.isatty = lambda: False  # type: ignore[assignment]
+        buf.isatty = lambda: False  # type: ignore[method-assign]
 
         exit_code = self._run_tool(tool, buf)
 
@@ -263,7 +263,7 @@ class TestFieldsFiltering:
     def test_fields_filters_json_output(self) -> None:
         tool = self._make_tool(fields="name,plan")
         buf = io.StringIO()
-        buf.isatty = lambda: True  # type: ignore[assignment]
+        buf.isatty = lambda: True  # type: ignore[method-assign]
         tool.print_response(
             [{"name": "svc1", "plan": "hobby", "state": "RUNNING", "cloud": "aws"}],
             json=True,
@@ -275,7 +275,7 @@ class TestFieldsFiltering:
     def test_fields_filters_table_output(self) -> None:
         tool = self._make_tool(fields="name,plan")
         buf = io.StringIO()
-        buf.isatty = lambda: True  # type: ignore[assignment]
+        buf.isatty = lambda: True  # type: ignore[method-assign]
         tool.print_response(
             [{"name": "svc1", "plan": "hobby", "state": "RUNNING"}],
             json=False,
@@ -288,7 +288,7 @@ class TestFieldsFiltering:
     def test_no_fields_returns_all(self) -> None:
         tool = self._make_tool(fields=None)
         buf = io.StringIO()
-        buf.isatty = lambda: True  # type: ignore[assignment]
+        buf.isatty = lambda: True  # type: ignore[method-assign]
         tool.print_response(
             [{"name": "svc1", "state": "RUNNING"}],
             json=True,
@@ -300,7 +300,7 @@ class TestFieldsFiltering:
     def test_fields_single_item(self) -> None:
         tool = self._make_tool(fields="name")
         buf = io.StringIO()
-        buf.isatty = lambda: True  # type: ignore[assignment]
+        buf.isatty = lambda: True  # type: ignore[method-assign]
         tool.print_response(
             {"name": "svc1", "plan": "hobby"},
             json=True,
@@ -315,7 +315,7 @@ class TestFieldsFiltering:
         """single_item=True with json=True must emit {}, not [{}]."""
         tool = self._make_tool(fields=None)
         buf = io.StringIO()
-        buf.isatty = lambda: True  # type: ignore[assignment]
+        buf.isatty = lambda: True  # type: ignore[method-assign]
         tool.print_response(
             {"name": "svc1", "plan": "hobby"},
             json=True,
@@ -331,7 +331,7 @@ class TestFieldsFiltering:
         """single_item=True + json=True + --fields must emit filtered {}."""
         tool = self._make_tool(fields="name")
         buf = io.StringIO()
-        buf.isatty = lambda: True  # type: ignore[assignment]
+        buf.isatty = lambda: True  # type: ignore[method-assign]
         tool.print_response(
             {"name": "svc1", "plan": "hobby"},
             json=True,
@@ -347,7 +347,7 @@ class TestFieldsFiltering:
         tool = self._make_tool(fields="nonexistent")
         tool.log = mock.Mock()
         buf = io.StringIO()
-        buf.isatty = lambda: True  # type: ignore[assignment]
+        buf.isatty = lambda: True  # type: ignore[method-assign]
         tool.print_response(
             [{"name": "svc1", "plan": "hobby"}],
             json=True,
@@ -361,7 +361,7 @@ class TestFieldsFiltering:
         """--fields should not filter when format= is used."""
         tool = self._make_tool(fields="name")
         buf = io.StringIO()
-        buf.isatty = lambda: True  # type: ignore[assignment]
+        buf.isatty = lambda: True  # type: ignore[method-assign]
         # format references 'plan' which is NOT in --fields
         tool.print_response(
             [{"name": "svc1", "plan": "hobby"}],
