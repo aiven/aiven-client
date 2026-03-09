@@ -911,7 +911,7 @@ class AivenCLI(argx.CommandLineTool):
     EXT_SERVICE_LAYOUT = ["service_uri", "disk_space_mb", "user_config.*", "databases", "users"]
 
     @arg.project
-    @arg("service_name", nargs="*", default=[], help="Service name")
+    @arg("service_name", nargs="*", default=[], help="Service name", type=validated_resource_id("service_name"))
     @arg.service_type
     @arg("--format", help="Format string for output, e.g. '{service_name} {service_uri}'")
     @arg.verbose

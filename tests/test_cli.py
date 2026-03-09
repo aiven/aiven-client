@@ -3054,3 +3054,12 @@ class TestResourceIdValidation:
                 cli.run(args=["service", "terminate", "--force", "../etc/passwd"])
             assert exc_info.value.code == EXIT_CODE_INVALID_USAGE
         aiven_client.delete_service.assert_not_called()
+
+    def test_service_list_rejects_path_traversal(self) -> None:
+        aiven_client = mock.Mock(spec_set=AivenClient)
+        cli = build_aiven_cli(aiven_client)
+        with mock_config({"default_project": "myproject"}):
+            with pytest.raises(SystemExit) as exc_info:
+                cli.run(args=["service", "list", "../etc/passwd"])
+            assert exc_info.value.code == EXIT_CODE_INVALID_USAGE
+        aiven_client.get_services.assert_not_called()
