@@ -49,7 +49,7 @@ export SETUPTOOLS_SCM_PRETEND_VERSION=%{version}+%{minor_version}
 
 %files -n %{name} -f %{pyproject_files}
 %license LICENSE
-%doc README.rst
+%doc README.md
 %{_bindir}/avn
 %{python3_sitelib}/aiven/client/py.typed
 

@@ -3,7 +3,7 @@ global-include *.typed
 include aiven/*.py
 include tests/*.py
 include scripts/*
-include README.rst
+include README.md
 include version.py
 include setup.py
 include setup.cfg
