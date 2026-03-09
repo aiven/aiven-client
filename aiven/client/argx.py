@@ -331,6 +331,20 @@ class CommandLineTool:
         fields = {f.strip() for f in fields_str.split(",")}
         return [{k: v for k, v in item.items() if k in fields} for item in result]
 
+    def _should_emit_json(self, json: bool, csv: bool, format: str | None, file: TextIO) -> bool:
+        """Determine whether output should be JSON.
+
+        Returns True if json=True explicitly, or if auto-JSON detection
+        triggers (non-TTY output, no --no-auto-json, no csv, no format).
+        """
+        if json:
+            return True
+        if csv or format is not None:
+            return False
+        if getattr(self.args, "no_auto_json", False):
+            return False
+        return hasattr(file, "isatty") and not file.isatty()
+
     def print_response(
         self,
         result: Mapping[str, Any] | Collection[Mapping[str, Any]],
@@ -347,16 +361,7 @@ class CommandLineTool:
         if file is None:
             file = sys.stdout
 
-        # Auto-detect non-TTY: emit JSON when piped, unless explicitly disabled
-        if (
-            not json
-            and not getattr(self.args, "no_auto_json", False)
-            and not csv
-            and format is None
-            and hasattr(file, "isatty")
-            and not file.isatty()
-        ):
-            json = True
+        json = self._should_emit_json(json, csv, format, file)
 
         # Convert to collection for all output paths
         result_collection = self._to_mapping_collection(result, single_item=single_item)
@@ -371,11 +376,11 @@ class CommandLineTool:
         result_collection = self._apply_field_filter(result_collection)
 
         if json:
-            output: Any = list(result_collection)
-            if single_item and len(output) == 1:
-                output = output[0]
+            json_data: Any = list(result_collection)
+            if single_item and len(json_data) == 1:
+                json_data = json_data[0]
             print(
-                jsonlib.dumps(output, indent=4, sort_keys=True, cls=pretty.CustomJsonEncoder),
+                jsonlib.dumps(json_data, indent=4, sort_keys=True, cls=pretty.CustomJsonEncoder),
                 file=file,
             )
         elif csv:
