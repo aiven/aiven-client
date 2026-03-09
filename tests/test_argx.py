@@ -4,7 +4,7 @@
 # See the file `LICENSE` for details.
 from __future__ import annotations
 
-from aiven.client.argx import arg, CommandLineTool
+from aiven.client.argx import arg, CommandLineTool, UserError
 from functools import cached_property
 from typing import Callable, NoReturn
 from unittest import mock
@@ -187,3 +187,64 @@ class TestPrintResponseAutoJson:
             file=buf,
         )
         assert buf.getvalue().strip() == "svc1"
+
+
+class TestStructuredErrorOutput:
+    """In non-TTY contexts, errors should be emitted as JSON to stdout."""
+
+    def _make_tool_that_raises(self, exception: Exception) -> CommandLineTool:
+        tool = CommandLineTool("test")
+        tool.args = mock.Mock()
+        tool.args.config = "/dev/null"
+        tool.args.no_auto_json = False
+        tool.run_actual = mock.Mock(side_effect=exception)  # type: ignore[assignment]
+        tool.parse_args = mock.Mock()  # type: ignore[assignment]
+        return tool
+
+    def _run_tool(self, tool: CommandLineTool, buf: io.StringIO) -> int | None:
+        with mock.patch("sys.stdout", buf), mock.patch("aiven.client.argx.Config", return_value={}):
+            return tool.run(args=["some", "command"])
+
+    def test_user_error_json_on_non_tty(self) -> None:
+        """UserError should produce JSON error on non-TTY stdout."""
+        tool = self._make_tool_that_raises(UserError("project not found"))
+        buf = io.StringIO()
+        buf.isatty = lambda: False  # type: ignore[assignment]
+
+        exit_code = self._run_tool(tool, buf)
+
+        assert exit_code == 1
+        output = buf.getvalue()
+        parsed = json.loads(output)
+        assert parsed["error"] is True
+        assert "project not found" in parsed["message"]
+        assert parsed["exit_code"] == 1
+
+    def test_user_error_plain_on_tty(self) -> None:
+        """UserError should NOT produce JSON on TTY stdout (backward compat)."""
+        tool = self._make_tool_that_raises(UserError("project not found"))
+        buf = io.StringIO()
+        buf.isatty = lambda: True  # type: ignore[assignment]
+
+        exit_code = self._run_tool(tool, buf)
+
+        assert exit_code == 1
+        assert buf.getvalue() == ""
+
+    def test_client_error_includes_status(self) -> None:
+        """client.Error should include HTTP status in JSON error."""
+        from aiven.client import client as aiven_client
+
+        resp = mock.Mock()
+        resp.text = '{"message": "forbidden"}'
+        error = aiven_client.Error(resp, status=403)
+        tool = self._make_tool_that_raises(error)
+        buf = io.StringIO()
+        buf.isatty = lambda: False  # type: ignore[assignment]
+
+        exit_code = self._run_tool(tool, buf)
+
+        assert exit_code == 1
+        parsed = json.loads(buf.getvalue())
+        assert parsed["error"] is True
+        assert parsed["status"] == 403

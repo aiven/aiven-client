@@ -372,6 +372,21 @@ class CommandLineTool:
                 file=file,
             )
 
+    def _emit_json_error(self, message: str, exit_code: int, status: int | None = None) -> None:
+        """Emit structured JSON error to stdout if in non-TTY context."""
+        no_auto_json = getattr(self.args, "no_auto_json", False)
+        if no_auto_json:
+            return
+        if hasattr(sys.stdout, "isatty") and not sys.stdout.isatty():
+            error_obj: dict[str, Any] = {
+                "error": True,
+                "message": message,
+                "exit_code": exit_code,
+            }
+            if status is not None:
+                error_obj["status"] = status
+            print(jsonlib.dumps(error_obj, indent=4, sort_keys=True), file=sys.stdout)
+
     def run(self, args: Sequence[str] | None = None) -> int | None:
         args = args or sys.argv[1:]
         if not args:
@@ -394,6 +409,8 @@ class CommandLineTool:
             # nicer output on "expected" errors
             err = "command failed: {0.__class__.__name__}: {0}".format(ex)
             self.log.error(err)
+            status = getattr(ex, "status", None)
+            self._emit_json_error(str(ex), exit_code=1, status=status)
             return 1
         except OSError as ex:
             if ex.errno != errno.EPIPE:
