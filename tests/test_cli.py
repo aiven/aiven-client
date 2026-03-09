@@ -3012,7 +3012,18 @@ class TestDryRun:
         aiven_client.delete_service.assert_not_called()
         captured = capsys.readouterr()
         assert "my-service" in captured.out
-        assert "dry-run" in captured.out.lower() or "dry_run" in captured.out.lower()
+        assert "dry-run: would terminate service 'my-service' in project 'myproject'" in captured.out
+
+    def test_service_terminate_dry_run_multiple(self, capsys: CaptureFixture[str]) -> None:
+        aiven_client = mock.Mock(spec_set=AivenClient)
+        cli = build_aiven_cli(aiven_client)
+        with mock_config({"default_project": "myproject"}):
+            result = cli.run(args=["service", "terminate", "--force", "--dry-run", "svc1", "svc2"])
+        assert result is None
+        aiven_client.delete_service.assert_not_called()
+        captured = capsys.readouterr()
+        assert "svc1" in captured.out
+        assert "svc2" in captured.out
 
     def test_service_terminate_without_dry_run(self) -> None:
         aiven_client = mock.Mock(spec_set=AivenClient)

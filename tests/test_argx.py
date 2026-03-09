@@ -342,6 +342,21 @@ class TestFieldsFiltering:
         assert isinstance(parsed, dict)
         assert parsed == {"name": "svc1"}
 
+    def test_fields_nonexistent_warns(self) -> None:
+        """--fields with a non-existent field should warn and return empty keys."""
+        tool = self._make_tool(fields="nonexistent")
+        tool.log = mock.Mock()
+        buf = io.StringIO()
+        buf.isatty = lambda: True  # type: ignore[assignment]
+        tool.print_response(
+            [{"name": "svc1", "plan": "hobby"}],
+            json=True,
+            file=buf,
+        )
+        parsed = json.loads(buf.getvalue())
+        assert parsed == [{}]
+        tool.log.warning.assert_called_once()
+
     def test_fields_does_not_break_format_string(self) -> None:
         """--fields should not filter when format= is used."""
         tool = self._make_tool(fields="name")
