@@ -37,6 +37,8 @@ class TestValidateResourceId:
             ("service\nname", "newline"),
             ("service\tname", "tab"),
             ("%2e%2e/secret", "percent-encoded dots"),
+            ("\uff0e\uff0e/etc/passwd", "fullwidth period path traversal"),
+            ("service\uff1fadmin=true", "fullwidth question mark"),
             ("", "empty string"),
             ("   ", "whitespace only"),
         ],

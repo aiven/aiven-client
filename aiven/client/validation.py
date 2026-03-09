@@ -12,6 +12,7 @@ control characters, and empty/whitespace-only strings.
 from __future__ import annotations
 
 import re
+import unicodedata
 
 # Control characters (U+0000 to U+001F and U+007F)
 _CONTROL_CHAR_RE = re.compile(r"[\x00-\x1f\x7f]")
@@ -31,6 +32,9 @@ def validate_resource_id(value: str, field_name: str) -> str:
     """
     if not value or not value.strip():
         raise ValueError(f"Invalid resource identifier for {field_name!r}: must not be empty")
+
+    # Normalize Unicode to catch fullwidth character bypasses (e.g. ．．/ -> ../)
+    value = unicodedata.normalize("NFKC", value)
 
     if ".." in value:
         raise ValueError(f"Invalid resource identifier for {field_name!r}: " f"path traversal sequence '..' is not allowed")

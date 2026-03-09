@@ -22,7 +22,17 @@ __all__ = [
 
 
 def validated_resource_id(field_name: str) -> Callable[[str], str]:
-    """Return an argparse type function that validates resource IDs."""
+    """Return an argparse ``type`` function that validates resource identifiers.
+
+    Rejects common LLM hallucination patterns: path traversal, percent-encoding,
+    query parameters, fragments, control characters, and fullwidth Unicode bypasses.
+
+    Args:
+        field_name: Name of the CLI argument (used in error messages).
+
+    Returns:
+        A validation function suitable for argparse's ``type`` parameter.
+    """
 
     def _validate(value: str) -> str:
         return validate_resource_id(value, field_name)
