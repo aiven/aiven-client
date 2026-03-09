@@ -3031,6 +3031,17 @@ class TestDryRun:
         captured = capsys.readouterr()
         assert "my-project" in captured.out
 
+    def test_organization_delete_dry_run(self, capsys: CaptureFixture[str]) -> None:
+        aiven_client = mock.Mock(spec_set=AivenClient)
+        cli = build_aiven_cli(aiven_client)
+        with mock_config({}):
+            result = cli.run(args=["organization", "delete", "--force", "--dry-run", "org-12345"])
+        assert result is None
+        aiven_client.delete_organization.assert_not_called()
+        captured = capsys.readouterr()
+        assert "org-12345" in captured.out
+        assert "dry-run" in captured.out.lower()
+
 
 class TestResourceIdValidation:
     """Resource ID validation should reject dangerous names."""
