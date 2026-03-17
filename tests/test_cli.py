@@ -2460,6 +2460,61 @@ def test_organization_vpc_peering_connection_delete() -> None:
     )
 
 
+def test_organization_vpc_peering_connection_refresh() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.organization_vpc_peering_connections_refresh.return_value = {
+        **ORGANIZATION_VPC,
+        "peering_connections": [ORGANIZATION_VPC_PEERING_CONNECTION],
+        "pending_build_only_peering_connections": "2025-03-13T13:00:00Z",
+    }
+    args = [
+        "organization",
+        "vpc",
+        "peering-connection",
+        "refresh",
+        "--organization-id",
+        "org4f9ed964ba9",
+        "--organization-vpc-id",
+        "58e00a73-61c7-470d-b140-ace64c21a417",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.organization_vpc_peering_connections_refresh.assert_called_once_with(
+        organization_id="org4f9ed964ba9",
+        vpc_id="58e00a73-61c7-470d-b140-ace64c21a417",
+    )
+
+
+def test_project_vpc_peering_connection_refresh() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.refresh_project_vpc_peering_connections.return_value = {
+        "peering_connections": [
+            {
+                "peer_cloud_account": "peer-account",
+                "peer_resource_group": None,
+                "peer_vpc": "peer-vpc",
+                "peer_region": None,
+                "state": "PENDING_PEER",
+            }
+        ],
+        "pending_build_only_peering_connections": "2025-03-13T13:00:00Z",
+        "state": "ACTIVE",
+    }
+    args = [
+        "vpc",
+        "peering-connection",
+        "refresh",
+        "--project",
+        "testproject",
+        "--project-vpc-id",
+        "58e00a73-61c7-470d-b140-ace64c21a417",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.refresh_project_vpc_peering_connections.assert_called_once_with(
+        project="testproject",
+        project_vpc_id="58e00a73-61c7-470d-b140-ace64c21a417",
+    )
+
+
 def test_organization_vpc_peering_connection_list() -> None:
     aiven_client = mock.Mock(spec_set=AivenClient)
     aiven_client.get_organization_vpc.return_value = {
