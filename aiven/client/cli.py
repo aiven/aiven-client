@@ -3906,6 +3906,32 @@ ssl.truststore.type=JKS
             print(ex.response.text)
             raise
 
+    @arg.project
+    @arg.json
+    @arg("--project-vpc-id", required=True, help=_project_vpc_id_help)
+    def vpc__peering_connection__refresh(self) -> None:
+        """Trigger an asynchronous refresh of peering connection states for a project VPC"""
+        project_name = self.get_project()
+        try:
+            vpc = self.client.refresh_project_vpc_peering_connections(
+                project=project_name,
+                project_vpc_id=self.args.project_vpc_id,
+            )
+            self.print_response(
+                vpc["peering_connections"],
+                json=self.args.json,
+                table_layout=[
+                    "peer_cloud_account",
+                    "peer_resource_group",
+                    "peer_vpc",
+                    "peer_region",
+                    "state",
+                ],
+            )
+        except client.Error as ex:
+            print(ex.response.text)
+            raise
+
     def _validate_using_cloud_vpc(self) -> None:
         """Raise an error if we might unexpectedly end up using a Project VPC"""
         # If the user was specific about VPC then we don't need to worry
@@ -6419,6 +6445,28 @@ server_encryption_options:
             [dict(peering_connection, peer_resource_group=peering_connection.get("peer_resource_group"))],
             json=self.args.json,
             table_layout=layout,
+        )
+
+    @arg.json
+    @arg.organization_id
+    @arg("--organization-vpc-id", required=True)
+    def organization__vpc__peering_connection__refresh(self) -> None:
+        """Trigger an asynchronous refresh of peering connection states for an organization VPC"""
+        vpc = self.client.organization_vpc_peering_connections_refresh(
+            organization_id=self.args.organization_id,
+            vpc_id=self.args.organization_vpc_id,
+        )
+        self.print_response(
+            vpc["peering_connections"],
+            json=self.args.json,
+            table_layout=[
+                "peering_connection_id",
+                "peer_cloud_account",
+                "peer_resource_group",
+                "peer_vpc",
+                "peer_region",
+                "state",
+            ],
         )
 
     @arg.json

@@ -1279,6 +1279,12 @@ class AivenClient(AivenClientBase):
     def get_project_vpc(self, project: str, project_vpc_id: str) -> Mapping:
         return self.verify(self.get, self.build_path("project", project, "vpcs", project_vpc_id))
 
+    def refresh_project_vpc_peering_connections(self, project: str, project_vpc_id: str) -> Mapping:
+        return self.verify(
+            self.post,
+            self.build_path("project", project, "vpcs", project_vpc_id, "peering-connections", "refresh"),
+        )
+
     def delete_project_vpc(self, project: str, project_vpc_id: str) -> Mapping:
         return self.verify(self.delete, self.build_path("project", project, "vpcs", project_vpc_id))
 
@@ -3214,6 +3220,20 @@ class AivenClient(AivenClientBase):
                 vpc_id,
                 "peering-connections",
                 peering_connection_id,
+            ),
+        )
+
+    def organization_vpc_peering_connections_refresh(self, *, organization_id: str, vpc_id: str) -> Mapping[Any, Any]:
+        return self.verify(
+            self.post,
+            self.build_path(
+                "organization",
+                organization_id,
+                "vpcs",
+                vpc_id,
+                "peering-connections",
+                "actions",
+                "refresh",
             ),
         )
 
