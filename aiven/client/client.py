@@ -7,11 +7,11 @@ from __future__ import annotations
 from ._typing import assert_never
 from .common import UNDEFINED
 from .session import get_requests_session
-from collections.abc import Collection, Mapping, Sequence
+from collections.abc import Callable, Collection, Mapping, Sequence
 from http import HTTPStatus
 from requests import Response
 from requests_toolbelt import MultipartEncoder  # type: ignore
-from typing import Any, BinaryIO, Callable, Final, Literal, NamedTuple, TYPE_CHECKING, TypedDict
+from typing import Any, BinaryIO, Final, Literal, NamedTuple, TYPE_CHECKING, TypedDict
 from urllib.parse import quote
 
 import datetime
@@ -28,7 +28,7 @@ except ImportError:
     __version__ = "UNKNOWN"
 
 if TYPE_CHECKING:
-    from typing_extensions import TypeAlias
+    from typing import TypeAlias
 
 UNCHANGED = object()  # used as a sentinel value
 

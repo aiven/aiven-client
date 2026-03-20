@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 from collections.abc import Collection, Iterator, Mapping
-from typing import Any, cast, TextIO, Union
+from typing import Any, cast, TextIO
 
 import datetime
 import decimal
@@ -18,7 +18,7 @@ import json
 import sys
 
 ResultType = Collection[Mapping[str, Any]]
-TableLayout = Collection[Union[list[str], tuple[str], str]]
+TableLayout = Collection[list[str] | tuple[str] | str]
 
 
 class CustomJsonEncoder(json.JSONEncoder):
