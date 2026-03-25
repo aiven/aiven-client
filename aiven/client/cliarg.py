@@ -5,8 +5,9 @@
 from __future__ import annotations
 
 from .argx import arg, CommandLineTool, UserError
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 import json as jsonlib
 import os
