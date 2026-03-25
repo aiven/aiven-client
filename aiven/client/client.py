@@ -938,6 +938,75 @@ class AivenClient(AivenClientBase):
             self.build_path("project", project, "service", service, "kafka", "schema-registry", "acl", acl_id),
         )
 
+    def create_service_kafka_quota(
+        self,
+        project: str,
+        service: str,
+        client_id: str | None = None,
+        user: str | None = None,
+        consumer_byte_rate: float | None = None,
+        producer_byte_rate: float | None = None,
+        request_percentage: float | None = None,
+    ) -> Mapping:
+        body: dict[str, Any] = {}
+        if client_id is not None:
+            body["client-id"] = client_id
+        if user is not None:
+            body["user"] = user
+        if consumer_byte_rate is not None:
+            body["consumer_byte_rate"] = consumer_byte_rate
+        if producer_byte_rate is not None:
+            body["producer_byte_rate"] = producer_byte_rate
+        if request_percentage is not None:
+            body["request_percentage"] = request_percentage
+        return self.verify(
+            self.post,
+            self.build_path("project", project, "service", service, "quota"),
+            body=body,
+        )
+
+    def delete_service_kafka_quota(
+        self,
+        project: str,
+        service: str,
+        client_id: str | None = None,
+        user: str | None = None,
+    ) -> Mapping:
+        params: dict[str, str] = {}
+        if client_id is not None:
+            params["client-id"] = client_id
+        if user is not None:
+            params["user"] = user
+        return self.verify(
+            self.delete,
+            self.build_path("project", project, "service", service, "quota"),
+            params=params if params else None,
+        )
+
+    def list_service_kafka_quotas(self, project: str, service: str) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path("project", project, "service", service, "quota"),
+        )
+
+    def describe_service_kafka_quota(
+        self,
+        project: str,
+        service: str,
+        client_id: str | None = None,
+        user: str | None = None,
+    ) -> Mapping:
+        params: dict[str, str] = {}
+        if client_id is not None:
+            params["client-id"] = client_id
+        if user is not None:
+            params["user"] = user
+        return self.verify(
+            self.get,
+            self.build_path("project", project, "service", service, "quota", "describe"),
+            params=params if params else None,
+        )
+
     def get_available_kafka_connectors(self, project: str, service: str) -> Mapping:
         return self.verify(
             self.get,

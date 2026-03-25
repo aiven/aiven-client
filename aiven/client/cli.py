@@ -6862,6 +6862,135 @@ server_encryption_options:
 
     @arg.project
     @arg.service_name
+    @arg(
+        "--client-id",
+        help="Client ID to apply the quota to. Quotas can be scoped by user, client-id, or both.",
+        required=False,
+        default=None,
+    )
+    @arg(
+        "--user",
+        help="Username to apply the quota to. Quotas can be scoped by user, client-id, or both.",
+        required=False,
+        default=None,
+    )
+    @arg(
+        "--consumer-byte-rate",
+        help="Bandwidth limit in bytes/sec for consumers sharing this quota (0–1073741824).",
+        type=float,
+        required=False,
+        default=None,
+    )
+    @arg(
+        "--producer-byte-rate",
+        help="Bandwidth limit in bytes/sec for producers sharing this quota (0–1073741824).",
+        type=float,
+        required=False,
+        default=None,
+    )
+    @arg(
+        "--request-percentage",
+        help="Maximum CPU percentage for request handler I/O and network threads per broker (0–100).",
+        type=float,
+        required=False,
+        default=None,
+    )
+    def service__quota__create(self) -> None:
+        """Create a Kafka quota"""
+        if self.args.client_id is None and self.args.user is None:
+            raise argx.UserError("At least one of --client-id or --user must be specified")
+        if (
+            self.args.consumer_byte_rate is None
+            and self.args.producer_byte_rate is None
+            and self.args.request_percentage is None
+        ):
+            raise argx.UserError(
+                "At least one of --consumer-byte-rate, --producer-byte-rate or --request-percentage must be specified"
+            )
+        response = self.client.create_service_kafka_quota(
+            project=self.get_project(),
+            service=self.args.service_name,
+            client_id=self.args.client_id,
+            user=self.args.user,
+            consumer_byte_rate=self.args.consumer_byte_rate,
+            producer_byte_rate=self.args.producer_byte_rate,
+            request_percentage=self.args.request_percentage,
+        )
+        print(response["message"])
+
+    @arg.project
+    @arg.service_name
+    @arg(
+        "--client-id",
+        help="Client ID of the quota to delete.",
+        required=False,
+        default=None,
+    )
+    @arg(
+        "--user",
+        help="Username of the quota to delete.",
+        required=False,
+        default=None,
+    )
+    def service__quota__delete(self) -> None:
+        """Delete a Kafka quota"""
+        if self.args.client_id is None and self.args.user is None:
+            raise argx.UserError("At least one of --client-id or --user must be specified")
+        response = self.client.delete_service_kafka_quota(
+            project=self.get_project(),
+            service=self.args.service_name,
+            client_id=self.args.client_id,
+            user=self.args.user,
+        )
+        print(response["message"])
+
+    @arg.project
+    @arg.service_name
+    @arg.json
+    def service__quota__list(self) -> None:
+        """List Kafka quotas"""
+        response = self.client.list_service_kafka_quotas(
+            project=self.get_project(),
+            service=self.args.service_name,
+        )
+        quotas = response.get("quotas", [])
+        layout = ["client-id", "user", "consumer_byte_rate", "producer_byte_rate", "request_percentage"]
+        if quotas or self.args.json:
+            self.print_response(quotas, json=self.args.json, table_layout=layout)
+        else:
+            # Show it is empty by printing only layout headers
+            self.print_response([{k: "" for k in layout}], json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg.service_name
+    @arg(
+        "--client-id",
+        help="Client ID of the quota to describe.",
+        required=False,
+        default=None,
+    )
+    @arg(
+        "--user",
+        help="Username of the quota to describe.",
+        required=False,
+        default=None,
+    )
+    @arg.json
+    def service__quota__describe(self) -> None:
+        """Describe a specific Kafka quota"""
+        if self.args.client_id is None and self.args.user is None:
+            raise argx.UserError("At least one of --client-id or --user must be specified")
+        response = self.client.describe_service_kafka_quota(
+            project=self.get_project(),
+            service=self.args.service_name,
+            client_id=self.args.client_id,
+            user=self.args.user,
+        )
+        layout = ["client-id", "user", "consumer_byte_rate", "producer_byte_rate", "request_percentage"]
+        self.print_response(response["quota"], json=self.args.json, table_layout=layout, single_item=True)
+
+    @arg.project
+    @arg.service_name
     def service__opensearch__custom_repo_list(self) -> None:
         """Show custom repository information"""
         response = self.client.opensearch_custom_repo_list(
