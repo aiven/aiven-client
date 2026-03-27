@@ -1721,16 +1721,11 @@ class AivenCLI(argx.CommandLineTool):
     def _parse_access_control(self) -> Mapping[str, Any]:
         arg_vars = vars(self.args)
         result = {key: arg_vars[key].split() for key in VALKEY_ACL_ARGS if arg_vars[key] is not None}
-        for key in ["m3_group"]:
-            value = arg_vars[key]
-            if value is not None:
-                result[key] = value
         return result
 
     @arg.project
     @arg.service_name
     @arg("--username", help="Service user username", required=True)
-    @arg("--m3-group", help="Service user group")
     @arg("--valkey-acl-keys", help="ACL rules for keys (Valkey only)")
     @arg("--valkey-acl-commands", help="ACL rules for commands (Valkey only)")
     @arg("--valkey-acl-categories", help="ACL rules for command categories (Valkey only)")
@@ -1970,7 +1965,6 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.service_name
     @arg("--username", help="Service user username", required=True)
-    @arg("--m3-group", help="Service user group")
     @arg("--valkey-acl-keys", help="ACL rules for keys (Valkey only)")
     @arg("--valkey-acl-commands", help="ACL rules for commands (Valkey only)")
     @arg("--valkey-acl-categories", help="ACL rules for command categories (Valkey only)")
@@ -2435,120 +2429,6 @@ ssl.truststore.type=JKS
             service=self.args.service_name,
             index_name=self.args.index_name,
         )
-
-    @arg.project
-    @arg.service_name
-    @arg("--format", help="Format string for output, e.g. '{name} {retention_hours}'")
-    @arg.json
-    def service__m3__namespace__list(self) -> None:
-        """List M3 namespaces"""
-        namespaces = self.client.list_m3_namespaces(project=self.get_project(), service=self.args.service_name)
-        layout = [
-            [
-                "name",
-                "type",
-                "resolution",
-                "retention_period_duration",
-                "blocksize_duration",
-                "block_data_expiry_duration",
-                "buffer_future_duration",
-                "buffer_past_duration",
-                "writes_to_commitlog",
-            ]
-        ]
-        if not self.args.json:
-            # Fix optional fields, flatten for output
-            def _f(ns: dict[str, Any]) -> dict[str, str]:
-                o = ns.get("options", {})
-                ro = o.get("retention_options", {})
-                return {
-                    "name": ns["name"],
-                    "type": ns["type"],
-                    "resolution": ns.get("resolution", ""),
-                    "retention_period_duration": ro.get("retention_period_duration", ""),
-                    "blocksize_duration": ro.get("blocksize_duration", ""),
-                    "block_data_expiry_duration": ro.get("block_data_expiry_duration", ""),
-                    "buffer_future_duration": ro.get("buffer_future_duration", ""),
-                    "buffer_past_duration": ro.get("buffer_past_duration", ""),
-                    "writes_to_commitlog": o.get("writes_to_commitlog", ""),
-                }
-
-            namespaces = [_f(ns) for ns in namespaces]
-        self.print_response(namespaces, format=self.args.format, json=self.args.json, table_layout=layout)
-
-    @arg.project
-    @arg.service_name
-    @arg.ns_name
-    def service__m3__namespace__delete(self) -> None:
-        """Delete M3 namespaces"""
-        try:
-            self.client.delete_m3_namespace(
-                project=self.get_project(), service=self.args.service_name, ns_name=self.args.ns_name
-            )
-        except KeyError as ex:  # namespace does not exist
-            raise argx.UserError(ex)
-
-    @arg.project
-    @arg.service_name
-    @arg.ns_name
-    @arg.ns_type
-    @arg.ns_retention_mandatory
-    @arg.ns_resolution
-    @arg.ns_blocksize_dur
-    @arg.ns_block_data_expiry_dur
-    @arg.ns_buffer_future_dur
-    @arg.ns_buffer_past_dur
-    @arg.ns_writes_to_commitlog
-    def service__m3__namespace__add(self) -> None:
-        """Add M3 namespaces"""
-        try:
-            self.client.add_m3_namespace(
-                project=self.get_project(),
-                service=self.args.service_name,
-                ns_name=self.args.ns_name,
-                ns_type=self.args.ns_type,
-                ns_ret=self.args.ns_retention,
-                ns_res=self.args.ns_resolution,
-                ns_blocksize_dur=self.args.ns_blocksize_dur,
-                ns_block_data_expiry_dur=self.args.ns_block_data_expiry_dur,
-                ns_buffer_future_dur=self.args.ns_buffer_future_dur,
-                ns_buffer_past_dur=self.args.ns_buffer_past_dur,
-                ns_writes_to_commitlog=convert_str_to_value(
-                    schema={"type": ["boolean"]}, value=self.args.ns_writes_to_commitlog
-                ),
-            )
-        except ValueError as ex:  # namespace argument validations
-            raise argx.UserError(ex)
-
-    @arg.project
-    @arg.service_name
-    @arg.ns_name
-    @arg.ns_retention
-    @arg.ns_resolution
-    @arg.ns_blocksize_dur
-    @arg.ns_block_data_expiry_dur
-    @arg.ns_buffer_future_dur
-    @arg.ns_buffer_past_dur
-    @arg.ns_writes_to_commitlog
-    def service__m3__namespace__update(self) -> None:
-        """Add M3 namespaces"""
-        try:
-            self.client.update_m3_namespace(
-                project=self.get_project(),
-                service=self.args.service_name,
-                ns_name=self.args.ns_name,
-                ns_ret=self.args.ns_retention,
-                ns_res=self.args.ns_resolution,
-                ns_blocksize_dur=self.args.ns_blocksize_dur,
-                ns_block_data_expiry_dur=self.args.ns_block_data_expiry_dur,
-                ns_buffer_future_dur=self.args.ns_buffer_future_dur,
-                ns_buffer_past_dur=self.args.ns_buffer_past_dur,
-                ns_writes_to_commitlog=convert_str_to_value(
-                    schema={"type": ["boolean"]}, value=self.args.ns_writes_to_commitlog
-                ),
-            )
-        except (KeyError, ValueError) as ex:  # namespace does not exist, argument validations
-            raise argx.UserError(ex)
 
     @arg.project
     @arg.service_name
@@ -4080,24 +3960,8 @@ ssl.truststore.type=JKS
         raise argx.UserError(f"{service_type} v{version} is not available")
 
     def _extract_user_config_version(self, service_type: str, user_config: dict) -> str | None:
-        """Extracts version specified in the user config.
-
-        This handles the special case for M3 components which also accept
-        an 'm3_version' entry instead of '{service_type}_version'. If the
-        user supplies an 'm3_version' this method modifies the user_config
-        as the server side would.
-        """
+        """Extracts version specified in the user config."""
         service_version_key = f"{service_type}_version"
-
-        # M3 components have special cases for m3_version as key
-        if service_type in {"m3db", "m3aggregator", "m3coordinator"}:
-            if "m3_version" in user_config:
-                if service_version_key in user_config:
-                    raise argx.UserError(f"'{service_version_key}' and 'm3_version' cannot be specified together")
-
-                # Replace m3_version with service_type specific key
-                user_config[service_version_key] = user_config.pop("m3_version")
-
         return user_config.get(service_version_key)
 
     def _do_version_eol_check(self, service_type: str, requested_version: str, project: str | None = None) -> None:
