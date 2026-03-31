@@ -2123,22 +2123,6 @@ class AivenClient(AivenClientBase):
             self.build_path("project", project, "service", service, "maintenance", "start"),
         )
 
-    def create_ticket(
-        self, project: str, severity: str, title: str, description: str, service: str | None = None
-    ) -> Mapping:
-        body = {
-            "severity": severity,
-            "title": title,
-            "description": description,
-        }
-        if service:
-            body["service_name"] = service
-
-        return self.verify(self.post, self.build_path("project", project, "tickets"), body=body)
-
-    def list_tickets(self, project: str) -> Mapping:
-        return self.verify(self.get, self.build_path("project", project, "tickets"))
-
     def get_service_migration_status(self, project: str, service: str) -> Mapping:
         return self.verify(
             self.get,

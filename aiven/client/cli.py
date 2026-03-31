@@ -5300,42 +5300,16 @@ server_encryption_options:
     @arg("--description", required=True, help="Longer description")
     def ticket__create(self) -> None:
         """Create a support ticket"""
-        project_name = self.get_project()
-        ticket = self.client.create_ticket(
-            description=self.args.description,
-            project=project_name,
-            service=self.args.service,
-            severity=self.args.severity,
-            title=self.args.title,
+        raise argx.UserError(
+            "Support tickets are no longer available through the API; open a request at https://support.aiven.io/"
         )
-        self.print_response(result=ticket, json=self.args.json)
 
     @arg.json
     @arg.project
     @arg("--state", required=False, help="Ticket state", choices=["closed", "open"])
     def ticket__list(self) -> None:
         """List support tickets for a project"""
-        project_name = self.get_project()
-        result = self.client.list_tickets(project=project_name)
-
-        tickets = result["tickets"]
-        if self.args.state:
-            tickets = [ticket for ticket in tickets if ticket["state"] == self.args.state]
-
-        layout = [
-            "ticket_id",
-            "severity",
-            "state",
-            "title",
-            "project_name",
-            "service_name",
-            "create_time",
-            "description",
-            "update_time",
-            "user_email",
-            "user_real_name",
-        ]
-        self.print_response(result=tickets, table_layout=layout, json=self.args.json)
+        raise argx.UserError("Support tickets are no longer available through the API; use https://support.aiven.io/")
 
     @arg.json
     @arg.project
