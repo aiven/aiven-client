@@ -1386,6 +1386,7 @@ class AivenClient(AivenClientBase):
         service_integrations: Sequence[Mapping[str, str]] | None = None,
         termination_protection: bool = False,
         static_ips: tuple[str, ...] = (),
+        cmk_id: str | None = None,
     ) -> Mapping:
         user_config = user_config or {}
         body: dict[str, Any] = {
@@ -1402,6 +1403,8 @@ class AivenClient(AivenClientBase):
             body["disk_space_mb"] = disk_space_mb
         if project_vpc_id is not UNDEFINED:
             body["project_vpc_id"] = project_vpc_id
+        if cmk_id is not None:
+            body["cmk_id"] = cmk_id
         return self.verify(
             self.post,
             self.build_path("project", project, "service"),
@@ -1424,6 +1427,7 @@ class AivenClient(AivenClientBase):
         project_vpc_id: object | str = UNDEFINED,
         schema_registry_authorization: bool | None = None,
         disaster_recovery_role: str | None = None,
+        cmk_id: str | None = None,
     ) -> Mapping:
         user_config = user_config or {}
         body: dict[str, Any] = {}
@@ -1449,6 +1453,8 @@ class AivenClient(AivenClientBase):
             body["schema_registry_authz"] = schema_registry_authorization
         if disaster_recovery_role is not None:
             body["disaster_recovery_role"] = disaster_recovery_role
+        if cmk_id is not None:
+            body["cmk_id"] = cmk_id
         path = self.build_path("project", project, "service", service)
         return self.verify(self.put, path, body=body, result_key="service")
 
@@ -3313,3 +3319,75 @@ class AivenClient(AivenClientBase):
         if cloud_name is not None:
             params["cloud_name"] = cloud_name
         return self.verify(self.get, path, result_key="rates", params=params)
+
+    def create_cmk(
+        self,
+        project: str,
+        provider: str,
+        resource: str,
+        default_cmk: bool | None = None,
+    ) -> Mapping:
+        body: dict[str, Any] = {
+            "provider": provider,
+            "resource": resource,
+        }
+        if default_cmk is not None:
+            body["default_cmk"] = default_cmk
+        return self.verify(
+            self.post,
+            self.build_path("project", project, "secrets", "cmks"),
+            body=body,
+            result_key="cmk",
+        )
+
+    def list_cmks(self, project: str) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path("project", project, "secrets", "cmks"),
+            result_key="cmks",
+        )
+
+    def get_cmk(self, project: str, cmk_id: str) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path("project", project, "secrets", "cmks", cmk_id),
+            result_key="cmk",
+        )
+
+    def update_cmk(self, project: str, cmk_id: str, default_cmk: bool) -> Mapping:
+        body: dict[str, Any] = {"default_cmk": default_cmk}
+        return self.verify(
+            self.post,
+            self.build_path("project", project, "secrets", "cmks", cmk_id),
+            body=body,
+            result_key="cmk",
+        )
+
+    def delete_cmk(self, project: str, cmk_id: str) -> Mapping:
+        return self.verify(
+            self.delete,
+            self.build_path("project", project, "secrets", "cmks", cmk_id),
+            result_key="cmk",
+        )
+
+    def list_cmk_accessors(self, project: str) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path("project", project, "secrets", "cmks", "accessors"),
+            result_key="accessors",
+        )
+
+    def trigger_cmk_access_check(self, project: str, cmk_id: str) -> Mapping:
+        return self.verify(
+            self.post,
+            self.build_path("project", project, "secrets", "cmks", cmk_id, "access_check"),
+            body={},
+            result_key="cmk",
+        )
+
+    def list_cmk_service_associations(self, project: str, cmk_id: str) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path("project", project, "secrets", "cmks", cmk_id, "service_associations"),
+            result_key="service_associations",
+        )

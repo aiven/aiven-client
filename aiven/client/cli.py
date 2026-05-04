@@ -3841,6 +3841,7 @@ ssl.truststore.type=JKS
     )
     @arg("--service-to-fork-from", help="Service to fork from")
     @arg("--recovery-target-time", help="PITR recovery point in format 2023-02-01 11:38:49")
+    @arg("--cmk-id", help="Customer Managed Key identifier (CMK ID) to encrypt the service with")
     @arg.force
     def service__create(self) -> None:
         """Create a service"""
@@ -3899,6 +3900,7 @@ ssl.truststore.type=JKS
                 termination_protection=self.args.enable_termination_protection,
                 service_integrations=service_integrations,
                 static_ips=self.args.static_ips or (),
+                cmk_id=self.args.cmk_id,
             )
         except client.Error as ex:
             print(ex.response)
@@ -4097,6 +4099,7 @@ ssl.truststore.type=JKS
         help="Set disaster recovery role",
         choices=["active", "passive", "failed"],
     )
+    @arg("--cmk-id", help="Customer Managed Key identifier (CMK ID) to encrypt the service with")
     @arg.force
     def service__update(self) -> None:
         """Update service settings"""
@@ -4153,6 +4156,7 @@ ssl.truststore.type=JKS
                 project_vpc_id=project_vpc_id,
                 schema_registry_authorization=schema_registry_authorization,
                 disaster_recovery_role=self.args.disaster_recovery_role,
+                cmk_id=self.args.cmk_id,
             )
         except client.Error as ex:
             try:
@@ -6994,6 +6998,86 @@ server_encryption_options:
             ],
         ]
         self.print_response(rates, json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg("--provider", help="CMK cloud provider", choices=["aws", "gcp", "oci"], required=True)
+    @arg("--resource", help="Cloud provider key resource name (full resource path)", required=True)
+    @arg("--default-cmk", action="store_true", default=False, help="Set as default CMK for all newly created services")
+    @arg.json
+    def project__cmks__create(self) -> None:
+        """Register a Customer Managed Key (CMK) for the project"""
+        project = self.get_project()
+        cmk = self.client.create_cmk(
+            project=project,
+            provider=self.args.provider,
+            resource=self.args.resource,
+            default_cmk=self.args.default_cmk or None,
+        )
+        layout = [["id", "provider", "resource", "default_cmk", "status", "created_at", "updated_at"]]
+        self.print_response([cmk], json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg.json
+    def project__cmks__list(self) -> None:
+        """List Customer Managed Keys (CMKs) for the project"""
+        project = self.get_project()
+        cmks = self.client.list_cmks(project=project)
+        layout = [["id", "resource", "default_cmk", "created_at", "updated_at"]]
+        self.print_response(cmks, json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg("--cmk-id", help="CMK identifier", required=True)
+    @arg.verbose
+    @arg.json
+    def project__cmks__get(self) -> None:
+        """Get Customer Managed Key (CMK) details. Use -v to also show associated services."""
+        project = self.get_project()
+        cmk = self.client.get_cmk(project=project, cmk_id=self.args.cmk_id)
+        if self.args.verbose:
+            associations = self.client.list_cmk_service_associations(project=project, cmk_id=self.args.cmk_id)
+            cmk = dict(cmk)
+            cmk["service_associations"] = associations
+        layout = [["id", "provider", "resource", "default_cmk", "status", "created_at", "updated_at"]]
+        self.print_response(cmk, json=self.args.json, table_layout=layout, single_item=True)
+        if self.args.verbose and not self.args.json and cmk.get("service_associations"):
+            print("\nAssociated services:")
+            self.print_response(cmk["service_associations"], json=False, table_layout=[["service_name", "status"]])
+
+    @arg.project
+    @arg("--cmk-id", help="CMK identifier", required=True)
+    @arg("--default-cmk", help="Set as default CMK for all newly created services (true/false)", required=True)
+    @arg.json
+    def project__cmks__update(self) -> None:
+        """Update a Customer Managed Key (CMK)"""
+        project = self.get_project()
+        default_cmk_value = self.args.default_cmk.lower()
+        if default_cmk_value in ("true", "1"):
+            default_cmk = True
+        elif default_cmk_value in ("false", "0"):
+            default_cmk = False
+        else:
+            raise argx.UserError("--default-cmk must be 'true' or 'false'")
+        cmk = self.client.update_cmk(project=project, cmk_id=self.args.cmk_id, default_cmk=default_cmk)
+        layout = [["id", "provider", "resource", "default_cmk", "status", "created_at", "updated_at"]]
+        self.print_response([cmk], json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg("--cmk-id", help="CMK identifier", required=True)
+    @arg.json
+    def project__cmks__delete(self) -> None:
+        """Delete a Customer Managed Key (CMK)"""
+        project = self.get_project()
+        cmk = self.client.delete_cmk(project=project, cmk_id=self.args.cmk_id)
+        layout = [["id", "resource", "default_cmk", "created_at", "updated_at"]]
+        self.print_response([cmk], json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg.json
+    def project__cmks__accessors(self) -> None:
+        """List CMK accessors (principals/groups that need access to your key)"""
+        project = self.get_project()
+        accessors = self.client.list_cmk_accessors(project=project)
+        self.print_response(accessors, json=True)
 
 
 if __name__ == "__main__":
