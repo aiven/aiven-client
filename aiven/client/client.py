@@ -1760,14 +1760,6 @@ class AivenClient(AivenClientBase):
     def get_project_ca(self, project: str) -> Mapping:
         return self.verify(self.get, self.build_path("project", project, "kms", "ca"))
 
-    def get_service_ca(self, project: str, service: str, ca: str) -> dict:
-        path = self.build_path("project", project, "service", service, "kms", "ca", ca)
-        return self.verify(self.get, path)
-
-    def get_service_keypair(self, project: str, service: str, keypair: str) -> Mapping:
-        path = self.build_path("project", project, "service", service, "kms", "keypairs", keypair)
-        return self.verify(self.get, path)
-
     def invite_project_user(self, project: str, user_email: str, member_type: str | None = None) -> Mapping:
         body = {
             "user_email": user_email,

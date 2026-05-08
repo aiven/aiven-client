@@ -12,7 +12,6 @@ import pytest
 # Current service types (2021-03-09); they are used just for testing
 SERVICE_TYPES = [
     "alerta",
-    "cassandra",
     "elasticsearch",
     "grafana",
     "kafka",
