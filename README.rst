@@ -412,52 +412,6 @@ Updating existing files::
 
     $ avn service custom-file update --project <project> --file_path <file_path> --file_id <file_id> <service_name>
 
-.. _teams:
-
-Working with Teams
-------------------
-
-List account teams::
-
-  $ avn account team list <account_id>
-
-Create a team::
-
-  $ avn account team create --team-name <team_name> <account_id>
-
-Delete a team::
-
-  $ avn account team delete --team-id <team_id> <account_id>
-
-Attach team to a project::
-
-  $ avn account team project-attach --team-id <team_id> --project <project_name> <account_id> --team-type <admin|developer|operator|read_only>
-
-
-Detach team from project::
-
-  $ avn account team project-detach --team-id <team_id> --project <project_name> <account_id>
-
-List projects associated to the team::
-
-  $ avn account team project-list --team-id <team_id> <account_id>
-
-List members of the team::
-
-  $ avn account team user-list --team-id <team_id> <account_id>
-
-Invite a new member to the team::
-
-  $ avn account team user-invite --team-id <team_id> <account_id> <somebody@example.com>
-
-See the list of pending invitations::
-
-  $ avn account team user-list-pending --team-id <team_id> <account_id>
-
-Remove user from the team::
-
-  $ avn account team user-delete --team-id <team_id> --user-id <user_id> <account_id>
-
 
 .. _oauth2-clients:
 
