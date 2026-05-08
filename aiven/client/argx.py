@@ -9,7 +9,7 @@ from aiven.client import envdefault, pretty
 from argparse import Action, ArgumentParser, Namespace
 from collections.abc import Callable, Collection, Iterable, Mapping, Sequence
 from os import PathLike
-from typing import Any, cast, NoReturn, TextIO, TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Any, NoReturn, TextIO, TypeVar, cast
 
 import aiven.client.client
 import argparse

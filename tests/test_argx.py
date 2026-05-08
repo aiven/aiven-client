@@ -4,7 +4,7 @@
 # See the file `LICENSE` for details.
 from __future__ import annotations
 
-from aiven.client.argx import arg, CommandLineTool
+from aiven.client.argx import CommandLineTool, arg
 from collections.abc import Callable
 from functools import cached_property
 from typing import NoReturn

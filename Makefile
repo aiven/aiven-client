@@ -10,11 +10,11 @@ install-py:
 
 test: pytest
 
-lint: ruff flake8 mypy
+lint: ruff mypy
 
 reformat:
-	$(PYTHON) -m isort $(PYTHON_DIRS)
-	$(PYTHON) -m black $(PYTHON_DIRS)
+	$(PYTHON) -m ruff check --select I --fix $(PYTHON_DIRS)
+	$(PYTHON) -m ruff format $(PYTHON_DIRS)
 
 validate-style:
 	$(eval CHANGES_BEFORE := $(shell mktemp))
@@ -26,14 +26,12 @@ validate-style:
 	-rm $(CHANGES_BEFORE) $(CHANGES_AFTER)
 
 
-flake8:
-	$(PYTHON) -m flake8 $(PYTHON_DIRS)
-
 mypy:
 	$(PYTHON) -m mypy $(PYTHON_DIRS)
 
 ruff:
 	$(PYTHON) -m ruff check $(PYTHON_DIRS)
+	$(PYTHON) -m ruff format --check $(PYTHON_DIRS)
 
 pytest:
 	$(PYTHON) -m pytest -vv tests/
@@ -47,19 +45,17 @@ clean:
 
 build-dep-fedora:
 	sudo dnf install -y --best --allowerasing \
-		black \
 		python3-devel \
 		python3-certifi \
 		python3-hatch-vcs \
 		python3-hatchling \
 		python3-PyMySQL \
 		python3-wheel \
-		python3-flake8 \
-		python3-isort \
 		python3-mypy \
 		python3-pytest \
 		python3-requests \
 		python3-requests-toolbelt \
+		python3-ruff \
 		python3-types-requests \
 		python3-setuptools_scm \
 		rpmdevtools \
@@ -80,4 +76,4 @@ rpm:
 install-rpm: $(RPM)
 	sudo dnf install $<
 
-.PHONY: build-dep-fedora clean coverage pytest mypy flake8 reformat test validate-style ruff
+.PHONY: build-dep-fedora clean coverage pytest mypy reformat test validate-style ruff

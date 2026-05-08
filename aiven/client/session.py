@@ -4,7 +4,7 @@
 # See the file `LICENSE` for details.
 from __future__ import annotations
 
-from requests import adapters, models, Session
+from requests import Session, adapters, models
 from requests.structures import CaseInsensitiveDict
 from typing import Any
 
