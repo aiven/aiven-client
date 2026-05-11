@@ -205,8 +205,6 @@ arg.ns_block_data_expiry_dur = arg(
 arg.ns_buffer_future_dur = arg("--ns-buffer-future-dur", help="Namespace block size duration (written like 30m/25h etc)")
 arg.ns_buffer_past_dur = arg("--ns-buffer-past-dur", help="Namespace block size duration (written like 30m/25h etc)")
 arg.ns_writes_to_commitlog = arg("--ns-writes-to-commitlog", help="Namespace writes to commit log")
-arg.team_name = arg("--team-name", help="Team  name", required=True)
-arg.team_id = arg("--team-id", help="Team identifier", required=True)
 arg.timeout = arg("--timeout", type=int, help="Wait for up to N seconds (default: infinite)")
 arg.topic = arg("topic", help="Topic name")
 arg.user_config = arg(
