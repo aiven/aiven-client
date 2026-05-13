@@ -32,10 +32,10 @@ Requirements:
 
 .. _installation:
 
-Install from PyPi
+Install from PyPI
 -----------------
 
-Pypi installation is the recommended route for most users::
+PyPI installation is the recommended route for most users::
 
   $ python3 -m pip install aiven-client
 
@@ -82,7 +82,7 @@ You can also use an access token generated in the Aiven Console::
 
 You will be prompted for your access token as above.
 
-If you are registered on Aiven through the AWS or GCP marketplace, then you need to specify an additional argument ``--tenant``. Currently the supported value are ``aws`` and ``gcp``, for example::
+If you are registered on Aiven through the AWS or GCP marketplace, then you need to specify an additional argument ``--tenant``. Currently the supported values are ``aws`` and ``gcp``, for example::
 
   $ avn user login <you@example.com> --tenant aws
 
@@ -165,7 +165,7 @@ List projects you are a member of::
   $ avn project list
 
 Project commands operate on the currently active project or the project
-specified with the ``--project NAME`` switch. The active project cab be changed
+specified with the ``--project NAME`` switch. The active project can be changed
 with the ``project switch`` command::
 
   $ avn project switch <projectname>
@@ -340,7 +340,7 @@ Service users are created with strong random passwords.
 Service Integrations
 --------------------
 `Service integrations <https://aiven.io/service-integrations>`_ allow to link Aiven services to other Aiven services or to services
-offered by other companies for example for logging. Some examples for various diffenent integrations:
+offered by other companies for example for logging. Some examples for various different integrations:
 `Google cloud logging`_, `AWS Cloudwatch logging`_, `Remote syslog integration`_ and `Getting started with Datadog`_.
 
 .. _`Google cloud logging`: https://help.aiven.io/en/articles/4209837-sending-service-logs-to-google-cloud-logging
@@ -450,7 +450,7 @@ List an OAuth2 client's secrets::
 
   $ avn account oauth2-client secret-list <account_id> --oauth2-client-id <client_id>
 
-Create a new OAUth2 client secret::
+Create a new OAuth2 client secret::
 
   $ avn account oauth2-client secret-create <account_id> --oauth2-client-id <client_id>
 
@@ -484,11 +484,11 @@ When you spin up a new service, you'll want to connect to it. The ``--json`` opt
 
   $ avn service get --json <service> | jq ".service_uri"
 
-Each project has its own CA cert, and other services (notably Kafka) use mutualTLS so you will also need the ``service.key`` and ``service.cert`` files too for those. Download all three files to the local directory::
+Each project has its own CA cert, and other services (notably Kafka) use mutual TLS so you will also need the ``service.key`` and ``service.cert`` files too for those. Download all three files to the local directory::
 
   $ avn service user-creds-download --username avnadmin <service>
 
-For working with `kcat <https://github.com/edenhill/kcat>`_ (see also our `help article <https://developer.aiven.io/docs/products/kafka/howto/kcat.html>`_ ) or the command-line tools that ship with Kafka itself, a keystore and trustore are needed. By specifying which user's creds to use, and a secret, you can generate these via ``avn`` too::
+For working with `kcat <https://github.com/edenhill/kcat>`_ (see also our `help article <https://developer.aiven.io/docs/products/kafka/howto/kcat.html>`_ ) or the command-line tools that ship with Kafka itself, a keystore and truststore are needed. By specifying which user's creds to use, and a secret, you can generate these via ``avn`` too::
 
   $ avn service user-kafka-java-creds --username avnadmin -p t0pS3cr3t <service>
 
