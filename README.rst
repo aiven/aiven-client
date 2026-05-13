@@ -103,7 +103,7 @@ Some handy hints that work with all commands:
 
 *  All commands will output the raw REST API JSON response with ``--json``,
    we use this extensively ourselves in conjunction with
-   `jq <https://stedolan.github.io/jq/>`__.
+   `jq <https://jqlang.org/>`__.
 
 
 .. _login-and-users:
@@ -480,7 +480,7 @@ For more information (including completions usage in other shells) see https://k
 Auth Helpers
 ------------
 
-When you spin up a new service, you'll want to connect to it. The ``--json`` option combined with the `jq <https://stedolan.github.io/jq/>`_ utility is a good way to grab the fields you need for your specific service. Try this to get the connection string::
+When you spin up a new service, you'll want to connect to it. The ``--json`` option combined with the `jq <https://jqlang.org/>`_ utility is a good way to grab the fields you need for your specific service. Try this to get the connection string::
 
   $ avn service get --json <service> | jq ".service_uri"
 
