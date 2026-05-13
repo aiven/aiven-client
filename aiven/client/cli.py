@@ -4859,16 +4859,6 @@ ssl.truststore.type=JKS
         layout = [["code", "remaining_value"]]
         self.print_response(project_credits, json=self.args.json, table_layout=layout)
 
-    @arg.json
-    @arg.project
-    @arg("code", help="Credit code")
-    def credits__claim(self) -> None:
-        """Claim a credit code"""
-        project_name = self.get_project()
-        result = self.client.claim_project_credit(project=project_name, credit_code=self.args.code)
-        if self.args.json:
-            self.print_response(result, json=True)
-
     def _print_billing_groups(self, billing_groups: Sequence[dict[str, Any]]) -> None:
         for billing_group in billing_groups:
             billing_group["credit_card"] = self._format_card_info(billing_group)
