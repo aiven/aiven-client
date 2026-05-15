@@ -108,15 +108,24 @@ class CustomFormatter(argparse.RawDescriptionHelpFormatter):
 
     def _get_help_string(self, action: Action) -> str:
         help_text = action.help or ""
-        if "%(default)" not in help_text and action.default is not argparse.SUPPRESS:
-            if action.option_strings or action.nargs in [
-                argparse.OPTIONAL,
-                argparse.ZERO_OR_MORE,
-            ]:
-                if (not isinstance(action.default, bool) and isinstance(action.default, int)) or (
-                    isinstance(action.default, str) and action.default
-                ):
-                    help_text += " (default: %(default)s)"
+        has_default_format = "%(default)" in help_text
+
+        if not has_default_format:
+
+            # Escape literal % characters for Python 3.14+ compatibility
+            if "%" in help_text:
+                help_text = help_text.replace("%", "%%")
+
+            has_default = action.default is not argparse.SUPPRESS
+            is_optional = action.option_strings or action.nargs in [argparse.OPTIONAL, argparse.ZERO_OR_MORE]
+
+            is_int_but_not_bool = isinstance(action.default, int) and not isinstance(action.default, bool)
+            is_non_empty_string = isinstance(action.default, str) and action.default
+            is_float = isinstance(action.default, float)
+            default_is_displayable = is_int_but_not_bool or is_non_empty_string or is_float
+
+            if has_default and is_optional and default_is_displayable:
+                help_text += " (default: %(default)s)"
 
         if isinstance(action, ArgumentDeprecationNotice):
             help_text = (
@@ -181,11 +190,10 @@ def name_to_cmd_parts(name: str) -> list[str]:
     if "__" in name:
         # allow multi-level commands, separating each level with double underscores
         cmd_parts = name.split("__")
+        return [part.replace("_", "-") for part in cmd_parts]
     else:
-        # previously we only allowed two levels, separated by a single underscore
-        cmd_parts = name.split("_", 1)
-
-    return [part.replace("_", "-") for part in cmd_parts]
+        # single-level command - just replace underscores with dashes
+        return [name.replace("_", "-")]
 
 
 class Config(dict):

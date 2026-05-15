@@ -68,6 +68,7 @@ version-file = "aiven/client/version.py"
 packages = ["aiven"]
 
 [tool.black]
+extend-exclude = "aiven/client/version.py"
 line-length = 125
 target-version = ['py310', 'py311', 'py312', 'py313', 'py314']
 include = '\.pyi?$'
