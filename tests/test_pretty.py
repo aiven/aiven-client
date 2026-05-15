@@ -4,7 +4,7 @@
 # See the file `LICENSE` for details.
 from __future__ import annotations
 
-from aiven.client.pretty import flatten_list, format_item, print_table, ResultType, TableLayout, yield_table
+from aiven.client.pretty import ResultType, TableLayout, flatten_list, format_item, print_table, yield_table
 from collections.abc import Collection
 from typing import Any
 

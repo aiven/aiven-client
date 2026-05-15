@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from aiven.client import AivenClient, argx
 from aiven.client.argx import UserError
-from aiven.client.cli import AivenCLI, ClientFactory, convert_str_to_value, EOL_ADVANCE_WARNING_TIME
+from aiven.client.cli import EOL_ADVANCE_WARNING_TIME, AivenCLI, ClientFactory, convert_str_to_value
 from aiven.client.common import UNDEFINED
 from argparse import Namespace
 from collections.abc import Iterator, Mapping

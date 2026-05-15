@@ -11,7 +11,7 @@ from collections.abc import Callable, Collection, Mapping, Sequence
 from http import HTTPStatus
 from requests import Response
 from requests_toolbelt import MultipartEncoder  # type: ignore
-from typing import Any, BinaryIO, Final, Literal, NamedTuple, TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, Any, BinaryIO, Final, Literal, NamedTuple, TypedDict
 from urllib.parse import quote
 
 import datetime
