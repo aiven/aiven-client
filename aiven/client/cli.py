@@ -6796,7 +6796,7 @@ ssl.truststore.type=JKS
         self.print_response(rates, json=self.args.json, table_layout=layout)
 
     @arg.project
-    @arg("--provider", help="CMK cloud provider", choices=["aws", "gcp", "oci"], required=True)
+    @arg("--provider", help="CMK cloud provider", choices=["aws", "azure", "gcp", "oci"], required=True)
     @arg("--resource", help="Cloud provider key resource name (full resource path)", required=True)
     @arg("--default-cmk", action="store_true", default=False, help="Set as default CMK for all newly created services")
     @arg.json
