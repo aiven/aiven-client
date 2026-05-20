@@ -351,3 +351,165 @@ def test_refresh_service_privatelink_aws() -> None:
             params=None,
             data=None,
         )
+
+
+UPGRADE_STEP = {
+    "step_id": "3a718c8f-57cb-474e-a14f-8f5a7c63a751",
+    "source_project_name": "src-project",
+    "source_service_name": "src-service",
+    "destination_project_name": "dst-project",
+    "destination_service_name": "dst-service",
+    "auto_validation_delay_days": 7,
+    "last_validation": None,
+}
+
+
+def test_upgrade_pipeline_step_create() -> None:
+    aiven_client = AivenClient("test_base_url")
+
+    with patch.object(aiven_client.session, "post") as post_mock:
+        post_mock.return_value = MockResponse(
+            status_code=HTTPStatus.OK,
+            headers={"Content-Type": "application/json"},
+            json_data=UPGRADE_STEP,
+        )
+
+        response = aiven_client.upgrade_pipeline_step_create(
+            organization_id="org123456789a",
+            source_project_name="src-project",
+            source_service_name="src-service",
+            destination_project_name="dst-project",
+            destination_service_name="dst-service",
+            auto_validation_delay_days=7,
+        )
+        assert response == UPGRADE_STEP
+
+        post_mock.assert_called_once_with(
+            "test_base_url/v1/organization/org123456789a/upgrade-pipeline/steps",
+            headers={"content-type": "application/json"},
+            params=None,
+            data=(
+                '{"source_project_name": "src-project", '
+                '"source_service_name": "src-service", '
+                '"destination_project_name": "dst-project", '
+                '"destination_service_name": "dst-service", '
+                '"auto_validation_delay_days": 7}'
+            ),
+        )
+
+
+def test_upgrade_pipeline_step_update() -> None:
+    aiven_client = AivenClient("test_base_url")
+
+    with patch.object(aiven_client.session, "patch") as patch_mock:
+        patch_mock.return_value = MockResponse(
+            status_code=HTTPStatus.OK,
+            headers={"Content-Type": "application/json"},
+            json_data=UPGRADE_STEP,
+        )
+
+        response = aiven_client.upgrade_pipeline_step_update(
+            organization_id="org123456789a",
+            step_id="3a718c8f-57cb-474e-a14f-8f5a7c63a751",
+            auto_validation_delay_days=14,
+        )
+        assert response == UPGRADE_STEP
+
+        patch_mock.assert_called_once_with(
+            "test_base_url/v1/organization/org123456789a/upgrade-pipeline/steps/3a718c8f-57cb-474e-a14f-8f5a7c63a751",
+            headers={"content-type": "application/json"},
+            params=None,
+            data=('{"auto_validation_delay_days": 14}'),
+        )
+
+
+def test_upgrade_pipeline_step_delete() -> None:
+    aiven_client = AivenClient("test_base_url")
+
+    with patch.object(aiven_client.session, "delete") as delete_mock:
+        delete_mock.return_value = MockResponse(
+            status_code=HTTPStatus.NO_CONTENT,
+            content=None,
+        )
+
+        response = aiven_client.upgrade_pipeline_step_delete(
+            organization_id="org123456789a",
+            step_id="3a718c8f-57cb-474e-a14f-8f5a7c63a751",
+        )
+        assert response == {}
+
+        delete_mock.assert_called_once_with(
+            "test_base_url/v1/organization/org123456789a/upgrade-pipeline/steps/3a718c8f-57cb-474e-a14f-8f5a7c63a751",
+            headers={"content-type": "application/octet-stream"},
+            params=None,
+            data=None,
+        )
+
+
+def test_upgrade_pipeline_step_get() -> None:
+    aiven_client = AivenClient("test_base_url")
+
+    with patch.object(aiven_client.session, "get") as get_mock:
+        get_mock.return_value = MockResponse(
+            status_code=HTTPStatus.OK,
+            headers={"Content-Type": "application/json"},
+            json_data=UPGRADE_STEP,
+        )
+
+        response = aiven_client.upgrade_pipeline_step_get(
+            organization_id="org123456789a", step_id="3a718c8f-57cb-474e-a14f-8f5a7c63a751"
+        )
+        assert response == UPGRADE_STEP
+
+        get_mock.assert_called_once_with(
+            "test_base_url/v1/organization/org123456789a/upgrade-pipeline/steps/3a718c8f-57cb-474e-a14f-8f5a7c63a751",
+            headers={"content-type": "application/octet-stream"},
+            params=None,
+            data=None,
+        )
+
+
+def test_upgrade_pipeline_step_list() -> None:
+    aiven_client = AivenClient("test_base_url")
+
+    with patch.object(aiven_client.session, "get") as get_mock:
+        get_mock.return_value = MockResponse(
+            status_code=HTTPStatus.OK,
+            headers={"Content-Type": "application/json"},
+            json_data={"steps": UPGRADE_STEP},
+        )
+
+        response = aiven_client.upgrade_pipeline_step_list(organization_id="org123456789a")
+        assert response == {"steps": UPGRADE_STEP}
+
+        get_mock.assert_called_once_with(
+            "test_base_url/v1/organization/org123456789a/upgrade-pipeline/steps",
+            headers={"content-type": "application/octet-stream"},
+            params=None,
+            data=None,
+        )
+
+
+def test_upgrade_pipeline_step_validate() -> None:
+    aiven_client = AivenClient("test_base_url")
+
+    with patch.object(aiven_client.session, "post") as post_mock:
+        post_mock.return_value = MockResponse(
+            status_code=HTTPStatus.OK,
+            headers={"Content-Type": "application/json"},
+            json_data=UPGRADE_STEP,
+        )
+
+        response = aiven_client.upgrade_pipeline_step_validate(
+            project_name="src-project",
+            service_name="src-service",
+            comment="validated",
+        )
+        assert response == UPGRADE_STEP
+
+        post_mock.assert_called_once_with(
+            "test_base_url/v1/project/src-project/service/src-service/upgrade-validation",
+            headers={"content-type": "application/json"},
+            params=None,
+            data='{"comment": "validated"}',
+        )

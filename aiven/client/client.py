@@ -3383,3 +3383,94 @@ class AivenClient(AivenClientBase):
             self.build_path("project", project, "secrets", "cmks", cmk_id, "service_associations"),
             result_key="service_associations",
         )
+
+    def upgrade_pipeline_step_create(
+        self,
+        organization_id: str,
+        source_project_name: str,
+        source_service_name: str,
+        destination_project_name: str,
+        destination_service_name: str,
+        auto_validation_delay_days: int | None,
+    ) -> Mapping:
+        return self.verify(
+            self.post,
+            self.build_path(
+                "organization",
+                organization_id,
+                "upgrade-pipeline",
+                "steps",
+            ),
+            body={
+                "source_project_name": source_project_name,
+                "source_service_name": source_service_name,
+                "destination_project_name": destination_project_name,
+                "destination_service_name": destination_service_name,
+                "auto_validation_delay_days": auto_validation_delay_days,
+            },
+        )
+
+    def upgrade_pipeline_step_update(
+        self, organization_id: str, step_id: str, auto_validation_delay_days: int | None
+    ) -> Mapping:
+        return self.verify(
+            self.patch,
+            self.build_path(
+                "organization",
+                organization_id,
+                "upgrade-pipeline",
+                "steps",
+                step_id,
+            ),
+            body={
+                "auto_validation_delay_days": auto_validation_delay_days,
+            },
+        )
+
+    def upgrade_pipeline_step_delete(self, organization_id: str, step_id: str) -> Mapping:
+        return self.verify(
+            self.delete,
+            self.build_path(
+                "organization",
+                organization_id,
+                "upgrade-pipeline",
+                "steps",
+                step_id,
+            ),
+        )
+
+    def upgrade_pipeline_step_get(self, organization_id: str, step_id: str) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "organization",
+                organization_id,
+                "upgrade-pipeline",
+                "steps",
+                step_id,
+            ),
+        )
+
+    def upgrade_pipeline_step_list(self, organization_id: str) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path(
+                "organization",
+                organization_id,
+                "upgrade-pipeline",
+                "steps",
+            ),
+        )
+
+    def upgrade_pipeline_step_validate(self, project_name: str, service_name: str, comment: str | None) -> Mapping:
+        return self.verify(
+            self.post,
+            self.build_path(
+                "project",
+                project_name,
+                "service",
+                service_name,
+                "upgrade-validation",
+            ),
+            body={"comment": comment},
+        )
