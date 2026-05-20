@@ -1957,14 +1957,6 @@ class AivenClient(AivenClientBase):
             result_key="credits",
         )
 
-    def claim_project_credit(self, project: str, credit_code: str) -> Mapping:
-        return self.verify(
-            self.post,
-            self.build_path("project", project, "credits"),
-            body={"code": credit_code},
-            result_key="credit",
-        )
-
     def create_billing_group(
         self,
         billing_group_name: str,
