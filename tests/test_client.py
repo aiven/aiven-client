@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from aiven.client import AivenClient
-from aiven.client.client import ResponseError, RetrySpec
+from aiven.client.client import Error, ResponseError, RetrySpec
 from http import HTTPStatus
 from typing import Any
 from unittest import mock
@@ -144,6 +144,38 @@ def test_response_processing_error_raise() -> None:
             str(e)
             == "server returned error: test operation test_base_url {'foo': 1, 'bar': 2, 'spam': 3, 'error': 'test error'}"
         )
+
+
+@pytest.mark.parametrize(
+    "response_text, status, expected_str",
+    [
+        (
+            '{"errors":[{"error_code":"kafka_topic_invalid_config","message":"bad config",'
+            '"status":400}],"message":"Replication factor for diskless topics cannot be different than 1"}',
+            400,
+            "Replication factor for diskless topics cannot be different than 1 (status 400)",
+        ),
+        (
+            '{"message":"Not found"}',
+            404,
+            "Not found (status 404)",
+        ),
+        (
+            "plain text error",
+            500,
+            "plain text error (status 500)",
+        ),
+        (
+            '{"errors":[]}',
+            422,
+            '{"errors":[]} (status 422)',
+        ),
+    ],
+)
+def test_error_str(response_text: str, status: int, expected_str: str) -> None:
+    response = MockResponse(status_code=status, content=response_text.encode("utf-8"))
+    error = Error(response, status)  # type: ignore[arg-type]
+    assert str(error) == expected_str
 
 
 class TestGetRetrySpec:
