@@ -2657,7 +2657,7 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.service_name
     @arg.topic
-    @arg.partitions
+    @arg("--partitions", type=int, required=False, help="Number of partitions")
     @arg.min_insync_replicas
     @arg.retention
     @arg.retention_ms

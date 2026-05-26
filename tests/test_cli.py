@@ -408,6 +408,16 @@ def test_service_topic_create(command_line: str, expected_post_data: Mapping[str
                 "cleanup_policy": "compact",
             },
         ),
+        (
+            "service topic-update --project project1 --retention 168 service1 topic1",
+            {
+                "partitions": None,
+                "replication": None,
+                "min_insync_replicas": None,
+                "retention_bytes": None,
+                "retention_hours": 168,
+            },
+        ),
     ],
 )
 def test_service_topic_update(command_line: str, expected_put_data: Mapping[str, str | int | None]) -> None:
