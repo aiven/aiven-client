@@ -42,7 +42,12 @@ class Error(Exception):
 
     def __str__(self) -> str:
         response_text, status = self.args
-        return f"{response_text}, status({type(status)})={str(status)}"
+        try:
+            body = json.loads(response_text)
+            message = body.get("message", response_text)
+        except (json.JSONDecodeError, AttributeError, TypeError):
+            message = response_text
+        return f"{message} (status {status})"
 
 
 class ResponseError(Exception):
