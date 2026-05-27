@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 from collections.abc import Collection, Iterator, Mapping
-from typing import Any, cast, TextIO
+from typing import Any, TextIO, cast
 
 import datetime
 import decimal

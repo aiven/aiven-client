@@ -4,7 +4,7 @@
 # See the file `LICENSE` for details.
 from __future__ import annotations
 
-from .argx import arg, CommandLineTool, UserError
+from .argx import CommandLineTool, UserError, arg
 from collections.abc import Callable
 from functools import wraps
 from typing import Any, TypeVar

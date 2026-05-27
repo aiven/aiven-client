@@ -40,9 +40,6 @@ jobs:
       - id: ruff
         run: make ruff
 
-      - id: flake8
-        run: make flake8
-
       - id: mypy
         run: make mypy
 

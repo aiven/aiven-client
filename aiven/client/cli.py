@@ -21,7 +21,7 @@ from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from http import HTTPStatus
-from typing import Any, Final, IO, Protocol, TypeVar
+from typing import IO, Any, Final, Protocol, TypeVar
 from urllib.parse import urlparse
 
 import errno
@@ -775,8 +775,7 @@ class AivenCLI(argx.CommandLineTool):
                         types = spec["type"]
                         if isinstance(types, str) and types == "null":
                             print(
-                                "  {full_description}\n"
-                                "     => --remove-option {name}".format(
+                                "  {full_description}\n     => --remove-option {name}".format(
                                     name=name,
                                     full_description=full_description,
                                 )
@@ -786,8 +785,7 @@ class AivenCLI(argx.CommandLineTool):
                                 types = [types]
                             type_str = " or ".join(t for t in types if t != "null")
                             print(
-                                "  {full_description}\n"
-                                "     => -c {name}=<{type}>  {default}".format(
+                                "  {full_description}\n     => -c {name}=<{type}>  {default}".format(
                                     name=name,
                                     type=type_str,
                                     default=default_desc,
@@ -5595,11 +5593,13 @@ ssl.truststore.type=JKS
     def organization__create(self) -> None:
         """Create new organization"""
         if not self.args.force:
-            confirmation_result = self.confirm("Settings like billing details and authentication methods \
+            confirmation_result = self.confirm(
+                "Settings like billing details and authentication methods \
     cannot be shared across multiple organizations.\
     \nWhen you create a new organization, you must configure each of these settings manually.\
     \n\nTo use your current settings, create an organizational unit within this organization instead.\
-    \n\nI understand and want to create a new organization (y/N)? ")
+    \n\nI understand and want to create a new organization (y/N)? "
+            )
 
             if not confirmation_result:
                 raise argx.UserError("Aborted")
