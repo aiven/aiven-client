@@ -1956,6 +1956,49 @@ def test_byoc_update() -> None:
         cloud_region="eu-west-2",
         reserved_cidr="10.1.0.0/24",
         display_name="Another name",
+        contact_emails=None,
+        tags=None,
+    )
+
+
+def test_byoc_update_contact_emails() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.byoc_update.return_value = {
+        "custom_cloud_environment": {
+            "cloud_provider": "aws",
+            "cloud_region": "eu-west-2",
+            "contact_emails": [
+                {"email": "admin@example.com", "real_name": "John Doe", "role": "Admin"},
+                {"email": "ops@example.com", "real_name": "Jane Smith", "role": "Operator"},
+            ],
+            "custom_cloud_environment_id": "d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+            "deployment_model": "standard",
+            "reserved_cidr": "10.1.0.0/24",
+            "display_name": "My Cloud",
+            "state": "draft",
+        }
+    }
+    args = [
+        "byoc",
+        "update",
+        "--organization-id=org123456789a",
+        "--byoc-id=d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+        '--contact-email=email="admin@example.com",real_name="John Doe",role="Admin"',
+        '--contact-email=email="ops@example.com",real_name="Jane Smith",role="Operator"',
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.byoc_update.assert_called_once_with(
+        organization_id="org123456789a",
+        byoc_id="d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+        deployment_model=None,
+        cloud_provider=None,
+        cloud_region=None,
+        reserved_cidr=None,
+        display_name=None,
+        contact_emails=[
+            {"email": "admin@example.com", "real_name": "John Doe", "role": "Admin"},
+            {"email": "ops@example.com", "real_name": "Jane Smith", "role": "Operator"},
+        ],
         tags=None,
     )
 

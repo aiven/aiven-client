@@ -6111,8 +6111,20 @@ ssl.truststore.type=JKS
     @arg("--cloud-region", help="Region for the BYOC cloud")
     @arg("--reserved-cidr", help="The CIDR for the VPC to create for the custom cloud environment")
     @arg("--display-name", help="User set display name for the custom cloud environment")
+    @arg(
+        "--contact-email",
+        dest="contact_emails",
+        action="append",
+        help=(
+            'Replace contacts for the custom cloud environment (email="EMAIL",real_name="NAME",role="ROLE"). '
+            "email is required. Values must be quoted. Repeat for multiple contacts."
+        ),
+    )
     def byoc__update(self) -> None:
         """Update an existing Bring Your Own Cloud configuration."""
+        contact_emails = None
+        if self.args.contact_emails:
+            contact_emails = [self._parse_contact(c) for c in self.args.contact_emails]
         output = self.client.byoc_update(
             organization_id=self.args.organization_id,
             byoc_id=self.args.byoc_id,
@@ -6121,6 +6133,7 @@ ssl.truststore.type=JKS
             cloud_region=self.args.cloud_region,
             reserved_cidr=self.args.reserved_cidr,
             display_name=self.args.display_name,
+            contact_emails=contact_emails,
             tags=None,
         )
         self.print_response(output)
@@ -6242,6 +6255,36 @@ ssl.truststore.type=JKS
     @staticmethod
     def remove_prefix_from_keys(prefix: str, tags: Mapping[str, str]) -> Mapping[str, str]:
         return {(k.partition(prefix)[-1] if k.startswith(prefix) else k): v for (k, v) in tags.items()}
+
+    @staticmethod
+    def _parse_contact(contact: str) -> dict[str, str]:
+        """Parse a contact string in the format 'email="EMAIL",real_name="NAME",role="ROLE"'.
+
+        Values must be quoted.
+        """
+
+        fields: dict[str, str] = {}
+        pattern = re.compile(r'(\w+)="([^"]*)"')
+        remaining = contact
+        while remaining:
+            remaining = remaining.lstrip(",").strip()
+            if not remaining:
+                break
+            match = pattern.match(remaining)
+            if not match:
+                raise argx.UserError(
+                    f"Invalid format near '{remaining}'. "
+                    'Expected key="value" format (valid keys: email, real_name, role). '
+                    'Example: email="user@example.com",real_name="John Doe",role="Admin"'
+                )
+            key, value = match.group(1), match.group(2)
+            if key not in ("email", "real_name", "role"):
+                raise argx.UserError(f"Unknown field '{key}', valid fields: email, real_name, role")
+            fields[key] = value
+            remaining = remaining[match.end() :]
+        if "email" not in fields:
+            raise argx.UserError("Contact must include 'email' field")
+        return fields
 
     @arg.json
     @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
