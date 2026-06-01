@@ -2736,9 +2736,10 @@ class AivenClient(AivenClientBase):
         cloud_region: str | None,
         reserved_cidr: str | None,
         display_name: str | None,
+        contact_emails: list[dict[str, str]] | None,
         tags: Mapping[str, str | None] | None,
     ) -> Mapping[Any, Any]:
-        body = {
+        body: dict[str, Any] = {
             key: value
             for key, value in {
                 "deployment_model": deployment_model,
@@ -2747,6 +2748,7 @@ class AivenClient(AivenClientBase):
                 "reserved_cidr": reserved_cidr,
                 "display_name": display_name,
                 "tags": tags,
+                "contact_emails": contact_emails,
             }.items()
             if value is not None
         }
@@ -2851,6 +2853,7 @@ class AivenClient(AivenClientBase):
             cloud_region=None,
             reserved_cidr=None,
             display_name=None,
+            contact_emails=None,
             tags=None,
         )
         return {"tags": output.get("custom_cloud_environment", {}).get("tags", {})}
@@ -2864,6 +2867,7 @@ class AivenClient(AivenClientBase):
             cloud_region=None,
             reserved_cidr=None,
             display_name=None,
+            contact_emails=None,
             tags=tag_updates,
         )
         # There have been no errors raised
@@ -2878,6 +2882,7 @@ class AivenClient(AivenClientBase):
             cloud_region=None,
             reserved_cidr=None,
             display_name=None,
+            contact_emails=None,
             tags=tags,
         )
         # There have been no errors raised
