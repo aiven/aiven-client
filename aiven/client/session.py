@@ -32,11 +32,13 @@ def get_requests_session(*, timeout: int | None = None) -> Session:
     session.mount("http://", adapter)
     session.mount("https://", adapter)
     session.verify = True
-    session.headers = CaseInsensitiveDict(
-        {
-            "content-type": "application/json",
-            "user-agent": "aiven-client/" + __version__,
-        }
+    session.headers.update(
+        CaseInsensitiveDict(
+            {
+                "content-type": "application/json",
+                "user-agent": "aiven-client/" + __version__,
+            }
+        )
     )
 
     return session
