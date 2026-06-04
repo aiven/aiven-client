@@ -1678,6 +1678,15 @@ class AivenClient(AivenClientBase):
             path = self.build_path("project", project, "service_types")
         return self.verify(self.get, path, result_key="service_types")
 
+    def get_service_type(self, project: str, service_type: str) -> Mapping:
+        """Fetch a single service type definition.
+
+        Much cheaper than get_service_types(), which returns the full catalog
+        (tens of MB). Use this when only one service type's definition is needed.
+        """
+        path = self.build_path("project", project, "service-types", service_type)
+        return self.verify(self.get, path)
+
     def create_account(self, account_name: str) -> Mapping:
         body = {
             "account_name": account_name,

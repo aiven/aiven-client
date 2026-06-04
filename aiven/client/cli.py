@@ -3927,10 +3927,14 @@ ssl.truststore.type=JKS
         return "Unknown {} {!r}{} (available options: {})".format(option_type, option, did_you_mean, ", ".join(options))
 
     def _get_service_type_user_config_schema(self, project: str, service_type: str) -> Mapping[str, Any]:
-        service_types = self.client.get_service_types(project=project)
         try:
-            service_def = service_types[service_type]
-        except KeyError as ex:
+            service_def = self.client.get_service_type(project=project, service_type=service_type)
+        except client.Error as ex:
+            if ex.status not in {HTTPStatus.BAD_REQUEST, HTTPStatus.NOT_FOUND}:
+                raise
+            # Unknown service type: fall back to the full catalog so we can offer
+            # a "did you mean" suggestion listing the available service types.
+            service_types = self.client.get_service_types(project=project)
             raise argx.UserError(
                 self._get_unknown_option_error(
                     option_type="service type",
