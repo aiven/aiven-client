@@ -1994,7 +1994,7 @@ ssl.truststore.type=JKS
     @arg.json
     def service__integration_endpoint_create(self) -> None:
         """Create a service integration endpoint"""
-        if self.args.user_config_json:
+        if self.args.user_config_json is not None:
             user_config = self.args.user_config_json
         elif self.args.user_config:
             project = self.get_project()
@@ -2019,7 +2019,7 @@ ssl.truststore.type=JKS
     @arg.json
     def service__integration_endpoint_update(self) -> None:
         """Update a service integration endpoint"""
-        if self.args.user_config_json:
+        if self.args.user_config_json is not None:
             user_config = self.args.user_config_json
         elif self.args.user_config:
             project = self.get_project()
@@ -2095,7 +2095,7 @@ ssl.truststore.type=JKS
     @arg.json
     def service__integration_create(self) -> None:
         """Create a service integration"""
-        if self.args.user_config_json:
+        if self.args.user_config_json is not None:
             user_config = self.args.user_config_json
         elif self.args.user_config:
             project = self.get_project()
@@ -2123,7 +2123,7 @@ ssl.truststore.type=JKS
     @arg.json
     def service__integration_update(self) -> None:
         """Update a service integration"""
-        if self.args.user_config_json:
+        if self.args.user_config_json is not None:
             user_config = self.args.user_config_json
         elif self.args.user_config:
             project = self.get_project()
