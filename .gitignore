@@ -1,5 +1,6 @@
 .idea/
 .venv/
+.python-version
 Pipfile*
 /.cache/
 *.pyc

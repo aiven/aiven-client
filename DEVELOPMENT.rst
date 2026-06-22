@@ -13,6 +13,16 @@ After the local virtual environment is created, run the following to "shell in" 
 
     pipenv shell
 
+Alternatively, with ``pyenv`` and the ``pyenv-virtualenv`` plugin, create a project virtual environment and install all dependencies:
+
+::
+
+    pyenv virtualenv 3.13 aiven-client
+    pyenv local aiven-client
+    python -m pip install -e .[dev]
+
+``pyenv local`` writes a ``.python-version`` file that auto-activates the virtual environment when you enter the directory, provided ``eval "$(pyenv virtualenv-init -)"`` is in your shell startup.
+
 Releasing a new version
 =======================
 
