@@ -7,14 +7,14 @@ from __future__ import annotations
 from . import argx, client, units
 from aiven.client import AivenClient, envdefault
 from aiven.client.cliarg import arg
-from aiven.client.client import Tag
+from aiven.client.client import DEFAULT_IDLE_TIMEOUT, DEFAULT_MAX_AGE, Tag
 from aiven.client.common import UNDEFINED
 from aiven.client.connection_info.common import Store
 from aiven.client.connection_info.kafka import KafkaCertificateConnectionInfo, KafkaSASLConnectionInfo
 from aiven.client.connection_info.pg import PGConnectionInfo
 from aiven.client.connection_info.valkey import ValkeyConnectionInfo
 from aiven.client.speller import suggest
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentTypeError
 from ast import literal_eval
 from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
@@ -139,8 +139,25 @@ def get_current_date() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def connection_lifetime_arg(value: str) -> float | None:
+    """Parse a connection idle-timeout/max-age argument, mapping -1 to None (disabled)."""
+    try:
+        parsed = float(value)
+    except ValueError:
+        raise ArgumentTypeError(f"invalid number of seconds: {value!r} (use -1 to disable)") from None
+    return None if parsed == -1 else parsed
+
+
 class ClientFactory(Protocol):
-    def __call__(self, base_url: str, show_http: bool, request_timeout: int | None) -> client.AivenClient: ...
+    def __call__(
+        self,
+        *,
+        base_url: str,
+        show_http: bool,
+        request_timeout: int | None,
+        idle_timeout: float | None,
+        max_age: float | None,
+    ) -> client.AivenClient: ...
 
 
 class AivenCLI(argx.CommandLineTool):
@@ -173,6 +190,18 @@ class AivenCLI(argx.CommandLineTool):
             type=int,
             default=None,
             help="Wait for up to N seconds for a response to a request (default: infinite)",
+        )
+        parser.add_argument(
+            "--idle-timeout",
+            type=connection_lifetime_arg,
+            default=DEFAULT_IDLE_TIMEOUT,
+            help="Recycle a pooled HTTP connection idle for more than N seconds, -1 to disable (default: %(default)s)",
+        )
+        parser.add_argument(
+            "--max-age",
+            type=connection_lifetime_arg,
+            default=DEFAULT_MAX_AGE,
+            help="Recycle a pooled HTTP connection older than N seconds, -1 to disable (default: %(default)s)",
         )
 
     def collect_user_config_options(self, obj_def: Mapping[str, Any], prefixes: list[str] | None = None) -> dict[str, Any]:
@@ -4525,6 +4554,8 @@ ssl.truststore.type=JKS
             base_url=self.args.url,
             show_http=self.args.show_http,
             request_timeout=self.args.request_timeout,
+            idle_timeout=self.args.idle_timeout,
+            max_age=self.args.max_age,
         )
         # Always set CA if we have anything set at the command line or in the env
         if self.args.auth_ca is not None:

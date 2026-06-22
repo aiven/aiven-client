@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from ._typing import assert_never
 from .common import UNDEFINED
-from .session import get_requests_session
+from .session import DEFAULT_IDLE_TIMEOUT, DEFAULT_MAX_AGE, get_requests_session
 from collections.abc import Callable, Collection, Mapping, Sequence
 from http import HTTPStatus
 from requests import Response
@@ -91,12 +91,14 @@ class AivenClientBase:
         show_http: bool = False,
         request_timeout: int | None = None,
         default_retry_spec: RetrySpec = DEFAULT_RETRY,
+        idle_timeout: float | None = DEFAULT_IDLE_TIMEOUT,
+        max_age: float | None = DEFAULT_MAX_AGE,
     ) -> None:
         self.log = logging.getLogger("AivenClient")
         self.auth_token: str | None = None
         self.base_url = base_url
         self.log.debug("using %r", self.base_url)
-        self.session = get_requests_session(timeout=request_timeout)
+        self.session = get_requests_session(timeout=request_timeout, idle_timeout=idle_timeout, max_age=max_age)
         self.http_log = logging.getLogger("aiven_http")
         self.init_http_logging(show_http)
         self.api_prefix = "/v1"
