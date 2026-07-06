@@ -446,6 +446,81 @@ def test_service_topic_update(command_line: str, expected_put_data: Mapping[str,
     assert data_dict == expected_put_data
 
 
+def test_service_topic_get_includes_configs(capsys: CaptureFixture[str]) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.get_service_topic.return_value = {
+        "topic_name": "topic1",
+        "partitions": [
+            {
+                "consumer_groups": [],
+                "earliest_offset": 0,
+                "isr": 3,
+                "latest_offset": 42,
+                "partition": 0,
+                "size": 1024,
+            }
+        ],
+        "replication": 3,
+        "min_insync_replicas": 2,
+        "retention_bytes": -1,
+        "retention_hours": -1,
+        "cleanup_policy": "delete",
+        "tags": [{"key": "env", "value": "test"}],
+        "config": {
+            "cleanup_policy": {"value": "delete", "source": "DYNAMIC_TOPIC_CONFIG"},
+            "remote_storage_enable": {"value": True, "source": "DYNAMIC_TOPIC_CONFIG"},
+        },
+    }
+
+    assert (
+        build_aiven_cli(aiven_client).run(args=["service", "topic-get", "--project", "project1", "service1", "topic1"])
+        is None
+    )
+
+    stdout, _ = capsys.readouterr()
+    assert "TOPIC_NAME" in stdout
+    assert "topic1" in stdout
+    assert "unlimited" in stdout
+    assert "env=test" in stdout
+    assert "CONFIG_NAME" in stdout
+    assert "remote_storage_enable" in stdout
+    assert "DYNAMIC_TOPIC_CONFIG" in stdout
+    assert "PARTITION" in stdout
+    assert "(No consumer groups)" in stdout
+
+
+def test_service_topic_get_json_includes_configs(capsys: CaptureFixture[str]) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.get_service_topic.return_value = {
+        "partitions": [
+            {
+                "consumer_groups": [{"group_name": "group1", "offset": 40}],
+                "earliest_offset": 0,
+                "isr": 3,
+                "latest_offset": 42,
+                "partition": 0,
+                "size": 1024,
+            }
+        ],
+        "config": {
+            "cleanup_policy": {"value": "delete", "source": "DYNAMIC_TOPIC_CONFIG"},
+        },
+    }
+
+    assert (
+        build_aiven_cli(aiven_client).run(
+            args=["service", "topic-get", "--project", "project1", "--json", "service1", "topic1"]
+        )
+        is None
+    )
+
+    stdout, _ = capsys.readouterr()
+    data = json.loads(stdout)
+    assert data["config"] == {"cleanup_policy": {"value": "delete", "source": "DYNAMIC_TOPIC_CONFIG"}}
+    assert data["consumer_groups"] == [{"consumer_group": "group1", "lag": 2, "offset": 40, "partition": 0}]
+    assert data["partitions"][0]["groups"] == 1
+
+
 def test_service_create_from_pitr() -> None:
     AivenCLI().run(
         args=[
