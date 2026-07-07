@@ -836,6 +836,19 @@ class AivenCLI(argx.CommandLineTool):
     ]
     EXT_SERVICE_LAYOUT = ["service_uri", "disk_space_mb", "user_config.*", "databases", "users"]
 
+    TOPIC_LIST_LAYOUT = [
+        [
+            "topic_name",
+            "partitions",
+            "replication",
+            "min_insync_replicas",
+            "retention_bytes",
+            "retention_hours",
+            "cleanup_policy",
+            "tags",
+        ]
+    ]
+
     @arg.project
     @arg("service_name", nargs="*", default=[], help="Service name")
     @arg.service_type
@@ -2469,19 +2482,53 @@ ssl.truststore.type=JKS
                 topic["retention_hours"] = "unlimited"
             if not self.args.json:
                 topic["tags"] = [f"{t['key']}={t['value']}" for t in topic["tags"]]
-        layout = [
-            [
-                "topic_name",
-                "partitions",
-                "replication",
-                "min_insync_replicas",
-                "retention_bytes",
-                "retention_hours",
-                "cleanup_policy",
-                "tags",
-            ]
-        ]
-        self.print_response(topics, format=self.args.format, json=self.args.json, table_layout=layout)
+        self.print_response(topics, format=self.args.format, json=self.args.json, table_layout=self.TOPIC_LIST_LAYOUT)
+
+    def _service_topic_summary(self, topic: Mapping[str, Any]) -> dict[str, Any]:
+        summary = {field: topic.get(field) for field in self.TOPIC_LIST_LAYOUT[0]}
+        summary["topic_name"] = topic.get("topic_name", self.args.topic)
+        summary["partitions"] = len(topic["partitions"])
+        if summary["retention_hours"] == -1:
+            summary["retention_hours"] = "unlimited"
+        tags = summary.get("tags")
+        if isinstance(tags, list):
+            summary["tags"] = [f"{t['key']}={t['value']}" if isinstance(t, Mapping) else t for t in tags]
+        return summary
+
+    @staticmethod
+    def _service_topic_config_rows(config: Mapping[str, Any]) -> list[dict[str, Any]]:
+        rows = []
+        for config_name, config_value in sorted(config.items()):
+            if isinstance(config_value, Mapping):
+                rows.append(
+                    {
+                        "config_name": config_name,
+                        "value": config_value.get("value"),
+                        "source": config_value.get("source"),
+                    }
+                )
+            else:
+                rows.append({"config_name": config_name, "value": config_value, "source": None})
+        return rows
+
+    def _print_service_topic_summary_and_config(self, topic: Mapping[str, Any], topic_config: Mapping[str, Any]) -> None:
+        self.print_response(
+            [self._service_topic_summary(topic)],
+            json=self.args.json,
+            table_layout=self.TOPIC_LIST_LAYOUT,
+        )
+        print()
+
+        topic_config_rows = self._service_topic_config_rows(topic_config)
+        if not topic_config_rows:
+            print("(No configs)")
+        else:
+            self.print_response(
+                topic_config_rows,
+                json=self.args.json,
+                table_layout=[["config_name", "value", "source"]],
+            )
+        print()
 
     @arg.project
     @arg.service_name
@@ -2494,12 +2541,12 @@ ssl.truststore.type=JKS
         topic = self.client.get_service_topic(
             project=self.get_project(), service=self.args.service_name, topic=self.args.topic
         )
-        has_remote_size = False
+        topic_config = topic.get("config") or {}
         for p in topic["partitions"]:
             p["groups"] = len(p["consumer_groups"])
-            if "remote_size" in p and not has_remote_size:
-                has_remote_size = True
-        is_tiered = "remote_storage_enable" in topic["config"] and topic["config"]["remote_storage_enable"]["value"]
+        has_remote_size = any("remote_size" in p for p in topic["partitions"])
+        remote_storage_config = topic_config.get("remote_storage_enable", {})
+        is_tiered = isinstance(remote_storage_config, Mapping) and remote_storage_config.get("value")
 
         cgroups = []
         for p in topic["partitions"]:
@@ -2520,10 +2567,13 @@ ssl.truststore.type=JKS
         if self.args.json:
             # If JSON output is requested, output the entire object in a single step
             self.print_response(
-                {"partitions": topic["partitions"], "consumer_groups": cgroups},
+                {"config": topic_config, "partitions": topic["partitions"], "consumer_groups": cgroups},
                 json=True,
             )
         else:
+            if self.args.format is None:
+                self._print_service_topic_summary_and_config(topic, topic_config)
+
             if is_tiered and has_remote_size:
                 layout = [["partition", "isr", "size", "remote_size", "earliest_offset", "latest_offset", "groups"]]
             else:
