@@ -74,6 +74,44 @@ def test_user_config_json_success() -> None:
     assert test_class.args.user_config_json == {"foo": "bar"}
 
 
+def test_user_config_json_not_provided_is_none() -> None:
+    """When --user-config-json is not provided, args.user_config_json is None.
+
+    This keeps "not provided" distinguishable from an explicitly empty
+    config (``--user-config-json "{}"``), which parses to ``{}``.
+    """
+
+    class T(CommandLineTool):
+        """Test class"""
+
+        @arg.user_config_json()
+        @arg()
+        def t(self) -> None:
+            """t"""
+
+    test_class = T("avn")
+    ret = test_class.run(args=["t"])
+    assert ret is None
+    assert test_class.args.user_config_json is None
+
+
+def test_user_config_json_explicit_empty_is_empty_dict() -> None:
+    """An explicit empty config parses to ``{}`` (not None)."""
+
+    class T(CommandLineTool):
+        """Test class"""
+
+        @arg.user_config_json()
+        @arg()
+        def t(self) -> None:
+            """t"""
+
+    test_class = T("avn")
+    ret = test_class.run(args=["t", "--user-config-json", "{}"])
+    assert ret is None
+    assert test_class.args.user_config_json == {}
+
+
 def test_user_config_success() -> None:
     """Test that user config parameter -c works and not cause conflict with
     --user_config_json
