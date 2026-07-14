@@ -2079,17 +2079,24 @@ def test_byoc_update_contact_emails() -> None:
 
 
 @pytest.mark.parametrize(
-    "provider,region,byoc_account_id",
+    "provider,region,byoc_account_id,azure_tenant_id",
     [
-        ("aws", "eu-west-2", "arn:aws:iam::123456789012:role/role-name"),
+        ("aws", "eu-west-2", "arn:aws:iam::123456789012:role/role-name", None),
         (
             "google",
             "europe-north1",
             "projects/aiven-test-byoa/serviceAccounts/aiven-cce4bafaf95155@aiven-test-byoa.iam.gserviceaccount.com",
+            None,
+        ),
+        (
+            "azure",
+            "westeurope",
+            "12345678-1234-1234-1234-123456789abc",
+            "87654321-4321-4321-4321-cba987654321",
         ),
     ],
 )
-def test_byoc_provision(provider: str, region: str, byoc_account_id: str) -> None:
+def test_byoc_provision(provider: str, region: str, byoc_account_id: str, azure_tenant_id: str | None) -> None:
     aiven_client = mock.Mock(spec_set=AivenClient)
     aiven_client.byoc_provision.return_value = {
         "custom_cloud_environment": {
@@ -2104,21 +2111,32 @@ def test_byoc_provision(provider: str, region: str, byoc_account_id: str) -> Non
         }
     }
     byoc_account_id_args = {
-        "aws": "--aws-iam-role-arn",
-        "google": "--google-privilege-bearing-service-account-id",
+        "aws": ["--aws-iam-role-arn"],
+        "azure": ["--azure-subscription-id", "--azure-tenant-id"],
+        "google": ["--google-privilege-bearing-service-account-id"],
     }
     args = [
         "byoc",
         "provision",
         "--organization-id=org123456789a",
         "--byoc-id=d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
-        f"{byoc_account_id_args[provider]}={byoc_account_id}",
     ]
+    if provider == "azure":
+        args.extend(
+            [
+                f"--azure-subscription-id={byoc_account_id}",
+                f"--azure-tenant-id={azure_tenant_id}",
+            ]
+        )
+    else:
+        args.append(f"{byoc_account_id_args[provider][0]}={byoc_account_id}")
     build_aiven_cli(aiven_client).run(args=args)
     aiven_client.byoc_provision.assert_called_once_with(
         organization_id="org123456789a",
         byoc_id="d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
         aws_iam_role_arn=byoc_account_id if provider == "aws" else None,
+        azure_subscription_id=byoc_account_id if provider == "azure" else None,
+        azure_tenant_id=azure_tenant_id if provider == "azure" else None,
         google_privilege_bearing_service_account_id=byoc_account_id if provider == "google" else None,
     )
 
@@ -2136,6 +2154,37 @@ def test_byoc_provision_args() -> None:
     ]
     build_aiven_cli(aiven_client).run(args=args)
     aiven_client.byoc_provision.assert_not_called()
+
+
+def test_byoc_provision_azure_args_must_be_paired() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    args = [
+        "byoc",
+        "provision",
+        "--organization-id=org123456789a",
+        "--byoc-id=d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+        "--azure-subscription-id=12345678-1234-1234-1234-123456789abc",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.byoc_provision.assert_not_called()
+
+
+def test_byoc_terraform_get_vars() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.byoc_terraform_get_vars.return_value = "byoc_name = test"
+    args = [
+        "byoc",
+        "template",
+        "terraform",
+        "get-vars",
+        "--organization-id=org123456789a",
+        "--byoc-id=d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+    ]
+    build_aiven_cli(aiven_client).run(args=args)
+    aiven_client.byoc_terraform_get_vars.assert_called_once_with(
+        organization_id="org123456789a",
+        byoc_id="d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
+    )
 
 
 @pytest.mark.parametrize("force", (False, True))

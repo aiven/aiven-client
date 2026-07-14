@@ -6236,17 +6236,41 @@ ssl.truststore.type=JKS
         "--google-privilege-bearing-service-account-id",
         help="The privilege-bearing service account that Aiven is authorized to impersonate to operate the cloud (Google)",
     )
+    @arg(
+        "--azure-subscription-id",
+        help=(
+            "The Azure subscription ID where the BYOC infrastructure is deployed (Azure). "
+            "Operator credentials come from the bootstrapped Aiven multi-tenant CCE application."
+        ),
+    )
+    @arg(
+        "--azure-tenant-id",
+        help=(
+            "The Entra ID tenant ID of the customer's directory where the Aiven CCE enterprise application "
+            "is installed (Azure). Use the tenant_id output from the BYOC Terraform template."
+        ),
+    )
     def byoc__provision(self) -> None:
         """Provision resources for a Bring Your Own Cloud cloud."""
-        if self.args.aws_iam_role_arn and self.args.google_privilege_bearing_service_account_id:
+        aws_args = [self.args.aws_iam_role_arn]
+        google_args = [self.args.google_privilege_bearing_service_account_id]
+        if self.args.azure_subscription_id or self.args.azure_tenant_id:
+            if not (self.args.azure_subscription_id and self.args.azure_tenant_id):
+                raise argx.UserError("--azure-subscription-id and --azure-tenant-id must be provided together.")
+        azure_args = [self.args.azure_subscription_id, self.args.azure_tenant_id]
+        active_cloud_identity_groups = sum(any(args) for args in (aws_args, google_args, azure_args))
+        if active_cloud_identity_groups > 1:
             raise argx.UserError(
-                "--aws-iam-role-arn and --google-privilege-bearing-service-account-id are mutually exclusive."
+                "--aws-iam-role-arn, --google-privilege-bearing-service-account-id,"
+                " and --azure-subscription-id/--azure-tenant-id are mutually exclusive."
             )
         output = self.client.byoc_provision(
             organization_id=self.args.organization_id,
             byoc_id=self.args.byoc_id,
             aws_iam_role_arn=self.args.aws_iam_role_arn,
             google_privilege_bearing_service_account_id=self.args.google_privilege_bearing_service_account_id,
+            azure_subscription_id=self.args.azure_subscription_id,
+            azure_tenant_id=self.args.azure_tenant_id,
         )
         self.print_response(output)
 
@@ -6274,7 +6298,12 @@ ssl.truststore.type=JKS
     @arg("--byoc-id", required=True, help="Identifier of the custom cloud environment that defines the BYOC cloud")
     def byoc__template__terraform__get_vars(self) -> None:
         """Download Terraform veriables for provisioning BYOC cloud."""
-        print(self.client.byoc_terraform_get_vars(organization_id=self.args.organization_id, byoc_id=self.args.byoc_id))
+        print(
+            self.client.byoc_terraform_get_vars(
+                organization_id=self.args.organization_id,
+                byoc_id=self.args.byoc_id,
+            )
+        )
 
     @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
     @arg("--byoc-id", required=True, help="Identifier of the custom cloud environment that defines the BYOC cloud")
