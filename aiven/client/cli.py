@@ -6236,17 +6236,25 @@ ssl.truststore.type=JKS
         "--google-privilege-bearing-service-account-id",
         help="The privilege-bearing service account that Aiven is authorized to impersonate to operate the cloud (Google)",
     )
+    @arg("--azure-subscription-id", help="The Azure subscription ID where the BYOC infrastructure is deployed (Azure)")
     def byoc__provision(self) -> None:
         """Provision resources for a Bring Your Own Cloud cloud."""
-        if self.args.aws_iam_role_arn and self.args.google_privilege_bearing_service_account_id:
+        cloud_identity_args = [
+            self.args.aws_iam_role_arn,
+            self.args.google_privilege_bearing_service_account_id,
+            self.args.azure_subscription_id,
+        ]
+        if sum(1 for a in cloud_identity_args if a) > 1:
             raise argx.UserError(
-                "--aws-iam-role-arn and --google-privilege-bearing-service-account-id are mutually exclusive."
+                "--aws-iam-role-arn, --google-privilege-bearing-service-account-id,"
+                " and --azure-subscription-id are mutually exclusive."
             )
         output = self.client.byoc_provision(
             organization_id=self.args.organization_id,
             byoc_id=self.args.byoc_id,
             aws_iam_role_arn=self.args.aws_iam_role_arn,
             google_privilege_bearing_service_account_id=self.args.google_privilege_bearing_service_account_id,
+            azure_subscription_id=self.args.azure_subscription_id,
         )
         self.print_response(output)
 
