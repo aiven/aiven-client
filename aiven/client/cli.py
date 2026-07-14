@@ -6236,17 +6236,41 @@ ssl.truststore.type=JKS
         "--google-privilege-bearing-service-account-id",
         help="The privilege-bearing service account that Aiven is authorized to impersonate to operate the cloud (Google)",
     )
+    @arg("--azure-subscription-id", help="The Azure subscription ID where the BYOC infrastructure is deployed (Azure)")
+    @arg("--azure-client-id", help="The client ID of the operator service principal created by Terraform (Azure)")
+    @arg("--azure-client-secret", help="The client secret of the operator service principal created by Terraform (Azure)")
+    @arg("--azure-tenant-id", help="The Azure AD tenant ID where the operator service principal resides (Azure)")
     def byoc__provision(self) -> None:
         """Provision resources for a Bring Your Own Cloud cloud."""
-        if self.args.aws_iam_role_arn and self.args.google_privilege_bearing_service_account_id:
+        aws_args = [self.args.aws_iam_role_arn]
+        google_args = [self.args.google_privilege_bearing_service_account_id]
+        azure_args = [
+            self.args.azure_subscription_id,
+            self.args.azure_client_id,
+            self.args.azure_client_secret,
+            self.args.azure_tenant_id,
+        ]
+        active_cloud_identity_groups = sum(any(args) for args in (aws_args, google_args, azure_args))
+        if active_cloud_identity_groups > 1:
             raise argx.UserError(
-                "--aws-iam-role-arn and --google-privilege-bearing-service-account-id are mutually exclusive."
+                "--aws-iam-role-arn, --google-privilege-bearing-service-account-id,"
+                " and the Azure provision arguments (--azure-subscription-id, --azure-client-id,"
+                " --azure-client-secret, --azure-tenant-id) are mutually exclusive."
+            )
+        if any(azure_args) and not all(azure_args):
+            raise argx.UserError(
+                "--azure-subscription-id, --azure-client-id, --azure-client-secret,"
+                " and --azure-tenant-id must all be provided together."
             )
         output = self.client.byoc_provision(
             organization_id=self.args.organization_id,
             byoc_id=self.args.byoc_id,
             aws_iam_role_arn=self.args.aws_iam_role_arn,
             google_privilege_bearing_service_account_id=self.args.google_privilege_bearing_service_account_id,
+            azure_subscription_id=self.args.azure_subscription_id,
+            azure_client_id=self.args.azure_client_id,
+            azure_client_secret=self.args.azure_client_secret,
+            azure_tenant_id=self.args.azure_tenant_id,
         )
         self.print_response(output)
 
