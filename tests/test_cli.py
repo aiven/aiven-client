@@ -2087,6 +2087,7 @@ def test_byoc_update_contact_emails() -> None:
             "europe-north1",
             "projects/aiven-test-byoa/serviceAccounts/aiven-cce4bafaf95155@aiven-test-byoa.iam.gserviceaccount.com",
         ),
+        ("azure", "westeurope", "12345678-1234-1234-1234-123456789abc"),
     ],
 )
 def test_byoc_provision(provider: str, region: str, byoc_account_id: str) -> None:
@@ -2105,6 +2106,7 @@ def test_byoc_provision(provider: str, region: str, byoc_account_id: str) -> Non
     }
     byoc_account_id_args = {
         "aws": "--aws-iam-role-arn",
+        "azure": "--azure-subscription-id",
         "google": "--google-privilege-bearing-service-account-id",
     }
     args = [
@@ -2119,6 +2121,7 @@ def test_byoc_provision(provider: str, region: str, byoc_account_id: str) -> Non
         organization_id="org123456789a",
         byoc_id="d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
         aws_iam_role_arn=byoc_account_id if provider == "aws" else None,
+        azure_subscription_id=byoc_account_id if provider == "azure" else None,
         google_privilege_bearing_service_account_id=byoc_account_id if provider == "google" else None,
     )
 

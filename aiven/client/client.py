@@ -2779,13 +2779,17 @@ class AivenClient(AivenClientBase):
         byoc_id: str,
         aws_iam_role_arn: str | None = None,
         google_privilege_bearing_service_account_id: str | None = None,
+        azure_subscription_id: str | None = None,
     ) -> Mapping[Any, Any]:
-        if aws_iam_role_arn is not None:
-            body = {"aws_iam_role_arn": aws_iam_role_arn}
-        elif google_privilege_bearing_service_account_id is not None:
-            body = {"google_privilege_bearing_service_account_id": google_privilege_bearing_service_account_id}
-        else:
-            body = {}
+        body = {
+            k: v
+            for k, v in {
+                "aws_iam_role_arn": aws_iam_role_arn,
+                "google_privilege_bearing_service_account_id": google_privilege_bearing_service_account_id,
+                "azure_subscription_id": azure_subscription_id,
+            }.items()
+            if v is not None
+        }
         return self.verify(
             self.post,
             self.build_path("organization", organization_id, "custom-cloud-environments", byoc_id, "provision"),
