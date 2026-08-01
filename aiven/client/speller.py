@@ -19,7 +19,7 @@ def suggest(word_to_check: str, known_words: Container[str]) -> str | None:
 
     def get_known(words: Iterable[str]) -> Iterable[str]:
         """The subset of `words` that appear in the dictionary of WORDS."""
-        return set(w for w in words if w in known_words)
+        return {w for w in words if w in known_words}
 
     def get_edits1(word: str) -> Iterable[str]:
         """All edits that are one edit away from `word`."""

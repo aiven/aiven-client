@@ -732,7 +732,7 @@ class AivenClient(AivenClientBase):
             self._del_es_acl_rules(
                 config=acl_config,
                 user=username,
-                rules=set(rule.strip() for rule in del_rules),
+                rules={rule.strip() for rule in del_rules},
             )
 
         path = self.build_path("project", project, "service", service, "elasticsearch", "acl")
@@ -2779,13 +2779,23 @@ class AivenClient(AivenClientBase):
         byoc_id: str,
         aws_iam_role_arn: str | None = None,
         google_privilege_bearing_service_account_id: str | None = None,
+        azure_subscription_id: str | None = None,
+        azure_client_id: str | None = None,
+        azure_client_secret: str | None = None,
+        azure_tenant_id: str | None = None,
     ) -> Mapping[Any, Any]:
-        if aws_iam_role_arn is not None:
-            body = {"aws_iam_role_arn": aws_iam_role_arn}
-        elif google_privilege_bearing_service_account_id is not None:
-            body = {"google_privilege_bearing_service_account_id": google_privilege_bearing_service_account_id}
-        else:
-            body = {}
+        body = {
+            k: v
+            for k, v in {
+                "aws_iam_role_arn": aws_iam_role_arn,
+                "google_privilege_bearing_service_account_id": google_privilege_bearing_service_account_id,
+                "azure_subscription_id": azure_subscription_id,
+                "azure_client_id": azure_client_id,
+                "azure_client_secret": azure_client_secret,
+                "azure_tenant_id": azure_tenant_id,
+            }.items()
+            if v is not None
+        }
         return self.verify(
             self.post,
             self.build_path("organization", organization_id, "custom-cloud-environments", byoc_id, "provision"),

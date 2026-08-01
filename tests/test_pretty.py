@@ -15,25 +15,27 @@ import ipaddress
 import pytest
 import re
 
+SAMPLE_DATETIME = datetime.datetime(2019, 12, 23, tzinfo=datetime.timezone.utc)
+
 
 @pytest.mark.parametrize(
     "value,expected",
     [
         (1, "1"),
         ("a_string", "a_string"),
-        (datetime.datetime(year=2019, month=12, day=23), "2019-12-23T00:00:00"),
-        ([datetime.datetime(year=2019, month=12, day=23)], "2019-12-23T00:00:00"),
+        (SAMPLE_DATETIME, "2019-12-23T00:00:00+00:00"),
+        ([SAMPLE_DATETIME], "2019-12-23T00:00:00+00:00"),
         (
-            ["x", datetime.datetime(year=2019, month=12, day=23)],
-            "x, 2019-12-23T00:00:00",
+            ["x", SAMPLE_DATETIME],
+            "x, 2019-12-23T00:00:00+00:00",
         ),
         (decimal.Decimal("64.23"), "64.23"),
         (
             {
                 "a": decimal.Decimal("12.34"),
-                "b": datetime.datetime(year=2019, month=12, day=23),
+                "b": SAMPLE_DATETIME,
             },
-            '{"a": "12.34", "b": "2019-12-23T00:00:00"}',
+            '{"a": "12.34", "b": "2019-12-23T00:00:00+00:00"}',
         ),
         (ipaddress.IPv4Address("192.168.0.1"), "192.168.0.1"),
         (ipaddress.IPv6Address("fd00:0000::1:123"), "fd00::1:123"),

@@ -2087,6 +2087,7 @@ def test_byoc_update_contact_emails() -> None:
             "europe-north1",
             "projects/aiven-test-byoa/serviceAccounts/aiven-cce4bafaf95155@aiven-test-byoa.iam.gserviceaccount.com",
         ),
+        ("azure", "westeurope", "12345678-1234-1234-1234-123456789abc"),
     ],
 )
 def test_byoc_provision(provider: str, region: str, byoc_account_id: str) -> None:
@@ -2105,6 +2106,7 @@ def test_byoc_provision(provider: str, region: str, byoc_account_id: str) -> Non
     }
     byoc_account_id_args = {
         "aws": "--aws-iam-role-arn",
+        "azure": "--azure-subscription-id",
         "google": "--google-privilege-bearing-service-account-id",
     }
     args = [
@@ -2114,11 +2116,23 @@ def test_byoc_provision(provider: str, region: str, byoc_account_id: str) -> Non
         "--byoc-id=d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
         f"{byoc_account_id_args[provider]}={byoc_account_id}",
     ]
+    if provider == "azure":
+        args.extend(
+            [
+                "--azure-client-id=azure-client-id",
+                "--azure-client-secret=azure-client-secret",
+                "--azure-tenant-id=azure-tenant-id",
+            ]
+        )
     build_aiven_cli(aiven_client).run(args=args)
     aiven_client.byoc_provision.assert_called_once_with(
         organization_id="org123456789a",
         byoc_id="d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
         aws_iam_role_arn=byoc_account_id if provider == "aws" else None,
+        azure_subscription_id=byoc_account_id if provider == "azure" else None,
+        azure_client_id="azure-client-id" if provider == "azure" else None,
+        azure_client_secret="azure-client-secret" if provider == "azure" else None,
+        azure_tenant_id="azure-tenant-id" if provider == "azure" else None,
         google_privilege_bearing_service_account_id=byoc_account_id if provider == "google" else None,
     )
 
@@ -2131,8 +2145,10 @@ def test_byoc_provision_args() -> None:
         "--organization-id=org123456789a",
         "--byoc-id=d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
         "--aws-iam-role-arn=arn:aws:iam::123456789012:role/role-name",
-        "--google-privilege-bearing-service-account-id="
-        "projects/aiven-test-byoa/serviceAccounts/aiven-cce4bafaf95155@aiven-test-byoa.iam.gserviceaccount.com",
+        (
+            "--google-privilege-bearing-service-account-id="
+            "projects/aiven-test-byoa/serviceAccounts/aiven-cce4bafaf95155@aiven-test-byoa.iam.gserviceaccount.com"
+        ),
     ]
     build_aiven_cli(aiven_client).run(args=args)
     aiven_client.byoc_provision.assert_not_called()
