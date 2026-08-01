@@ -732,7 +732,7 @@ class AivenClient(AivenClientBase):
             self._del_es_acl_rules(
                 config=acl_config,
                 user=username,
-                rules=set(rule.strip() for rule in del_rules),
+                rules={rule.strip() for rule in del_rules},
             )
 
         path = self.build_path("project", project, "service", service, "elasticsearch", "acl")

@@ -2149,8 +2149,10 @@ def test_byoc_provision_args() -> None:
         "--organization-id=org123456789a",
         "--byoc-id=d6a490ad-f43d-49d8-b3e5-45bc5dbfb387",
         "--aws-iam-role-arn=arn:aws:iam::123456789012:role/role-name",
-        "--google-privilege-bearing-service-account-id="
-        "projects/aiven-test-byoa/serviceAccounts/aiven-cce4bafaf95155@aiven-test-byoa.iam.gserviceaccount.com",
+        (
+            "--google-privilege-bearing-service-account-id="
+            "projects/aiven-test-byoa/serviceAccounts/aiven-cce4bafaf95155@aiven-test-byoa.iam.gserviceaccount.com"
+        ),
     ]
     build_aiven_cli(aiven_client).run(args=args)
     aiven_client.byoc_provision.assert_not_called()

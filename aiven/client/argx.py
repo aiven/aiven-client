@@ -108,15 +108,23 @@ class CustomFormatter(argparse.RawDescriptionHelpFormatter):
 
     def _get_help_string(self, action: Action) -> str:
         help_text = action.help or ""
-        if "%(default)" not in help_text and action.default is not argparse.SUPPRESS:
-            if action.option_strings or action.nargs in [
-                argparse.OPTIONAL,
-                argparse.ZERO_OR_MORE,
-            ]:
-                if (not isinstance(action.default, bool) and isinstance(action.default, int)) or (
-                    isinstance(action.default, str) and action.default
-                ):
-                    help_text += " (default: %(default)s)"
+        if (
+            "%(default)" not in help_text
+            and action.default is not argparse.SUPPRESS
+            and (
+                action.option_strings
+                or action.nargs
+                in [
+                    argparse.OPTIONAL,
+                    argparse.ZERO_OR_MORE,
+                ]
+            )
+            and (
+                (not isinstance(action.default, bool) and isinstance(action.default, int))
+                or (isinstance(action.default, str) and action.default)
+            )
+        ):
+            help_text += " (default: %(default)s)"
 
         if isinstance(action, ArgumentDeprecationNotice):
             help_text = (

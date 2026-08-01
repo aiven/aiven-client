@@ -76,6 +76,7 @@ extend-select = [
 ]
 ignore = [
   "PLR0913",  # It is too difficult to avoid "Too many arguments" error in the codebase
+  "PLR0917",  # Legacy client APIs pass many positional arguments
   "UP032",  # Downstream has different rules for f-strings
 ]
 
