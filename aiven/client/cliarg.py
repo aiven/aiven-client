@@ -76,11 +76,7 @@ def user_config_json() -> Callable[[Callable[[CommandLineTool], T]], Callable[[C
             # empty config ("{}"), which must parse to an empty dict.
             if self.args.user_config_json is not None:
                 try:
-                    setattr(
-                        self.args,
-                        "user_config_json",
-                        get_json_config(self.args.user_config_json),
-                    )
+                    self.args.user_config_json = get_json_config(self.args.user_config_json)
                 except jsonlib.decoder.JSONDecodeError as err:
                     raise UserError(f"Invalid user_config_json: {err!s}") from err
             return fun(self)
