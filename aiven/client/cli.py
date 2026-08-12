@@ -869,10 +869,18 @@ class AivenCLI(argx.CommandLineTool):
     @arg("--format", help="Format string for output")
     @arg.json
     @arg("--principal", dest="principals", action="append", metavar="PRINCIPAL", help=_aws_privatelink_principal_help)
+    @arg(
+        "--supported-regions",
+        help="Comma-separated list of additional regions to allow connections from",
+        default=None,
+    )
     def service__privatelink__aws__create(self) -> None:
         """Create PrivateLink for a service"""
         resp = self.client.create_service_privatelink_aws(
-            project=self.get_project(), service=self.args.service_name, principals=self.args.principals
+            project=self.get_project(),
+            service=self.args.service_name,
+            principals=self.args.principals,
+            supported_regions=self.args.supported_regions.split(",") if self.args.supported_regions is not None else None,
         )
         self.print_response([resp], format=self.args.format, json=self.args.json)
 
@@ -881,10 +889,18 @@ class AivenCLI(argx.CommandLineTool):
     @arg("--format", help="Format string for output")
     @arg.json
     @arg("--principal", dest="principals", action="append", metavar="PRINCIPAL", help=_aws_privatelink_principal_help)
+    @arg(
+        "--supported-regions",
+        help="Comma-separated list of additional regions to allow connections from",
+        default=None,
+    )
     def service__privatelink__aws__update(self) -> None:
         """Update PrivateLink for a service"""
         resp = self.client.update_service_privatelink_aws(
-            project=self.get_project(), service=self.args.service_name, principals=self.args.principals
+            project=self.get_project(),
+            service=self.args.service_name,
+            principals=self.args.principals,
+            supported_regions=self.args.supported_regions.split(",") if self.args.supported_regions is not None else None,
         )
         self.print_response([resp], format=self.args.format, json=self.args.json)
 
