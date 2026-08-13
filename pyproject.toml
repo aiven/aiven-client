@@ -56,7 +56,11 @@ source = "vcs"
 [tool.hatch.build.hooks.vcs]
 version-file = "aiven/client/version.py"
 
+[tool.hatch.build.targets.sdist]
+core-metadata-version = "2.4"
+
 [tool.hatch.build.targets.wheel]
+core-metadata-version = "2.4"
 packages = ["aiven"]
 
 [tool.ruff]
