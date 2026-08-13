@@ -21,7 +21,7 @@ from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from http import HTTPStatus
-from typing import IO, Any, Final, Protocol, TypeVar
+from typing import IO, Any, ClassVar, Final, Protocol, TypeVar
 from urllib.parse import urlparse
 
 import errno
@@ -350,7 +350,7 @@ class AivenCLI(argx.CommandLineTool):
     def help(self) -> None:
         """List commands"""
         output = []
-        patterns = [re.compile(p, re.I) for p in self.args.pattern]
+        patterns = [re.compile(p, re.IGNORECASE) for p in self.args.pattern]
         for plugin in self._extensions:
             for prop_name in dir(plugin):
                 if prop_name.startswith("_"):
@@ -585,7 +585,7 @@ class AivenCLI(argx.CommandLineTool):
                 )
             except requests.RequestException as ex:
                 if not self.args.follow:
-                    raise ex
+                    raise
                 consecutive_errors += 1
                 if consecutive_errors > consecutive_errors_limit:
                     raise argx.UserError("Fetching logs failed repeatedly, aborting.")
@@ -743,7 +743,7 @@ class AivenCLI(argx.CommandLineTool):
             entry["service_type"] = service_type
             output.append(entry)
 
-        dformat = Decimal("0") if self.args.monthly else Decimal("0.000")
+        dformat = Decimal(0) if self.args.monthly else Decimal("0.000")
         for info in sorted(output, key=lambda s: s["description"]):
             print("{} Plans:\n".format(info["description"]))
             for plan in info["service_plans"]:
@@ -822,7 +822,7 @@ class AivenCLI(argx.CommandLineTool):
                                 )
                             )
 
-    SERVICE_LAYOUT = [
+    SERVICE_LAYOUT: ClassVar[list[list[str]]] = [
         [
             "service_name",
             "service_type",
@@ -834,9 +834,9 @@ class AivenCLI(argx.CommandLineTool):
             "notifications",
         ]
     ]
-    EXT_SERVICE_LAYOUT = ["service_uri", "disk_space_mb", "user_config.*", "databases", "users"]
+    EXT_SERVICE_LAYOUT: ClassVar[list[str]] = ["service_uri", "disk_space_mb", "user_config.*", "databases", "users"]
 
-    TOPIC_LIST_LAYOUT = [
+    TOPIC_LIST_LAYOUT: ClassVar[list[list[str]]] = [
         [
             "topic_name",
             "partitions",
@@ -2706,7 +2706,7 @@ ssl.truststore.type=JKS
         """Create a Kafka topic"""
 
         tags = list(map(parse_tag_str, self.args.topic_option_tag or []))
-        tag_keys = list(map(lambda d: d.get("key"), tags))
+        tag_keys = [tag.get("key") for tag in tags]
         repeated_keys = [key for key, count in Counter(tag_keys).items() if count > 1 and key is not None]
         if len(repeated_keys) > 0:
             raise argx.UserError(f"Duplicate tags detected: {', '.join(repeated_keys)}")
@@ -2761,7 +2761,7 @@ ssl.truststore.type=JKS
 
         new_tags = list(map(parse_tag_str, self.args.topic_option_tag or []))
         untags = list(map(parse_untag_str, self.args.topic_option_untag or []))
-        keys: list = list(map(lambda d: d.get("key"), new_tags))
+        keys: list = [tag.get("key") for tag in new_tags]
         tag_keys = keys + untags
         repeated_keys = [key for key, count in Counter(tag_keys).items() if count > 1]
         if len(repeated_keys) > 0:
@@ -4851,8 +4851,10 @@ ssl.truststore.type=JKS
         if not self.args.permissions and not self.args.force:
             self.print_boxed(
                 [
-                    f"You are going to remove all permissions for principal "
-                    f"{self.args.principal_id} (principal_type={self.args.principal_type}).",
+                    (
+                        f"You are going to remove all permissions for principal "
+                        f"{self.args.principal_id} (principal_type={self.args.principal_type})."
+                    ),
                 ]
             )
             if not self.confirm("Do you want to proceed (y/N)?"):
@@ -4880,9 +4882,8 @@ ssl.truststore.type=JKS
                 for add_perm in added:
                     print(f"+ {add_perm}")
 
-            if added or removed:
-                if not self.confirm("Do you want to proceed (y/N)?"):
-                    raise argx.UserError("Aborted")
+            if (added or removed) and not self.confirm("Do you want to proceed (y/N)?"):
+                raise argx.UserError("Aborted")
 
         self.client.update_permissions(
             organization_id=self.args.organization_id,
@@ -6236,17 +6237,42 @@ ssl.truststore.type=JKS
         "--google-privilege-bearing-service-account-id",
         help="The privilege-bearing service account that Aiven is authorized to impersonate to operate the cloud (Google)",
     )
+    @arg(
+        "--azure-subscription-id",
+        help=(
+            "The Azure subscription ID where the BYOC infrastructure is deployed (Azure). "
+            "Operator credentials come from the bootstrapped Aiven multi-tenant CCE application."
+        ),
+    )
+    @arg(
+        "--azure-tenant-id",
+        help=(
+            "The Entra ID tenant ID of the customer's directory where the Aiven CCE enterprise application "
+            "is installed (Azure). Use the tenant_id output from the BYOC Terraform template."
+        ),
+    )
     def byoc__provision(self) -> None:
         """Provision resources for a Bring Your Own Cloud cloud."""
-        if self.args.aws_iam_role_arn and self.args.google_privilege_bearing_service_account_id:
+        aws_args = [self.args.aws_iam_role_arn]
+        google_args = [self.args.google_privilege_bearing_service_account_id]
+        if (self.args.azure_subscription_id or self.args.azure_tenant_id) and not (
+            self.args.azure_subscription_id and self.args.azure_tenant_id
+        ):
+            raise argx.UserError("--azure-subscription-id and --azure-tenant-id must be provided together.")
+        azure_args = [self.args.azure_subscription_id, self.args.azure_tenant_id]
+        active_cloud_identity_groups = sum(any(args) for args in (aws_args, google_args, azure_args))
+        if active_cloud_identity_groups > 1:
             raise argx.UserError(
-                "--aws-iam-role-arn and --google-privilege-bearing-service-account-id are mutually exclusive."
+                "--aws-iam-role-arn, --google-privilege-bearing-service-account-id,"
+                " and --azure-subscription-id/--azure-tenant-id are mutually exclusive."
             )
         output = self.client.byoc_provision(
             organization_id=self.args.organization_id,
             byoc_id=self.args.byoc_id,
             aws_iam_role_arn=self.args.aws_iam_role_arn,
             google_privilege_bearing_service_account_id=self.args.google_privilege_bearing_service_account_id,
+            azure_subscription_id=self.args.azure_subscription_id,
+            azure_tenant_id=self.args.azure_tenant_id,
         )
         self.print_response(output)
 
@@ -6274,7 +6300,12 @@ ssl.truststore.type=JKS
     @arg("--byoc-id", required=True, help="Identifier of the custom cloud environment that defines the BYOC cloud")
     def byoc__template__terraform__get_vars(self) -> None:
         """Download Terraform veriables for provisioning BYOC cloud."""
-        print(self.client.byoc_terraform_get_vars(organization_id=self.args.organization_id, byoc_id=self.args.byoc_id))
+        print(
+            self.client.byoc_terraform_get_vars(
+                organization_id=self.args.organization_id,
+                byoc_id=self.args.byoc_id,
+            )
+        )
 
     @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
     @arg("--byoc-id", required=True, help="Identifier of the custom cloud environment that defines the BYOC cloud")

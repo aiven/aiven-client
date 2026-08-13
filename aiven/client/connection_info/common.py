@@ -18,9 +18,9 @@ class ConnectionInfoError(UserError):
 
 
 class Store(Enum):
-    overwrite = object()
-    write = object()
-    skip = object()
+    overwrite = "overwrite"
+    write = "write"
+    skip = "skip"
 
     def handle(self, getter: Callable[[], str], path: str) -> None:
         if self is Store.overwrite:

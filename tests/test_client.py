@@ -150,8 +150,10 @@ def test_response_processing_error_raise() -> None:
     "response_text, status, expected_str",
     [
         (
-            '{"errors":[{"error_code":"kafka_topic_invalid_config","message":"bad config",'
-            '"status":400}],"message":"Replication factor for diskless topics cannot be different than 1"}',
+            (
+                '{"errors":[{"error_code":"kafka_topic_invalid_config","message":"bad config",'
+                '"status":400}],"message":"Replication factor for diskless topics cannot be different than 1"}'
+            ),
             400,
             "Replication factor for diskless topics cannot be different than 1 (status 400)",
         ),

@@ -6,5 +6,5 @@ from typing import Final
 MIB_IN_GIB: Final = 1024
 
 
-def convert_mib_to_gib(value: float | int) -> float:
+def convert_mib_to_gib(value: float) -> float:
     return float(value) / MIB_IN_GIB
