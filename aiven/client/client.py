@@ -1472,13 +1472,23 @@ class AivenClient(AivenClientBase):
     def _privatelink_path(self, project: str, service: str, cloud_provider: str, *rest: str) -> str:
         return self.build_path("project", project, "service", service, "privatelink", cloud_provider, *rest)
 
-    def create_service_privatelink_aws(self, project: str, service: str, principals: Sequence[str]) -> Mapping:
+    def create_service_privatelink_aws(
+        self, project: str, service: str, principals: Sequence[str], supported_regions: Sequence[str] | None = None
+    ) -> Mapping:
         path = self._privatelink_path(project, service, "aws")
-        return self.verify(self.post, path, body={"principals": principals})
+        body = {"principals": principals}
+        if supported_regions is not None:
+            body["supported_regions"] = supported_regions
+        return self.verify(self.post, path, body=body)
 
-    def update_service_privatelink_aws(self, project: str, service: str, principals: Sequence[str]) -> Mapping:
+    def update_service_privatelink_aws(
+        self, project: str, service: str, principals: Sequence[str], supported_regions: Sequence[str] | None = None
+    ) -> Mapping:
         path = self._privatelink_path(project, service, "aws")
-        return self.verify(self.put, path, body={"principals": principals})
+        body = {"principals": principals}
+        if supported_regions is not None:
+            body["supported_regions"] = supported_regions
+        return self.verify(self.put, path, body=body)
 
     def delete_service_privatelink_aws(self, project: str, service: str) -> Mapping:
         path = self._privatelink_path(project, service, "aws")
