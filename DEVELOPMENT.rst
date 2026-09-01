@@ -38,3 +38,6 @@ Let's say the version to be released is ``X.Y.Z``.
 4. Wait for the GitHub actions to finish
 5. Check that GitHub Publish to PyPI Action succeeded. Confirm the package looks correct at https://pypi.python.org/pypi/aiven-client
 6. Add Release in GitHub UI at https://github.com/aiven/aiven-client/releases
+7. Bump the Homebrew formula in https://github.com/Homebrew/homebrew-core (``Formula/a/aiven-client.rb``). The formula pulls the sdist from PyPI, so wait until step 5 is done. Open a PR that updates the ``url`` and ``sha256`` fields to the new PyPI sdist (see the "Download files" section on https://pypi.python.org/pypi/aiven-client/X.Y.Z). Homebrew CI will build bottles and push a follow-up commit to the PR. After the PR is merged, confirm the new version at https://formulae.brew.sh/formula/aiven-client
+
+   If you have Homebrew installed, you can use ``brew bump-formula-pr --strict aiven-client`` instead.
