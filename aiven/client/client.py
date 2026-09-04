@@ -3503,3 +3503,103 @@ class AivenClient(AivenClientBase):
             ),
             body={"comment": comment},
         )
+
+    # ---- Kafka Connect custom plugins ----------------------------------------
+
+    def kafka_connect_custom_plugin_file_create(
+        self,
+        *,
+        organization_id: str,
+        plugin_name: str,
+        plugin_version: str,
+        service_type: str = "kafka_connect",
+        content_type: str = "application/java-archive",
+        plugin_description: str | None = None,
+        file_description: str | None = None,
+    ) -> Mapping:
+        body: dict[str, Any] = {
+            "plugin_name": plugin_name,
+            "plugin_version": plugin_version,
+            "service_type": service_type,
+            "content_type": content_type,
+        }
+        if plugin_description is not None:
+            body["plugin_description"] = plugin_description
+        if file_description is not None:
+            body["file_description"] = file_description
+        return self.verify(
+            self.post,
+            self.build_path("organization", organization_id, "kafka-connect", "custom-plugin-files"),
+            body=body,
+        )
+
+    def kafka_connect_custom_plugin_file_update(
+        self,
+        *,
+        organization_id: str,
+        plugin_file_id: str,
+        file_description: str | None,
+    ) -> Mapping:
+        return self.verify(
+            self.put,
+            self.build_path("organization", organization_id, "kafka-connect", "custom-plugin-files", plugin_file_id),
+            body={"file_description": file_description},
+        )
+
+    def kafka_connect_custom_plugin_file_delete(self, *, organization_id: str, plugin_file_id: str) -> Mapping:
+        return self.verify(
+            self.delete,
+            self.build_path("organization", organization_id, "kafka-connect", "custom-plugin-files", plugin_file_id),
+        )
+
+    def kafka_connect_custom_plugin_file_get(self, *, organization_id: str, plugin_file_id: str) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path("organization", organization_id, "kafka-connect", "custom-plugin-files", plugin_file_id),
+        )
+
+    def kafka_connect_custom_plugin_file_list(self, *, organization_id: str, plugin_name: str) -> Sequence[dict[str, Any]]:
+        return self.verify(
+            self.get,
+            self.build_path("organization", organization_id, "kafka-connect", "custom-plugins", plugin_name, "files"),
+            result_key="plugin_files",
+        )
+
+    def kafka_connect_custom_plugin_update(
+        self,
+        *,
+        organization_id: str,
+        plugin_name: str,
+        plugin_description: str | None,
+    ) -> Mapping:
+        return self.verify(
+            self.put,
+            self.build_path("organization", organization_id, "kafka-connect", "custom-plugins", plugin_name),
+            body={"plugin_description": plugin_description},
+        )
+
+    def kafka_connect_custom_plugin_get(self, *, organization_id: str, plugin_name: str) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path("organization", organization_id, "kafka-connect", "custom-plugins", plugin_name),
+        )
+
+    def kafka_connect_custom_plugin_list(self, *, organization_id: str) -> Sequence[dict[str, Any]]:
+        return self.verify(
+            self.get,
+            self.build_path("organization", organization_id, "kafka-connect", "custom-plugins"),
+            result_key="plugins",
+        )
+
+    def kafka_connect_custom_plugin_class_get(self, *, organization_id: str, plugin_class_name: str) -> Mapping:
+        return self.verify(
+            self.get,
+            self.build_path("organization", organization_id, "kafka-connect", "custom-plugin-classes", plugin_class_name),
+        )
+
+    def kafka_connect_custom_plugin_class_list(self, *, organization_id: str) -> Sequence[dict[str, Any]]:
+        return self.verify(
+            self.get,
+            self.build_path("organization", organization_id, "kafka-connect", "custom-plugin-classes"),
+            result_key="plugin_classes",
+        )

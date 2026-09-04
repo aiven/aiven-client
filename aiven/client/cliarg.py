@@ -246,3 +246,9 @@ arg.tech_email = arg("--tech-email", action="append", help="Tech email address")
 arg.flink_application_id = arg("--application-id", required=True, help="Flink application id")
 arg.flink_application_version_id = arg("--application-version-id", required=True, help="Flink application version id")
 arg.flink_deployment_id = arg("--deployment-id", required=True, help="Flink deployment id")
+
+arg.kafka_connect_plugin_name = arg("--plugin-name", required=True, help="Kafka Connect custom plugin name")
+arg.kafka_connect_plugin_file_id = arg("--plugin-file-id", required=True, help="Kafka Connect custom plugin file ID")
+arg.kafka_connect_plugin_class_name = arg(
+    "--plugin-class-name", required=True, help="Fully-qualified Kafka Connect plugin class name"
+)
