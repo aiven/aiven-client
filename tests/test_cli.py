@@ -3467,3 +3467,388 @@ def test_inkless_offering_rates() -> None:
         cloud_provider="aws",
         cloud_name="aws-eu-north-1",
     )
+
+
+# ---- Kafka Connect custom plugins --------------------------------------------
+
+PLUGIN_FILE_ID = "543e420d-aa63-43e8-b8e8-294a78c600e7"
+PLUGIN_ID = "7f3e420d-aa63-43e8-b8e8-294a78c600e7"
+ORG_ID = "org4f9ed964ba9"
+
+CUSTOM_PLUGIN_FILE = {
+    "plugin_file_id": PLUGIN_FILE_ID,
+    "plugin_id": PLUGIN_ID,
+    "plugin_name": "my-connector",
+    "plugin_version": "2.7.14",
+    "file_status": "READY",
+    "file_description": None,
+    "file_sha256": "abc123",
+    "file_size": 1024,
+    "verify_error_code": None,
+    "verify_error_message": None,
+    "created_by": "user@example.com",
+    "updated_by": None,
+    "created_at": "2026-01-01T00:00:00Z",
+    "updated_at": "2026-01-01T00:00:00Z",
+}
+
+CUSTOM_PLUGIN = {
+    "plugin_id": PLUGIN_ID,
+    "plugin_name": "my-connector",
+    "service_type": "kafka_connect",
+    "plugin_description": "My connector",
+    "created_by": "user@example.com",
+    "updated_by": None,
+    "created_at": "2026-01-01T00:00:00Z",
+    "updated_at": "2026-01-01T00:00:00Z",
+}
+
+CUSTOM_PLUGIN_CLASS = {
+    "plugin_class": "io.example.MySourceConnector",
+    "plugin_class_type": "source",
+    "title": "My Source Connector",
+    "author": "Example Inc.",
+    "doc_url": None,
+    "description": None,
+    "created_by": "user@example.com",
+    "updated_by": None,
+    "created_at": "2026-01-01T00:00:00Z",
+    "updated_at": "2026-01-01T00:00:00Z",
+}
+
+
+def test_kafka_connect_custom_plugin_file_create(tmp_path: Any) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    jar_file = tmp_path / "my-connector-2.7.14.jar"
+    jar_file.write_bytes(b"fake-jar-content")
+
+    aiven_client.kafka_connect_custom_plugin_file_create.return_value = {
+        **CUSTOM_PLUGIN_FILE,
+        "upload_info": {
+            "url": "https://s3.example.com/presigned-upload-url",
+            "content_type": "application/java-archive",
+            "max_file_size_bytes": 104857600,
+            "upload_expiry_seconds": 1200,
+        },
+    }
+
+    with mock.patch("requests.put") as mock_put:
+        mock_put.return_value = mock.Mock(ok=True, status_code=200)
+        build_aiven_cli(aiven_client).run(
+            args=[
+                "organization",
+                "kafka-plugin",
+                "file",
+                "create",
+                "--organization-id",
+                ORG_ID,
+                "--plugin-name",
+                "my-connector",
+                "--plugin-version",
+                "2.7.14",
+                "--source",
+                str(jar_file),
+                "--plugin-description",
+                "My connector",
+                "--file-description",
+                "Initial release",
+            ]
+        )
+
+    aiven_client.kafka_connect_custom_plugin_file_create.assert_called_once_with(
+        organization_id=ORG_ID,
+        plugin_name="my-connector",
+        plugin_version="2.7.14",
+        content_type="application/java-archive",
+        plugin_description="My connector",
+        file_description="Initial release",
+    )
+    mock_put.assert_called_once()
+    _, put_kwargs = mock_put.call_args
+    assert put_kwargs["headers"]["Content-Type"] == "application/java-archive"
+
+
+def test_kafka_connect_custom_plugin_update() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.kafka_connect_custom_plugin_update.return_value = CUSTOM_PLUGIN
+
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "organization",
+            "kafka-plugin",
+            "update",
+            "--organization-id",
+            ORG_ID,
+            "--plugin-name",
+            "my-connector",
+            "--plugin-description",
+            "Updated description",
+        ]
+    )
+
+    aiven_client.kafka_connect_custom_plugin_update.assert_called_once_with(
+        organization_id=ORG_ID,
+        plugin_name="my-connector",
+        plugin_description="Updated description",
+    )
+
+
+def test_kafka_connect_custom_plugin_file_update() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.kafka_connect_custom_plugin_file_update.return_value = CUSTOM_PLUGIN_FILE
+
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "organization",
+            "kafka-plugin",
+            "file",
+            "update",
+            "--organization-id",
+            ORG_ID,
+            "--plugin-file-id",
+            PLUGIN_FILE_ID,
+            "--file-description",
+            "Fixed memory leak",
+        ]
+    )
+
+    aiven_client.kafka_connect_custom_plugin_file_update.assert_called_once_with(
+        organization_id=ORG_ID,
+        plugin_file_id=PLUGIN_FILE_ID,
+        file_description="Fixed memory leak",
+    )
+
+
+def test_kafka_connect_custom_plugin_file_delete() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.kafka_connect_custom_plugin_file_delete.return_value = {}
+
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "organization",
+            "kafka-plugin",
+            "file",
+            "delete",
+            "--organization-id",
+            ORG_ID,
+            "--plugin-file-id",
+            PLUGIN_FILE_ID,
+        ]
+    )
+
+    aiven_client.kafka_connect_custom_plugin_file_delete.assert_called_once_with(
+        organization_id=ORG_ID,
+        plugin_file_id=PLUGIN_FILE_ID,
+    )
+
+
+def test_kafka_connect_custom_plugin_file_delete_by_name_and_version() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.kafka_connect_custom_plugin_file_list.return_value = [CUSTOM_PLUGIN_FILE]
+    aiven_client.kafka_connect_custom_plugin_file_delete.return_value = {}
+
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "organization",
+            "kafka-plugin",
+            "file",
+            "delete",
+            "--organization-id",
+            ORG_ID,
+            "--plugin-name",
+            "my-connector",
+            "--plugin-version",
+            "2.7.14",
+        ]
+    )
+
+    aiven_client.kafka_connect_custom_plugin_file_list.assert_called_once_with(
+        organization_id=ORG_ID,
+        plugin_name="my-connector",
+    )
+    aiven_client.kafka_connect_custom_plugin_file_delete.assert_called_once_with(
+        organization_id=ORG_ID,
+        plugin_file_id=PLUGIN_FILE_ID,
+    )
+
+
+def test_kafka_connect_custom_plugin_file_delete_missing_args() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+
+    result = build_aiven_cli(aiven_client).run(
+        args=[
+            "organization",
+            "kafka-plugin",
+            "file",
+            "delete",
+            "--organization-id",
+            ORG_ID,
+            "--plugin-name",
+            "my-connector",
+            # missing --plugin-version
+        ]
+    )
+    assert result == 1
+
+
+def test_kafka_connect_custom_plugin_list(capsys: CaptureFixture[str]) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.kafka_connect_custom_plugin_list.return_value = [CUSTOM_PLUGIN]
+
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "organization",
+            "kafka-plugin",
+            "list",
+            "--organization-id",
+            ORG_ID,
+        ]
+    )
+
+    aiven_client.kafka_connect_custom_plugin_list.assert_called_once_with(organization_id=ORG_ID)
+    assert "my-connector" in capsys.readouterr().out
+
+
+def test_kafka_connect_custom_plugin_file_list(capsys: CaptureFixture[str]) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.kafka_connect_custom_plugin_file_list.return_value = [CUSTOM_PLUGIN_FILE]
+
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "organization",
+            "kafka-plugin",
+            "file",
+            "list",
+            "--organization-id",
+            ORG_ID,
+            "--plugin-name",
+            "my-connector",
+        ]
+    )
+
+    aiven_client.kafka_connect_custom_plugin_file_list.assert_called_once_with(
+        organization_id=ORG_ID,
+        plugin_name="my-connector",
+    )
+    assert PLUGIN_FILE_ID in capsys.readouterr().out
+
+
+def test_kafka_connect_custom_plugin_class_list(capsys: CaptureFixture[str]) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.kafka_connect_custom_plugin_class_list.return_value = [CUSTOM_PLUGIN_CLASS]
+
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "organization",
+            "kafka-plugin",
+            "class",
+            "list",
+            "--organization-id",
+            ORG_ID,
+        ]
+    )
+
+    aiven_client.kafka_connect_custom_plugin_class_list.assert_called_once_with(organization_id=ORG_ID)
+    assert "io.example.MySourceConnector" in capsys.readouterr().out
+
+
+def test_kafka_connect_custom_plugin_get(capsys: CaptureFixture[str]) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.kafka_connect_custom_plugin_get.return_value = CUSTOM_PLUGIN
+
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "organization",
+            "kafka-plugin",
+            "show",
+            "--organization-id",
+            ORG_ID,
+            "--plugin-name",
+            "my-connector",
+        ]
+    )
+
+    aiven_client.kafka_connect_custom_plugin_get.assert_called_once_with(
+        organization_id=ORG_ID,
+        plugin_name="my-connector",
+    )
+    assert "my-connector" in capsys.readouterr().out
+
+
+def test_kafka_connect_custom_plugin_file_get(capsys: CaptureFixture[str]) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.kafka_connect_custom_plugin_file_get.return_value = CUSTOM_PLUGIN_FILE
+
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "organization",
+            "kafka-plugin",
+            "file",
+            "show",
+            "--organization-id",
+            ORG_ID,
+            "--plugin-file-id",
+            PLUGIN_FILE_ID,
+        ]
+    )
+
+    aiven_client.kafka_connect_custom_plugin_file_get.assert_called_once_with(
+        organization_id=ORG_ID,
+        plugin_file_id=PLUGIN_FILE_ID,
+    )
+    assert PLUGIN_FILE_ID in capsys.readouterr().out
+
+
+def test_kafka_connect_custom_plugin_file_show_by_name_and_version(capsys: CaptureFixture[str]) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.kafka_connect_custom_plugin_file_list.return_value = [CUSTOM_PLUGIN_FILE]
+    aiven_client.kafka_connect_custom_plugin_file_get.return_value = CUSTOM_PLUGIN_FILE
+
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "organization",
+            "kafka-plugin",
+            "file",
+            "show",
+            "--organization-id",
+            ORG_ID,
+            "--plugin-name",
+            "my-connector",
+            "--plugin-version",
+            "2.7.14",
+        ]
+    )
+
+    aiven_client.kafka_connect_custom_plugin_file_list.assert_called_once_with(
+        organization_id=ORG_ID,
+        plugin_name="my-connector",
+    )
+    aiven_client.kafka_connect_custom_plugin_file_get.assert_called_once_with(
+        organization_id=ORG_ID,
+        plugin_file_id=PLUGIN_FILE_ID,
+    )
+    assert PLUGIN_FILE_ID in capsys.readouterr().out
+
+
+def test_kafka_connect_custom_plugin_class_get(capsys: CaptureFixture[str]) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.kafka_connect_custom_plugin_class_get.return_value = CUSTOM_PLUGIN_CLASS
+
+    build_aiven_cli(aiven_client).run(
+        args=[
+            "organization",
+            "kafka-plugin",
+            "class",
+            "show",
+            "--organization-id",
+            ORG_ID,
+            "--plugin-class-name",
+            "io.example.MySourceConnector",
+        ]
+    )
+
+    aiven_client.kafka_connect_custom_plugin_class_get.assert_called_once_with(
+        organization_id=ORG_ID,
+        plugin_class_name="io.example.MySourceConnector",
+    )
+    assert "io.example.MySourceConnector" in capsys.readouterr().out

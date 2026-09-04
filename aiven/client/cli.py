@@ -7143,6 +7143,217 @@ ssl.truststore.type=JKS
             project_name=project_name, service_name=self.args.service_name, comment=self.args.comment
         )
 
+    # ---- Kafka Connect custom plugins ----------------------------------------
+
+    @arg.json
+    @arg.organization_id
+    @arg.kafka_connect_plugin_name
+    @arg("--plugin-version", required=True, help="Plugin version (semver, e.g. 2.7.14)")
+    @arg("--source", required=True, help="Path to the JAR or ZIP file to upload")
+    @arg(
+        "--content-type",
+        default="application/java-archive",
+        choices=["application/java-archive", "application/zip"],
+        help="MIME type of the plugin file (default: application/java-archive)",
+    )
+    @arg("--plugin-description", help="Human-readable description of the plugin (all versions)")
+    @arg("--file-description", help="Human-readable change notes for this version")
+    def organization__kafka_plugin__file__create(self) -> None:
+        """Create and upload a Kafka plugin file"""
+        rsp = self.client.kafka_connect_custom_plugin_file_create(
+            organization_id=self.args.organization_id,
+            plugin_name=self.args.plugin_name,
+            plugin_version=self.args.plugin_version,
+            content_type=self.args.content_type,
+            plugin_description=self.args.plugin_description,
+            file_description=self.args.file_description,
+        )
+        upload_info = rsp.get("upload_info", {})
+        presigned_url = upload_info.get("url")
+        if not presigned_url:
+            raise argx.UserError("API did not return a presigned upload URL")
+
+        with open(self.args.source, "rb") as f:
+            put_response = requests.put(
+                presigned_url,
+                data=f,
+                headers={"Content-Type": self.args.content_type},
+                timeout=300,
+            )
+        if not put_response.ok:
+            raise argx.UserError(f"File upload failed: HTTP {put_response.status_code}: {put_response.text}")
+
+        self.print_response(rsp, json=self.args.json)
+
+    @arg.json
+    @arg.organization_id
+    @arg.kafka_connect_plugin_name
+    @arg("--plugin-description", required=True, help="New plugin description")
+    def organization__kafka_plugin__update(self) -> None:
+        """Update a Kafka Plugin description"""
+        self.print_response(
+            self.client.kafka_connect_custom_plugin_update(
+                organization_id=self.args.organization_id,
+                plugin_name=self.args.plugin_name,
+                plugin_description=self.args.plugin_description,
+            ),
+            json=self.args.json,
+        )
+
+    @arg.json
+    @arg.organization_id
+    @arg.kafka_connect_plugin_file_id
+    @arg("--file-description", required=True, help="New file description")
+    def organization__kafka_plugin__file__update(self) -> None:
+        """Update a Kafka Plugin file description"""
+        self.print_response(
+            self.client.kafka_connect_custom_plugin_file_update(
+                organization_id=self.args.organization_id,
+                plugin_file_id=self.args.plugin_file_id,
+                file_description=self.args.file_description,
+            ),
+            json=self.args.json,
+        )
+
+    @arg.organization_id
+    @arg("--plugin-file-id", help="Kafka Plugin file ID")
+    @arg("--plugin-name", help="Kafka Plugin name")
+    @arg("--plugin-version", help="Plugin version (e.g. 2.7.14)")
+    def organization__kafka_plugin__file__delete(self) -> None:
+        """Delete a Kafka Plugin file"""
+        plugin_file_id = self.args.plugin_file_id
+        if plugin_file_id is None:
+            if not self.args.plugin_name or not self.args.plugin_version:
+                raise argx.UserError("Either --plugin-file-id or both --plugin-name and --plugin-version must be provided")
+            files = self.client.kafka_connect_custom_plugin_file_list(
+                organization_id=self.args.organization_id,
+                plugin_name=self.args.plugin_name,
+            )
+            matches = [f for f in files if f["plugin_version"] == self.args.plugin_version]
+            if not matches:
+                raise argx.UserError(
+                    f"No plugin file found for plugin {self.args.plugin_name!r} version {self.args.plugin_version!r}"
+                )
+            plugin_file_id = matches[0]["plugin_file_id"]
+        self.client.kafka_connect_custom_plugin_file_delete(
+            organization_id=self.args.organization_id,
+            plugin_file_id=plugin_file_id,
+        )
+
+    @arg.json
+    @arg.organization_id
+    def organization__kafka_plugin__list(self) -> None:
+        """List Kafka Plugins"""
+        self.print_response(
+            self.client.kafka_connect_custom_plugin_list(organization_id=self.args.organization_id),
+            json=self.args.json,
+            table_layout=["plugin_name", "plugin_description", "created_at"],
+        )
+
+    @arg.json
+    @arg.organization_id
+    @arg.kafka_connect_plugin_name
+    def organization__kafka_plugin__file__list(self) -> None:
+        """List Kafka Plugin files"""
+        self.print_response(
+            self.client.kafka_connect_custom_plugin_file_list(
+                organization_id=self.args.organization_id,
+                plugin_name=self.args.plugin_name,
+            ),
+            json=self.args.json,
+            table_layout=[
+                "plugin_file_id",
+                "plugin_version",
+                "file_description",
+                "file_status",
+                "created_at",
+                "verify_error_code",
+                "verify_error_message",
+            ],
+        )
+
+    @arg.json
+    @arg.organization_id
+    def organization__kafka_plugin__class__list(self) -> None:
+        """List Kafka Plugin classes"""
+        self.print_response(
+            self.client.kafka_connect_custom_plugin_class_list(organization_id=self.args.organization_id),
+            json=self.args.json,
+            table_layout=["plugin_class", "plugin_class_type", "title", "created_at"],
+        )
+
+    @arg.json
+    @arg.organization_id
+    @arg.kafka_connect_plugin_name
+    def organization__kafka_plugin__show(self) -> None:
+        """Show Kafka Plugin details"""
+        self.print_response(
+            [
+                self.client.kafka_connect_custom_plugin_get(
+                    organization_id=self.args.organization_id,
+                    plugin_name=self.args.plugin_name,
+                )
+            ],
+            json=self.args.json,
+            table_layout=["plugin_name", "plugin_description", "created_at"],
+        )
+
+    @arg.json
+    @arg.organization_id
+    @arg("--plugin-file-id", help="Kafka Plugin file ID")
+    @arg("--plugin-name", help="Kafka Plugin name")
+    @arg("--plugin-version", help="Plugin version (e.g. 2.7.14)")
+    def organization__kafka_plugin__file__show(self) -> None:
+        """Show Kafka Plugin file details"""
+        plugin_file_id = self.args.plugin_file_id
+        if plugin_file_id is None:
+            if not self.args.plugin_name or not self.args.plugin_version:
+                raise argx.UserError("Either --plugin-file-id or both --plugin-name and --plugin-version must be provided")
+            files = self.client.kafka_connect_custom_plugin_file_list(
+                organization_id=self.args.organization_id,
+                plugin_name=self.args.plugin_name,
+            )
+            matches = [f for f in files if f["plugin_version"] == self.args.plugin_version]
+            if not matches:
+                raise argx.UserError(
+                    f"No plugin file found for plugin {self.args.plugin_name!r} version {self.args.plugin_version!r}"
+                )
+            plugin_file_id = matches[0]["plugin_file_id"]
+        self.print_response(
+            [
+                self.client.kafka_connect_custom_plugin_file_get(
+                    organization_id=self.args.organization_id,
+                    plugin_file_id=plugin_file_id,
+                )
+            ],
+            json=self.args.json,
+            table_layout=[
+                "plugin_file_id",
+                "plugin_version",
+                "file_description",
+                "file_status",
+                "created_at",
+                "verify_error_code",
+                "verify_error_message",
+            ],
+        )
+
+    @arg.json
+    @arg.organization_id
+    @arg.kafka_connect_plugin_class_name
+    def organization__kafka_plugin__class__show(self) -> None:
+        """Show Kafka Plugin class details"""
+        self.print_response(
+            [
+                self.client.kafka_connect_custom_plugin_class_get(
+                    organization_id=self.args.organization_id,
+                    plugin_class_name=self.args.plugin_class_name,
+                )
+            ],
+            json=self.args.json,
+            table_layout=["plugin_class", "plugin_class_type", "title", "created_at", "description", "author", "doc_url"],
+        )
+
 
 if __name__ == "__main__":
     AivenCLI().main()
