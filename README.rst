@@ -503,4 +503,3 @@ Keep Reading
 We maintain some other resources that you may also find useful:
 
 * `Command Line Magic with avn <https://aiven.io/blog/command-line-magic-with-the-aiven-cli>`__
-* `Managing Billing Groups via CLI <https://help.aiven.io/en/articles/4720981-using-billing-groups-via-cli>`__
