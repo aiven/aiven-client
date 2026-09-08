@@ -5658,7 +5658,7 @@ ssl.truststore.type=JKS
     @arg.project
     @arg.service_name
     @arg("--file_path", help="A path to the file", required=True)
-    @arg("--file_type", choices=["synonyms", "stopwords", "wordnet"], required=True)
+    @arg("--file_type", choices=["synonyms", "stopwords", "wordnet", "hyphenation_patterns"], required=True)
     @arg("--file_name", help="A name for the file", required=True)
     def service__custom_file__upload(self) -> None:
         """Upload custom file for the specified service"""
