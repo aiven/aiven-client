@@ -4424,64 +4424,6 @@ ssl.truststore.type=JKS
         with open(self.args.target_filepath, "w", encoding="utf-8") as fp:
             fp.write(result["certificate"])
 
-    @arg.project
-    @arg.email
-    @arg(
-        "--role",
-        help="Project role for new invited user ('admin', 'operator', 'developer')",
-    )
-    def project__user_invite(self) -> None:
-        """Invite a new user to the project"""
-        project_name = self.get_project()
-        try:
-            self.client.invite_project_user(
-                project=project_name,
-                user_email=self.args.email,
-                member_type=self.args.role,
-            )
-        except client.Error as ex:
-            print(ex.response.text)
-            raise argx.UserError("Project '{}' invite for {} failed".format(project_name, self.args.email))
-        self.log.info("Invited %r into project %r", self.args.email, project_name)
-
-    @arg.project
-    @arg.email
-    def project__user_remove(self) -> None:
-        """Remove a user from the project"""
-        project_name = self.get_project()
-        try:
-            self.client.remove_project_user(project=project_name, user_email=self.args.email)
-        except client.Error as ex:
-            print(ex.response.text)
-            raise argx.UserError("Project '{}' removal of user {} failed".format(project_name, self.args.email))
-        self.log.info("Removed %r from project %r", self.args.email, project_name)
-
-    @arg.json
-    @arg.project
-    def project__user_list(self) -> None:
-        """Project user list"""
-        project_name = self.get_project()
-        try:
-            user_list = self.client.list_project_users(project=project_name)
-            layout = [["user_email", "member_type", "create_time"]]
-            self.print_response(user_list, json=self.args.json, table_layout=layout)
-        except client.Error as ex:
-            print(ex.response.text)
-            raise argx.UserError("Project user listing for '{}' failed".format(project_name))
-
-    @arg.json
-    @arg.project
-    def project__invite_list(self) -> None:
-        """Project user list"""
-        project_name = self.get_project()
-        try:
-            user_list = self.client.list_invited_project_users(project=project_name)
-            layout = [["invited_user_email", "inviting_user_email", "member_type", "invite_time"]]
-            self.print_response(user_list, json=self.args.json, table_layout=layout)
-        except client.Error as ex:
-            print(ex.response.text)
-            raise argx.UserError("Project user listing for '{}' failed".format(project_name))
-
     def _print_tags(self, tags: Mapping[str, Any]) -> None:
         layout = [["key", "value"]]
         self.print_response(

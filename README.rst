@@ -182,18 +182,6 @@ Delete an empty project::
 
   $ avn project delete myproject
 
-List authorized users in a project::
-
-  $ avn project user-list
-
-Invite an existing Aiven user to a project::
-
-  $ avn project user-invite somebody@example.com
-
-Remove a user from the project::
-
-  $ avn project user-remove somebody@example.com
-
 View project management event log::
 
   $ avn events
