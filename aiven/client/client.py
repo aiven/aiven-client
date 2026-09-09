@@ -1786,23 +1786,6 @@ class AivenClient(AivenClientBase):
     def get_project_ca(self, project: str) -> Mapping:
         return self.verify(self.get, self.build_path("project", project, "kms", "ca"))
 
-    def invite_project_user(self, project: str, user_email: str, member_type: str | None = None) -> Mapping:
-        body = {
-            "user_email": user_email,
-        }
-        if member_type is not None:
-            body["member_type"] = member_type
-        return self.verify(self.post, self.build_path("project", project, "invite"), body=body)
-
-    def remove_project_user(self, project: str, user_email: str) -> Mapping:
-        return self.verify(self.delete, self.build_path("project", project, "user", user_email))
-
-    def list_project_users(self, project: str) -> Sequence[dict[str, Any]]:
-        return self.verify(self.get, self.build_path("project", project, "users"), result_key="users")
-
-    def list_invited_project_users(self, project: str) -> Sequence[dict[str, Any]]:
-        return self.verify(self.get, self.build_path("project", project, "users"), result_key="invitations")
-
     def create_user(self, email: str, password: str | None, real_name: str, *, tenant: str | None = None) -> Mapping:
         request = {
             "email": email,
