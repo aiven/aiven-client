@@ -1956,13 +1956,6 @@ class AivenClient(AivenClientBase):
             result_key="events",
         )
 
-    def list_project_credits(self, project: str) -> Sequence[dict[str, Any]]:
-        return self.verify(
-            self.get,
-            self.build_path("project", project, "credits"),
-            result_key="credits",
-        )
-
     def start_service_maintenance(self, project: str, service: str) -> Mapping:
         return self.verify(
             self.put,

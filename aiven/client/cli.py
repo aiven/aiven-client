@@ -4894,15 +4894,6 @@ ssl.truststore.type=JKS
 
     @arg.json
     @arg.project
-    def credits__list(self) -> None:
-        """List claimed credits"""
-        project_name = self.get_project()
-        project_credits = self.client.list_project_credits(project=project_name)
-        layout = [["code", "remaining_value"]]
-        self.print_response(project_credits, json=self.args.json, table_layout=layout)
-
-    @arg.json
-    @arg.project
     @arg("--service", help="Related service name")
     @arg(
         "--severity",
