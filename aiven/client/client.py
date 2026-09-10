@@ -2897,17 +2897,14 @@ class AivenClient(AivenClientBase):
         *,
         organization_id: str,
         organization_vpc_id: str,
-        peering_connection_id: str,
         add: Sequence[Mapping[str, str]] | None = None,
         delete: Sequence[str] | None = None,
     ) -> Mapping[Any, Any]:
         path = self.build_path(
             "organization",
             organization_id,
-            "vpcs",
+            "vpc",
             organization_vpc_id,
-            "peering-connections",
-            peering_connection_id,
             "user-peer-network-cidrs",
         )
         body: dict[str, Any] = {}

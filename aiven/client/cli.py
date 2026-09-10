@@ -5754,29 +5754,35 @@ ssl.truststore.type=JKS
 
     @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
     @arg("--organization-vpc-id", required=True)
-    @arg("--peering-connection-id", required=True)
+    @arg("--peer-cloud-account", required=True, help=_peer_cloud_account_help)
+    @arg("--peer-resource-group", help=_peer_resource_group_help)
+    @arg("--peer-vpc", required=True, help=_peer_vpc_help)
     @arg("cidrs", nargs="+", metavar="CIDR")
     @arg.json
     def organization__vpc__peering_connection__user_peer_network_cidrs__add(self) -> None:
-        """Add user peer network CIDRs for an organization VPC peering connection."""
+        """Add user peer network CIDRs for an organization VPC."""
+        add_base = {
+            "peer_cloud_account": self.args.peer_cloud_account,
+            "peer_vpc": self.args.peer_vpc,
+        }
+        if self.args.peer_resource_group is not None:
+            add_base["peer_resource_group"] = self.args.peer_resource_group
+        add = [dict(add_base, cidr=cidr) for cidr in self.args.cidrs]
         self.client.organization_vpc_user_peer_network_cidrs_update(
             organization_id=self.args.organization_id,
             organization_vpc_id=self.args.organization_vpc_id,
-            peering_connection_id=self.args.peering_connection_id,
-            add=[{"cidr": cidr} for cidr in self.args.cidrs],
+            add=add,
         )
 
     @arg("--organization-id", required=True, help="Identifier of the organization of the custom cloud environment")
     @arg("--organization-vpc-id", required=True)
-    @arg("--peering-connection-id", required=True)
     @arg("cidrs", nargs="+", metavar="CIDR")
     @arg.json
     def organization__vpc__peering_connection__user_peer_network_cidrs__delete(self) -> None:
-        """Delete user peer network CIDRs from an organization VPC peering connection."""
+        """Delete user peer network CIDRs from an organization VPC."""
         self.client.organization_vpc_user_peer_network_cidrs_update(
             organization_id=self.args.organization_id,
             organization_vpc_id=self.args.organization_vpc_id,
-            peering_connection_id=self.args.peering_connection_id,
             delete=self.args.cidrs,
         )
 

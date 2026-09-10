@@ -2867,16 +2867,23 @@ def test_organization_vpc_peering_connection_user_peer_network_cidrs_add() -> No
         "org4f9ed964ba9",
         "--organization-vpc-id",
         "58e00a73-61c7-470d-b140-ace64c21a417",
-        "--peering-connection-id",
-        "peering-connection-id",
+        "--peer-cloud-account",
+        "123456789012",
+        "--peer-vpc",
+        "vpc-2f09a348",
         "11.0.0.0/24",
     ]
     build_aiven_cli(aiven_client).run(args=args)
     aiven_client.organization_vpc_user_peer_network_cidrs_update.assert_called_once_with(
         organization_id="org4f9ed964ba9",
         organization_vpc_id="58e00a73-61c7-470d-b140-ace64c21a417",
-        peering_connection_id="peering-connection-id",
-        add=[{"cidr": "11.0.0.0/24"}],
+        add=[
+            {
+                "peer_cloud_account": "123456789012",
+                "peer_vpc": "vpc-2f09a348",
+                "cidr": "11.0.0.0/24",
+            }
+        ],
     )
 
 
@@ -2893,15 +2900,12 @@ def test_organization_vpc_peering_connection_user_peer_network_cidrs_delete() ->
         "org4f9ed964ba9",
         "--organization-vpc-id",
         "58e00a73-61c7-470d-b140-ace64c21a417",
-        "--peering-connection-id",
-        "peering-connection-id",
         "11.0.0.0/24",
     ]
     build_aiven_cli(aiven_client).run(args=args)
     aiven_client.organization_vpc_user_peer_network_cidrs_update.assert_called_once_with(
         organization_id="org4f9ed964ba9",
         organization_vpc_id="58e00a73-61c7-470d-b140-ace64c21a417",
-        peering_connection_id="peering-connection-id",
         delete=["11.0.0.0/24"],
     )
 
