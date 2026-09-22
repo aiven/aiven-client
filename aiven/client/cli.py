@@ -1969,6 +1969,7 @@ ssl.truststore.type=JKS
                 missing_user_items.append("certificate")
             else:
                 with open(os.path.join(self.args.target_directory, "service.cert"), "w", encoding="utf-8") as fp:
+                    os.chmod(fp.name, 0o600)
                     fp.write(cert)
                 downloaded_items.append("certificate")
 
@@ -1977,6 +1978,7 @@ ssl.truststore.type=JKS
                 missing_user_items.append("key")
             else:
                 with open(os.path.join(self.args.target_directory, "service.key"), "w", encoding="utf-8") as fp:
+                    os.chmod(fp.name, 0o600)
                     fp.write(key)
                 downloaded_items.append("key")
 
