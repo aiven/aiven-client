@@ -8,6 +8,8 @@ from _pytest.logging import LogCaptureFixture
 from aiven.client.argx import CommandLineTool
 from aiven.client.cliarg import arg
 
+import pytest
+
 
 def test_user_config_json_error_json(caplog: LogCaptureFixture) -> None:
     """Test that @arg.user_config_json causes
@@ -32,6 +34,29 @@ def test_user_config_json_error_json(caplog: LogCaptureFixture) -> None:
         or "Invalid user_config_json: Unexpected 'b': line 1 column 1 (char 0)" in caplog.text
     )
     assert ret == 1
+
+
+@pytest.mark.parametrize(
+    ("value", "message"),
+    [
+        ("null", "Invalid user_config_json: expected a JSON object"),
+        ("[]", "Invalid user_config_json: expected a JSON object"),
+        ("@/nonexistent/user-config.json", "Cannot read user_config_json file"),
+    ],
+)
+def test_user_config_json_rejects_non_objects_and_unreadable_files(
+    caplog: LogCaptureFixture, value: str, message: str
+) -> None:
+    class T(CommandLineTool):
+        """Test class"""
+
+        @arg.user_config_json()
+        @arg()
+        def t(self) -> None:
+            """t"""
+
+    assert T("avn").run(args=["t", "--user-config-json", value]) == 1
+    assert message in caplog.text
 
 
 def test_user_config_json_error_conflict() -> None:
