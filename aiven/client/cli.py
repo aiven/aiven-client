@@ -3535,6 +3535,25 @@ ssl.truststore.type=JKS
         self.print_response(response["repositories"], json=False, table_layout=layout)
         self._log_next_cursor(response)
 
+    @arg.organization_id
+    @arg.vcs_integration_id
+    @arg.remote_repository_id
+    @arg("--cursor", help="Pagination cursor from a previous page")
+    @arg.json
+    def service__application__branch__list(self) -> None:
+        """List branches and their head commits of a repository available to Aiven Runtime"""
+        response = self.client.list_application_vcs_branches(
+            organization_id=self.args.organization_id,
+            vcs_integration_id=self.args.vcs_integration_id,
+            remote_repository_id=self.args.remote_repository_id,
+            cursor=self.args.cursor,
+        )
+        if self.args.json:
+            self.print_response(response, json=True)
+            return
+        self.print_response(response["branches"], json=False, table_layout=["name", "commit_sha"])
+        self._log_next_cursor(response)
+
     @arg.project
     @arg.force
     @arg("service_name", help="Service name", nargs="+")

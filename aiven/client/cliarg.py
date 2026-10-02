@@ -251,3 +251,6 @@ arg.kafka_connect_plugin_class_name = arg(
 arg.vcs_integration_id = arg(
     "--vcs-integration-id", required=True, help="VCS integration ID (see 'service application vcs-integration list')"
 )
+arg.remote_repository_id = arg(
+    "--remote-repository-id", required=True, help="Repository ID (see 'service application repository list')"
+)
