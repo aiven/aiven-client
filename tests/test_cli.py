@@ -9,9 +9,9 @@ from aiven.client.argx import UserError
 from aiven.client.cli import EOL_ADVANCE_WARNING_TIME, AivenCLI, ClientFactory, convert_str_to_value
 from aiven.client.common import UNDEFINED
 from argparse import Namespace
-from collections.abc import Iterator, Mapping
-from contextlib import contextmanager
+from collections.abc import Mapping
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from pytest import CaptureFixture, LogCaptureFixture
 from requests import Session
 from typing import Any, cast
@@ -540,7 +540,7 @@ def test_service_create_from_pitr() -> None:
 
 
 def test_help() -> None:
-    AivenCLI().run(args=["help"])
+    build_aiven_cli(mock.Mock(spec_set=AivenClient)).run(args=["help"])
 
 
 def test_project_generate_sbom(caplog: LogCaptureFixture) -> None:
@@ -719,14 +719,12 @@ def test_convert_str_to_value_fails(user_config_args: str, config_type: str, err
     assert str(excinfo.value).startswith(error_message)
 
 
-def patched_get_auth_token() -> str:
-    return "token"
-
-
-def build_aiven_cli(client: AivenClient) -> AivenCLI:
-    cli = AivenCLI(client_factory=mock.Mock(spec_set=ClientFactory, return_value=client))
-    cli._get_auth_token = patched_get_auth_token  # type: ignore
-    return cli
+def build_aiven_cli(client: AivenClient, config_dir: Path | None = None) -> AivenCLI:
+    # The CLI gets this environment instead of the real one, so tests never touch the config, the credentials or the
+    # AIVEN_* variables of whoever runs them. Without config_dir the config directory does not exist, so the config
+    # starts empty; tests that save config pass a directory of their own.
+    env = {"AIVEN_CONFIG_DIR": str(config_dir or "/nonexistent"), "AIVEN_AUTH_TOKEN": "token"}
+    return AivenCLI(client_factory=mock.Mock(spec_set=ClientFactory, return_value=client), env=env)
 
 
 def test_service_task_create_migration_check() -> None:
@@ -960,26 +958,34 @@ def test_update_service_connection_pool() -> None:
     )
 
 
-@contextmanager
-def mock_config(return_value: Any) -> Iterator[None]:
-    with mock.patch("aiven.client.argx.Config", side_effect=lambda _: return_value):
-        yield
-
-
-def test_get_project(caplog: LogCaptureFixture) -> None:
+def test_get_project(caplog: LogCaptureFixture, tmp_path: Path) -> None:
     # https://github.com/aiven/aiven-client/issues/246
     aiven_client = mock.Mock(spec_set=AivenClient)
     aiven_client.get_services.side_effect = lambda project: []
     args = ["service", "list"]
-    with mock_config({}):
-        assert build_aiven_cli(aiven_client).run(args=args) == 1
+    assert build_aiven_cli(aiven_client).run(args=args) == 1
     assert "specify project" in caplog.text.lower()
     caplog.clear()
     assert build_aiven_cli(aiven_client).run(args=args + ["--project", "project_0"]) is None
     assert not caplog.text
-    with mock_config({"default_project": "project_1"}):
-        assert build_aiven_cli(aiven_client).run(args=args) is None
+    (tmp_path / "aiven-client.json").write_text(json.dumps({"default_project": "project_1"}))
+    assert build_aiven_cli(aiven_client, config_dir=tmp_path).run(args=args) is None
     assert not caplog.text
+
+
+@pytest.mark.parametrize(
+    ("args", "expected_project"),
+    [([], "env-project"), (["--project", "flag-project"], "flag-project")],
+)
+def test_get_project_from_environment(tmp_path: Path, args: list[str], expected_project: str) -> None:
+    # AIVEN_PROJECT wins over the default project in the config file, and --project wins over both.
+    (tmp_path / "aiven-client.json").write_text(json.dumps({"default_project": "config-project"}))
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.get_services.return_value = []
+    env = {"AIVEN_CONFIG_DIR": str(tmp_path), "AIVEN_AUTH_TOKEN": "token", "AIVEN_PROJECT": "env-project"}
+    cli = AivenCLI(client_factory=mock.Mock(spec_set=ClientFactory, return_value=aiven_client), env=env)
+    assert cli.run(args=["service", "list", *args]) is None
+    aiven_client.get_services.assert_called_once_with(project=expected_project)
 
 
 def test_user_logout() -> None:
@@ -990,6 +996,13 @@ def test_user_logout() -> None:
     aiven_client = mock.Mock(spec_set=AivenClient)
     assert build_aiven_cli(aiven_client).run(["user", "logout", "--no-token-revoke"]) is None
     aiven_client.access_token_revoke.assert_not_called()
+
+
+def test_user_logout_removes_credentials_file(tmp_path: Path) -> None:
+    credentials_file = tmp_path / "aiven-credentials.json"
+    credentials_file.write_text(json.dumps({"auth_token": "token", "user_email": "user@example.com"}))
+    assert build_aiven_cli(mock.Mock(spec_set=AivenClient), config_dir=tmp_path).run(["user", "logout"]) is None
+    assert not credentials_file.exists()
 
 
 def test_oauth2_clients_list() -> None:
@@ -1554,7 +1567,7 @@ def test_project_create__parent_id_required() -> None:
     assert excinfo.value.code == EXIT_CODE_INVALID_USAGE
 
 
-def test_project_create__parent_id_requested_correctly() -> None:
+def test_project_create__parent_id_requested_correctly(tmp_path: Path) -> None:
     aiven_client = mock.Mock(spec_set=AivenClient)
     account_id = "a1231231"
     project_name = "new-project"
@@ -1568,7 +1581,7 @@ def test_project_create__parent_id_requested_correctly() -> None:
         "billing_extra_text": "",
     }
 
-    build_aiven_cli(aiven_client).run(
+    build_aiven_cli(aiven_client, config_dir=tmp_path).run(
         args=[
             "project",
             "create",
@@ -1588,7 +1601,7 @@ def test_project_create__parent_id_requested_correctly() -> None:
     )
 
 
-def test_project_create__parent_id_as_org_id_requested_correctly() -> None:
+def test_project_create__parent_id_as_org_id_requested_correctly(tmp_path: Path) -> None:
     aiven_client = mock.Mock(spec_set=AivenClient)
     organization_id = "org2131231"
     account_id = "a1231231"
@@ -1612,7 +1625,7 @@ def test_project_create__parent_id_as_org_id_requested_correctly() -> None:
         "billing_extra_text": "",
     }
 
-    build_aiven_cli(aiven_client).run(
+    build_aiven_cli(aiven_client, config_dir=tmp_path).run(
         args=[
             "project",
             "create",
@@ -2613,6 +2626,8 @@ def test_service__privatelink__aws__refresh() -> None:
         "privatelink",
         "aws",
         "refresh",
+        "--project",
+        "new-project-name",
         "kafka-2921638b",
     ]
     build_aiven_cli(aiven_client).run(args=args)
@@ -3372,7 +3387,7 @@ def test_service_cli(url: str, command: str) -> None:
     aiven_client.auth_token = "token"
     aiven_client.get_service.return_value = {"service_uri": url}
     with patch("os.execvpe") as mock_exec:
-        build_aiven_cli(aiven_client).run(args=["service", "cli", "myservice"])
+        build_aiven_cli(aiven_client).run(args=["service", "cli", "--project", "myproject", "myservice"])
         command_called, _, _ = mock_exec.call_args[0]
         assert command_called == command
 
