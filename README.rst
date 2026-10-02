@@ -391,6 +391,7 @@ Find the IDs to deploy from a connected GitHub account::
     $ avn service application vcs-integration list --organization-id <organization id>
     $ avn service application repository list --organization-id <organization id> --vcs-integration-id <vcs integration id> --search <name>
     $ avn service application branch list --organization-id <organization id> --vcs-integration-id <vcs integration id> --remote-repository-id <repository id>
+    $ avn service application container-manifest list --organization-id <organization id> --vcs-integration-id <vcs integration id> --remote-repository-id <repository id> --commit-sha <sha>
 
 Create an application from a JSON user configuration::
 
