@@ -569,6 +569,11 @@ class AivenCLI(argx.CommandLineTool):
     )
     @arg("-n", "--limit", type=int, default=100, help="Get up to N rows of logs")
     @arg("-f", "--follow", action="store_true", default=False)
+    @arg(
+        "--log-type",
+        choices=["application-build", "application-run"],
+        help="Aiven Runtime: build or run logs (default: application-run)",
+    )
     def service__logs(self) -> None:
         """View project logs"""
         previous_offset: str | None = None
@@ -582,6 +587,7 @@ class AivenCLI(argx.CommandLineTool):
                     offset=previous_offset,
                     service=self.args.service_name,
                     sort_order=self.args.sort_order,
+                    log_type=self.args.log_type,
                 )
             except requests.RequestException as ex:
                 if not self.args.follow:

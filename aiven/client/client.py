@@ -1934,13 +1934,21 @@ class AivenClient(AivenClientBase):
         )
 
     def get_service_logs(
-        self, project: str, service: str, sort_order: str | None = None, offset: str | None = None, limit: int = 100
+        self,
+        project: str,
+        service: str,
+        sort_order: str | None = None,
+        offset: str | None = None,
+        limit: int = 100,
+        log_type: str | None = None,
     ) -> Mapping:
         body: dict[str, Any] = {"limit": limit}
         if offset is not None:
             body["offset"] = str(offset)
         if sort_order is not None:
             body["sort_order"] = sort_order
+        if log_type is not None:
+            body["log_type"] = log_type
         return self.verify(
             self.post,
             self.build_path("project", project, "service", service, "logs"),

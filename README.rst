@@ -411,6 +411,10 @@ Update it from a JSON user configuration::
 
     $ avn service update myapp --user-config-json @app.json
 
+View build logs::
+
+    $ avn service logs myapp --log-type application-build
+
 Custom Files
 ------------
 
