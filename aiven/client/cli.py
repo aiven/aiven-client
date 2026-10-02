@@ -3617,6 +3617,22 @@ ssl.truststore.type=JKS
         self.print_response(response["branches"], json=False, table_layout=["name", "commit_sha"])
         self._log_next_cursor(response)
 
+    @arg.organization_id
+    @arg.vcs_integration_id
+    @arg.remote_repository_id
+    @arg.commit_sha
+    @arg.json
+    def service__application__container_manifest__list(self) -> None:
+        """List Containerfiles, Dockerfiles and Compose files in a repository at a commit"""
+        files = self.client.list_application_container_manifest_files(
+            organization_id=self.args.organization_id,
+            vcs_integration_id=self.args.vcs_integration_id,
+            remote_repository_id=self.args.remote_repository_id,
+            commit_sha=self.args.commit_sha,
+        )
+        layout = ["file_path", "container_manifest_type", "file_sha"]
+        self.print_response(files, json=self.args.json, table_layout=layout)
+
     @arg.project
     @arg.force
     @arg("service_name", help="Service name", nargs="+")

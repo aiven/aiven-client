@@ -2001,6 +2001,27 @@ class AivenClient(AivenClientBase):
             params=params,
         )
 
+    def list_application_container_manifest_files(
+        self,
+        organization_id: str,
+        vcs_integration_id: str,
+        remote_repository_id: str,
+        commit_sha: str,
+    ) -> Sequence[dict[str, Any]]:
+        return self.verify(
+            self.get,
+            self._application_vcs_integration_path(
+                organization_id,
+                vcs_integration_id,
+                "repositories",
+                remote_repository_id,
+                "refs",
+                commit_sha,
+                "container-manifest-files",
+            ),
+            result_key="container_manifest_files",
+        )
+
     def get_events(self, project: str, limit: int = 100) -> Sequence[dict[str, Any]]:
         params = {"limit": limit}
         return self.verify(

@@ -354,6 +354,8 @@ REPOSITORY = {
     "source_url": "https://github.com/example/app.git",
     "default_branch_name": "main",
 }
+MANIFEST_ARGS = ["--vcs-integration-id", "vcs123", "--remote-repository-id", "r1", "--commit-sha", SHA]
+MANIFEST_FILE = {"file_path": "Dockerfile", "file_sha": "f1", "container_manifest_type": "containerfile"}
 
 
 @pytest.mark.parametrize(
@@ -376,6 +378,12 @@ REPOSITORY = {
             ("GET", VCS_PATH + "/vcs123/repositories/r1/branches"),
             {"branches": [{"name": "main", "commit_sha": SHA}], "next": None, "previous": None},
             ["NAME", "COMMIT_SHA"],
+        ),
+        (
+            ["container-manifest", "list", *MANIFEST_ARGS],
+            ("GET", VCS_PATH + f"/vcs123/repositories/r1/refs/{SHA}/container-manifest-files"),
+            {"container_manifest_files": [MANIFEST_FILE]},
+            ["FILE_PATH", "CONTAINER_MANIFEST_TYPE", "FILE_SHA"],
         ),
     ],
 )
@@ -455,3 +463,12 @@ def test_service_application_branch_list_json_keeps_cursors(tmp_path: Path, caps
     assert cli.run("service", "application", "branch", "list", *args) is None
 
     assert json.loads(capsys.readouterr().out) == page
+
+
+def test_service_application_container_manifest_list_json(tmp_path: Path, capsys: CaptureFixture[str]) -> None:
+    path = VCS_PATH + f"/vcs123/repositories/r1/refs/{SHA}/container-manifest-files"
+    cli = build_cli(tmp_path, {("GET", path): ok({"container_manifest_files": [MANIFEST_FILE]})})
+
+    args = ["--organization-id", "org123", *MANIFEST_ARGS, "--json"]
+    assert cli.run("service", "application", "container-manifest", "list", *args) is None
+    assert json.loads(capsys.readouterr().out) == [MANIFEST_FILE]

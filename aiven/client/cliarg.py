@@ -254,3 +254,4 @@ arg.vcs_integration_id = arg(
 arg.remote_repository_id = arg(
     "--remote-repository-id", required=True, help="Repository ID (see 'service application repository list')"
 )
+arg.commit_sha = arg("--commit-sha", required=True, help="Commit SHA (see 'service application branch list')")
