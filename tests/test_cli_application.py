@@ -371,6 +371,12 @@ REPOSITORY = {
             {"repositories": [REPOSITORY], "next": None, "previous": None},
             ["REMOTE_REPOSITORY_ID", "FULL_NAME", "SOURCE_URL", "DEFAULT_BRANCH_NAME"],
         ),
+        (
+            ["branch", "list", "--vcs-integration-id", "vcs123", "--remote-repository-id", "r1"],
+            ("GET", VCS_PATH + "/vcs123/repositories/r1/branches"),
+            {"branches": [{"name": "main", "commit_sha": SHA}], "next": None, "previous": None},
+            ["NAME", "COMMIT_SHA"],
+        ),
     ],
 )
 def test_service_application_list_tables(
@@ -421,3 +427,31 @@ def test_service_application_repository_list_logs_next_cursor(
     assert cli.session.requests[0].params == {"cursor": "c1"}
     assert "example/app" in capsys.readouterr().out
     assert "--cursor c2" in caplog.text
+
+
+def test_service_application_branch_list_passes_cursor(
+    tmp_path: Path, capsys: CaptureFixture[str], caplog: LogCaptureFixture
+) -> None:
+    caplog.set_level(logging.INFO)
+    page = {"branches": [{"name": "main", "commit_sha": SHA}], "next": "c2", "previous": None}
+    cli = build_cli(tmp_path, {("GET", VCS_PATH + "/vcs123/repositories/r1/branches"): ok(page)})
+
+    args = [
+        *("--organization-id", "org123", "--vcs-integration-id", "vcs123", "--remote-repository-id", "r1"),
+        *("--cursor", "c1"),
+    ]
+    assert cli.run("service", "application", "branch", "list", *args) is None
+
+    assert cli.session.requests[0].params == {"cursor": "c1"}
+    assert SHA in capsys.readouterr().out
+    assert "--cursor c2" in caplog.text
+
+
+def test_service_application_branch_list_json_keeps_cursors(tmp_path: Path, capsys: CaptureFixture[str]) -> None:
+    page = {"branches": [{"name": "main", "commit_sha": SHA}], "next": "c2", "previous": "c0"}
+    cli = build_cli(tmp_path, {("GET", VCS_PATH + "/vcs123/repositories/r1/branches"): ok(page)})
+
+    args = ["--organization-id", "org123", "--vcs-integration-id", "vcs123", "--remote-repository-id", "r1", "--json"]
+    assert cli.run("service", "application", "branch", "list", *args) is None
+
+    assert json.loads(capsys.readouterr().out) == page

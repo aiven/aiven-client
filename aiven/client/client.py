@@ -1983,6 +1983,24 @@ class AivenClient(AivenClientBase):
             params=params,
         )
 
+    def list_application_vcs_branches(
+        self,
+        organization_id: str,
+        vcs_integration_id: str,
+        remote_repository_id: str,
+        cursor: str | None = None,
+    ) -> Mapping:
+        params: dict[str, Any] = {}
+        if cursor is not None:
+            params["cursor"] = cursor
+        return self.verify(
+            self.get,
+            self._application_vcs_integration_path(
+                organization_id, vcs_integration_id, "repositories", remote_repository_id, "branches"
+            ),
+            params=params,
+        )
+
     def get_events(self, project: str, limit: int = 100) -> Sequence[dict[str, Any]]:
         params = {"limit": limit}
         return self.verify(
