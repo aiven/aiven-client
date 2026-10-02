@@ -389,6 +389,7 @@ and terminate it with the ``avn service`` commands.
 Find the IDs to deploy from a connected GitHub account::
 
     $ avn service application vcs-integration list --organization-id <organization id>
+    $ avn service application repository list --organization-id <organization id> --vcs-integration-id <vcs integration id> --search <name>
 
 Create an application from a JSON user configuration::
 
