@@ -2022,6 +2022,31 @@ class AivenClient(AivenClientBase):
             result_key="container_manifest_files",
         )
 
+    def scan_application_container_manifest(
+        self,
+        organization_id: str,
+        vcs_integration_id: str,
+        remote_repository_id: str,
+        commit_sha: str,
+        branch: str,
+        file_path: str,
+        repository_url: str,
+    ) -> Mapping:
+        return self.verify(
+            self.post,
+            self._application_vcs_integration_path(
+                organization_id,
+                vcs_integration_id,
+                "repositories",
+                remote_repository_id,
+                "refs",
+                commit_sha,
+                "scan-container-manifest",
+            ),
+            body={"branch": branch, "file_path": file_path, "repository_url": repository_url},
+            result_key="file_scan",
+        )
+
     def get_events(self, project: str, limit: int = 100) -> Sequence[dict[str, Any]]:
         params = {"limit": limit}
         return self.verify(

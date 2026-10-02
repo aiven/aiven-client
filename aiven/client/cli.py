@@ -3633,6 +3633,36 @@ ssl.truststore.type=JKS
         layout = ["file_path", "container_manifest_type", "file_sha"]
         self.print_response(files, json=self.args.json, table_layout=layout)
 
+    @arg.organization_id
+    @arg.vcs_integration_id
+    @arg.remote_repository_id
+    @arg.commit_sha
+    @arg("--branch", required=True, help="Branch the suggested services deploy from")
+    @arg(
+        "--repository-url",
+        required=True,
+        help="Repository URL, e.g. the source_url from 'service application repository list'",
+    )
+    @arg("--file-path", required=True, help="Manifest path (see 'service application container-manifest list')")
+    @arg.json
+    def service__application__container_manifest__scan(self) -> None:
+        """Scan a container manifest and suggest Aiven Runtime application and service configurations"""
+        file_scan = self.client.scan_application_container_manifest(
+            organization_id=self.args.organization_id,
+            vcs_integration_id=self.args.vcs_integration_id,
+            remote_repository_id=self.args.remote_repository_id,
+            commit_sha=self.args.commit_sha,
+            branch=self.args.branch,
+            file_path=self.args.file_path,
+            repository_url=self.args.repository_url,
+        )
+        if self.args.json:
+            self.print_response(file_scan, json=True)
+            return
+        self.print_response(
+            file_scan.get("service_suggestions", []), json=False, table_layout=["service_name", "service_type"]
+        )
+
     @arg.project
     @arg.force
     @arg("service_name", help="Service name", nargs="+")
