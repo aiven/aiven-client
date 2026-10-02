@@ -210,6 +210,7 @@ def test_service_create_user_config_json(tmp_path: Path, from_file: bool) -> Non
             ["--user-config-json", "@/nonexistent/app.json"],
             "Cannot read",
         ),
+        (["update", APP], ["--remove-option", "application.source.containerfile_path"], "--remove-option"),
     ],
 )
 def test_service_user_config_json_conflicts(
@@ -231,3 +232,26 @@ def test_service_create_user_config_json_file_not_utf8(tmp_path: Path, caplog: L
     args = ["service", "create", APP, "--project", PROJECT, "-t", "application", "--plan", "startup-50-1024"]
     assert cli.run(*args, "--user-config-json", f"@{config_file}") == 1
     assert "Cannot read user_config_json file" in caplog.text
+
+
+@pytest.mark.parametrize("from_file", [False, True], ids=["inline", "file"])
+def test_service_update_user_config_json(tmp_path: Path, from_file: bool) -> None:
+    cli = build_cli(
+        tmp_path,
+        {
+            ("GET", SERVICE_PATH): service_response("RUNNING"),
+            ("PUT", SERVICE_PATH): ok({"service": app_service("RUNNING")}),
+        },
+    )
+
+    # null is how --user-config-json removes an option.
+    user_config = {"application": {"source": {"branch": "release", "containerfile_path": None}}}
+    user_config_json = json.dumps(user_config)
+    if from_file:
+        config_file = tmp_path / "app.json"
+        config_file.write_text(user_config_json, encoding="utf-8")
+        user_config_json = f"@{config_file}"
+    assert cli.run("service", "update", APP, "--project", PROJECT, "--user-config-json", user_config_json) is None
+
+    assert cli.session.paths("GET") == [SERVICE_PATH]
+    assert cli.session.requests[-1].body["user_config"] == user_config

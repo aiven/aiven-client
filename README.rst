@@ -407,6 +407,10 @@ example::
 For a private repository, also set ``vcs_integration_id`` and ``remote_repository_id``
 in ``source``.
 
+Update it from a JSON user configuration::
+
+    $ avn service update myapp --user-config-json @app.json
+
 Custom Files
 ------------
 
