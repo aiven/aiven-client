@@ -3511,6 +3511,30 @@ ssl.truststore.type=JKS
         layout = ["vcs_integration_id", "vcs_type", "vcs_account_name", "create_time"]
         self.print_response(integrations, json=self.args.json, table_layout=layout)
 
+    def _log_next_cursor(self, response: Mapping[str, Any]) -> None:
+        if response.get("next") and not self.args.json:
+            self.log.info("More results available: --cursor %s", response["next"])
+
+    @arg.organization_id
+    @arg.vcs_integration_id
+    @arg("--search", help="Search repositories by name")
+    @arg("--cursor", help="Pagination cursor from a previous page; excludes --search")
+    @arg.json
+    def service__application__repository__list(self) -> None:
+        """List repositories of a VCS integration available to Aiven Runtime"""
+        response = self.client.list_application_vcs_repositories(
+            organization_id=self.args.organization_id,
+            vcs_integration_id=self.args.vcs_integration_id,
+            search=self.args.search,
+            cursor=self.args.cursor,
+        )
+        if self.args.json:
+            self.print_response(response, json=True)
+            return
+        layout = ["remote_repository_id", "full_name", "source_url", "default_branch_name"]
+        self.print_response(response["repositories"], json=False, table_layout=layout)
+        self._log_next_cursor(response)
+
     @arg.project
     @arg.force
     @arg("service_name", help="Service name", nargs="+")

@@ -17,6 +17,7 @@ from tests.test_client import MockResponse
 from typing import Any
 
 import json
+import logging
 import pytest
 
 BASE_URL = "https://api.example.invalid"
@@ -277,6 +278,15 @@ VCS_INTEGRATION = {
     "create_time": "2026-09-01T00:00:00Z",
     "remote_configure_url": None,
 }
+REPOSITORY = {
+    "remote_repository_id": "r1",
+    "vcs_integration_id": "vcs123",
+    "vcs_type": "github",
+    "full_name": "example/app",
+    "name": "app",
+    "source_url": "https://github.com/example/app.git",
+    "default_branch_name": "main",
+}
 
 
 @pytest.mark.parametrize(
@@ -287,6 +297,12 @@ VCS_INTEGRATION = {
             ("GET", VCS_PATH),
             {"vcs_integrations": [VCS_INTEGRATION]},
             ["VCS_INTEGRATION_ID", "VCS_TYPE", "VCS_ACCOUNT_NAME", "CREATE_TIME"],
+        ),
+        (
+            ["repository", "list", "--vcs-integration-id", "vcs123"],
+            ("GET", VCS_PATH + "/vcs123/repositories"),
+            {"repositories": [REPOSITORY], "next": None, "previous": None},
+            ["REMOTE_REPOSITORY_ID", "FULL_NAME", "SOURCE_URL", "DEFAULT_BRANCH_NAME"],
         ),
     ],
 )
@@ -312,3 +328,29 @@ def test_service_application_vcs_integration_list_json(tmp_path: Path, capsys: C
     args = ["vcs-integration", "list", "--organization-id", "org123", "--json"]
     assert cli.run("service", "application", *args) is None
     assert json.loads(capsys.readouterr().out) == [VCS_INTEGRATION]
+
+
+def test_service_application_repository_list_passes_search(tmp_path: Path, capsys: CaptureFixture[str]) -> None:
+    page = {"repositories": [REPOSITORY], "next": "c2", "previous": None}
+    cli = build_cli(tmp_path, {("GET", VCS_PATH + "/vcs123/repositories"): ok(page)})
+
+    args = ["--organization-id", "org123", "--vcs-integration-id", "vcs123", "--search", "app", "--json"]
+    assert cli.run("service", "application", "repository", "list", *args) is None
+
+    assert cli.session.requests[0].params == {"search": "app"}
+    assert json.loads(capsys.readouterr().out) == page
+
+
+def test_service_application_repository_list_logs_next_cursor(
+    tmp_path: Path, capsys: CaptureFixture[str], caplog: LogCaptureFixture
+) -> None:
+    caplog.set_level(logging.INFO)
+    page = {"repositories": [REPOSITORY], "next": "c2", "previous": None}
+    cli = build_cli(tmp_path, {("GET", VCS_PATH + "/vcs123/repositories"): ok(page)})
+
+    args = ["--organization-id", "org123", "--vcs-integration-id", "vcs123", "--cursor", "c1"]
+    assert cli.run("service", "application", "repository", "list", *args) is None
+
+    assert cli.session.requests[0].params == {"cursor": "c1"}
+    assert "example/app" in capsys.readouterr().out
+    assert "--cursor c2" in caplog.text

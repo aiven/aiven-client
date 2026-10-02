@@ -247,3 +247,7 @@ arg.kafka_connect_plugin_file_id = arg("--plugin-file-id", required=True, help="
 arg.kafka_connect_plugin_class_name = arg(
     "--plugin-class-name", required=True, help="Fully-qualified Kafka Connect plugin class name"
 )
+
+arg.vcs_integration_id = arg(
+    "--vcs-integration-id", required=True, help="VCS integration ID (see 'service application vcs-integration list')"
+)
