@@ -3903,6 +3903,7 @@ ssl.truststore.type=JKS
         default=False,
         help="do not fail if service already exists",
     )
+    @arg.user_config_json()
     @arg.user_config
     @arg(
         "--project-vpc-id",
@@ -3947,8 +3948,7 @@ ssl.truststore.type=JKS
 
         project_vpc_id = self._get_service_project_vpc_id()
         project = self.get_project()
-        user_config_schema = self._get_service_type_user_config_schema(project=project, service_type=service_type)
-        user_config = self.create_user_config(user_config_schema)
+        user_config = self._get_service_user_config(project=project, service_type=service_type)
 
         # If the user requests a specific version, check EOL status
         requested_version = self._extract_user_config_version(service_type, user_config)
@@ -4022,6 +4022,14 @@ ssl.truststore.type=JKS
         else:
             did_you_mean = ""
         return "Unknown {} {!r}{} (available options: {})".format(option_type, option, did_you_mean, ", ".join(options))
+
+    def _get_service_user_config(self, project: str, service_type: str) -> dict[str, Any]:
+        """Build user_config from --user-config-json or from -c options"""
+        user_config = self.args.user_config_json
+        if user_config is None:
+            user_config_schema = self._get_service_type_user_config_schema(project=project, service_type=service_type)
+            return self.create_user_config(user_config_schema)
+        return dict(user_config)
 
     def _get_service_type_user_config_schema(self, project: str, service_type: str) -> Mapping[str, Any]:
         try:

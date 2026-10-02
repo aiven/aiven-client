@@ -380,6 +380,33 @@ Delete a service integration::
 
     $ avn service integration-delete --project <project> <integration_id>
 
+Aiven Runtime Applications
+--------------------------
+
+An Aiven Runtime application is a service of type ``application``. Create, update, power
+and terminate it with the ``avn service`` commands.
+
+Create an application from a JSON user configuration::
+
+    $ avn service create myapp -t application --plan startup-50-1024 --cloud aws-eu-west-1 --user-config-json @app.json
+
+``app.json`` holds the service ``user_config``, the same object as in the API. A minimal
+example::
+
+    {
+        "application": {
+            "source": {
+                "repository_url": "https://github.com/example/app.git",
+                "branch": "main",
+                "containerfile_path": "Dockerfile"
+            },
+            "ports": [{"name": "http", "port": 8080, "protocol": "HTTP"}]
+        }
+    }
+
+For a private repository, also set ``vcs_integration_id`` and ``remote_repository_id``
+in ``source``.
+
 Custom Files
 ------------
 

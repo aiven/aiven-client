@@ -1,0 +1,233 @@
+# Copyright 2026, Aiven, https://aiven.io/
+#
+# This file is under the Apache License, Version 2.0.
+# See the file `LICENSE` for details.
+"""Aiven Runtime application commands, exercised through a real AivenClient over a fake HTTP session."""
+
+from __future__ import annotations
+
+from aiven.client import AivenClient
+from aiven.client.cli import AivenCLI
+from aiven.client.client import RetrySpec
+from dataclasses import dataclass, field
+from http import HTTPStatus
+from pathlib import Path
+from pytest import LogCaptureFixture
+from tests.test_client import MockResponse
+from typing import Any
+
+import json
+import pytest
+
+BASE_URL = "https://api.example.invalid"
+PROJECT = "test-project"
+APP = "example-app"
+SERVICE_PATH = f"/project/{PROJECT}/service/{APP}"
+
+APPLICATION_USER_CONFIG_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "application": {
+            "type": "object",
+            "properties": {
+                "source": {
+                    "type": "object",
+                    "properties": {
+                        "repository_url": {"type": "string"},
+                        "branch": {"type": "string"},
+                        "build_path": {"type": "string"},
+                        "containerfile_path": {"type": ["string", "null"]},
+                        "vcs_integration_id": {"type": "string"},
+                        "remote_repository_id": {"type": "string"},
+                    },
+                },
+                "ports": {"type": "array", "items": {"type": "object"}},
+                "environment_variables": {"type": "array", "items": {"type": "object"}},
+            },
+        },
+    },
+}
+
+
+@dataclass
+class RecordedRequest:
+    method: str
+    path: str
+    params: dict[str, Any] | None
+    body: Any
+
+
+@dataclass
+class FakeSession:
+    """Stands in for requests.Session: answers by (method, path) and records every request."""
+
+    routes: dict[tuple[str, str], MockResponse]
+    requests: list[RecordedRequest] = field(default_factory=list)
+
+    def _handle(self, method: str, url: str, **kwargs: Any) -> MockResponse:
+        path = url.removeprefix(BASE_URL + "/v1")
+        data = kwargs.get("data")
+        self.requests.append(
+            RecordedRequest(method=method, path=path, params=kwargs.get("params"), body=json.loads(data) if data else None)
+        )
+        response = self.routes.get((method, path))
+        if response is None:
+            return MockResponse(HTTPStatus.NOT_FOUND, {"message": f"no fake route for {method} {path}"})
+        return response
+
+    def get(self, url: str, **kwargs: Any) -> MockResponse:
+        return self._handle("GET", url, **kwargs)
+
+    def post(self, url: str, **kwargs: Any) -> MockResponse:
+        return self._handle("POST", url, **kwargs)
+
+    def put(self, url: str, **kwargs: Any) -> MockResponse:
+        return self._handle("PUT", url, **kwargs)
+
+    def delete(self, url: str, **kwargs: Any) -> MockResponse:
+        return self._handle("DELETE", url, **kwargs)
+
+    def paths(self, method: str) -> list[str]:
+        return [request.path for request in self.requests if request.method == method]
+
+
+@dataclass
+class CLIRunner:
+    session: FakeSession
+    config_path: Path
+
+    def run(self, *args: str) -> int | None:
+        def client_factory(**kwargs: Any) -> AivenClient:
+            # No retries: a failing request fails the test at once instead of sleeping between attempts.
+            client = AivenClient(**kwargs, default_retry_spec=RetrySpec(attempts=1))
+            client.session = self.session  # type: ignore[assignment]
+            return client
+
+        return AivenCLI(client_factory=client_factory).run(
+            args=["--config", str(self.config_path), "--auth-token", "token", "--url", BASE_URL, *args],
+        )
+
+
+def build_cli(tmp_path: Path, routes: dict[tuple[str, str], MockResponse]) -> CLIRunner:
+    return CLIRunner(session=FakeSession(routes=routes), config_path=tmp_path / "avn.json")
+
+
+def ok(body: dict[str, Any]) -> MockResponse:
+    return MockResponse(HTTPStatus.OK, body, headers={"content-type": "application/json"})
+
+
+def app_service(
+    state: str,
+) -> dict[str, Any]:
+    return {
+        "service_name": APP,
+        "service_type": "application",
+        "state": state,
+        "plan": "startup-50-1024",
+        "user_config": {
+            "application": {"source": {"repository_url": "https://github.com/example/app.git", "branch": "main"}}
+        },
+    }
+
+
+def service_response(*args: Any, **kwargs: Any) -> MockResponse:
+    return ok({"service": app_service(*args, **kwargs)})
+
+
+def create_routes() -> dict[tuple[str, str], MockResponse]:
+    return {
+        ("GET", f"/project/{PROJECT}/service-types/application"): ok({"user_config_schema": APPLICATION_USER_CONFIG_SCHEMA}),
+        ("GET", f"/project/{PROJECT}/vpcs"): ok({"vpcs": []}),
+        ("POST", f"/project/{PROJECT}/service"): ok({"service": app_service("REBUILDING")}),
+    }
+
+
+def test_service_create_documented_config_options(tmp_path: Path) -> None:
+    """The CLI example of docs/products/runtime/deploy-apps.md in aiven-docs."""
+    cli = build_cli(tmp_path, create_routes())
+
+    assert (
+        cli.run(
+            *("service", "create", APP, "--project", PROJECT, "-t", "application"),
+            *("--cloud", "aws-eu-west-1", "--plan", "startup-50-1024"),
+            *("-c", "application.source.vcs_integration_id=vcs123", "-c", "application.source.remote_repository_id=r1"),
+            *("-c", "application.source.repository_url=https://github.com/example/app.git"),
+            *("-c", "application.source.branch=main", "-c", "application.source.build_path=."),
+            *("-c", "application.source.containerfile_path=Dockerfile"),
+            *("-c", 'application.ports=[{"name":"http","port":8080,"protocol":"HTTP"}]'),
+        )
+        is None
+    )
+
+    create = cli.session.requests[-1]
+    assert (create.method, create.path) == ("POST", f"/project/{PROJECT}/service")
+    assert create.body["service_type"] == "application"
+    assert create.body["user_config"] == {
+        "application": {
+            "source": {
+                "vcs_integration_id": "vcs123",
+                "remote_repository_id": "r1",
+                "repository_url": "https://github.com/example/app.git",
+                "branch": "main",
+                "build_path": ".",
+                "containerfile_path": "Dockerfile",
+            },
+            "ports": [{"name": "http", "port": 8080, "protocol": "HTTP"}],
+        }
+    }
+
+
+@pytest.mark.parametrize("from_file", [False, True], ids=["inline", "file"])
+def test_service_create_user_config_json(tmp_path: Path, from_file: bool) -> None:
+    user_config = {
+        "application": {
+            "source": {"repository_url": "https://github.com/example/app.git", "branch": "main"},
+            "environment_variables": [{"key": "DEBUG", "value": "true", "kind": "variable"}],
+        }
+    }
+    cli = build_cli(tmp_path, create_routes())
+
+    args = ["service", "create", APP, "--project", PROJECT, "-t", "application", "--plan", "startup-50-1024"]
+    user_config_json = json.dumps(user_config)
+    if from_file:
+        config_file = tmp_path / "app.json"
+        config_file.write_text(user_config_json, encoding="utf-8")
+        user_config_json = f"@{config_file}"
+    assert cli.run(*args, "--user-config-json", user_config_json) is None
+
+    assert cli.session.paths("GET") == []
+    assert cli.session.requests[-1].body["user_config"] == user_config
+
+
+@pytest.mark.parametrize(
+    ("command", "extra_args", "message"),
+    [
+        (["create", APP, "-t", "application", "--plan", "p"], ["-c", "application.source.branch=main"], "-c (user config)"),
+        (["create", APP, "-t", "application", "--plan", "p"], ["--user-config-json", "[]"], "expected a JSON object"),
+        (["create", APP, "-t", "application", "--plan", "p"], ["--user-config-json", "null"], "expected a JSON object"),
+        (
+            ["create", APP, "-t", "application", "--plan", "p"],
+            ["--user-config-json", "@/nonexistent/app.json"],
+            "Cannot read",
+        ),
+    ],
+)
+def test_service_user_config_json_conflicts(
+    tmp_path: Path, caplog: LogCaptureFixture, command: list[str], extra_args: list[str], message: str
+) -> None:
+    user_config_json = [] if "--user-config-json" in extra_args else ["--user-config-json", "{}"]
+    cli = build_cli(tmp_path, {("GET", SERVICE_PATH): service_response("RUNNING")})
+
+    assert cli.run("service", *command, "--project", PROJECT, *user_config_json, *extra_args) == 1
+    assert message in caplog.text
+    assert cli.session.paths("POST") == cli.session.paths("PUT") == []
+
+
+def test_service_create_user_config_json_file_not_utf8(tmp_path: Path, caplog: LogCaptureFixture) -> None:
+    config_file = tmp_path / "app.json"
+    config_file.write_bytes(b"\xff\xfe{}")
+    cli = build_cli(tmp_path, create_routes())
+
+    args = ["service", "create", APP, "--project", PROJECT, "-t", "application", "--plan", "startup-50-1024"]
+    assert cli.run(*args, "--user-config-json", f"@{config_file}") == 1
+    assert "Cannot read user_config_json file" in caplog.text
