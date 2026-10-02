@@ -3503,6 +3503,14 @@ ssl.truststore.type=JKS
 
             time.sleep(3.0)
 
+    @arg.organization_id
+    @arg.json
+    def service__application__vcs_integration__list(self) -> None:
+        """List the VCS (GitHub) accounts connected to an organization for Aiven Runtime"""
+        integrations = self.client.list_application_vcs_integrations(organization_id=self.args.organization_id)
+        layout = ["vcs_integration_id", "vcs_type", "vcs_account_name", "create_time"]
+        self.print_response(integrations, json=self.args.json, table_layout=layout)
+
     @arg.project
     @arg.force
     @arg("service_name", help="Service name", nargs="+")
