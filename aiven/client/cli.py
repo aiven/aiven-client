@@ -4407,7 +4407,7 @@ ssl.truststore.type=JKS
         except client.Error as ex:
             print(ex.response.text)
             raise argx.UserError("Project '{}' update failed".format(project_name))
-        if self.args.name and self.config["default_project"] == project_name:
+        if self.args.name and self.config.get("default_project") == project_name:
             self.config["default_project"] = project["project_name"]
             self.config.save()
         self._show_projects([dict(project)])

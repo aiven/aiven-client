@@ -1714,6 +1714,24 @@ def test_project_update__parent_id_as_org_id_requested_correctly() -> None:
     )
 
 
+def test_project_update_rename_without_default_project(tmp_path: Any) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.update_project.return_value = {
+        "project_id": "p123123124",
+        "project_name": "new-project-name",
+        "default_cloud": "my-default-cloud",
+        "billing_currency": "USD",
+        "vat_id": "",
+        "billing_extra_text": "",
+    }
+    config_path = tmp_path / "aiven-client.json"
+
+    args = ["--config", str(config_path), "project", "update", "--project", "my-project-name", "--name", "new-project-name"]
+    assert build_aiven_cli(aiven_client).run(args=args) is None
+
+    assert not config_path.exists()
+
+
 def test_custom_files_list(capsys: CaptureFixture[str]) -> None:
     aiven_client = mock.Mock(spec_set=AivenClient)
 
