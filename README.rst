@@ -411,6 +411,10 @@ Update it from a JSON user configuration::
 
     $ avn service update myapp --user-config-json @app.json
 
+Show the build and deployment status::
+
+    $ avn service application status myapp
+
 View build logs::
 
     $ avn service logs myapp --log-type application-build

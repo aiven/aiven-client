@@ -7,12 +7,12 @@
 from __future__ import annotations
 
 from aiven.client import AivenClient
-from aiven.client.cli import AivenCLI
+from aiven.client.cli import AivenCLI, application_status
 from aiven.client.client import RetrySpec
 from dataclasses import dataclass, field
 from http import HTTPStatus
 from pathlib import Path
-from pytest import LogCaptureFixture
+from pytest import CaptureFixture, LogCaptureFixture
 from tests.test_client import MockResponse
 from typing import Any
 
@@ -23,6 +23,7 @@ BASE_URL = "https://api.example.invalid"
 PROJECT = "test-project"
 APP = "example-app"
 SERVICE_PATH = f"/project/{PROJECT}/service/{APP}"
+SHA = "0123456789abcdef0123456789abcdef01234567"
 
 APPLICATION_USER_CONFIG_SCHEMA = {
     "type": "object",
@@ -118,12 +119,24 @@ def ok(body: dict[str, Any]) -> MockResponse:
 
 def app_service(
     state: str,
+    build_status: str | None = None,
+    deployment_status: str | None = None,
+    commit_sha: str | None = None,
+    service_type: str = "application",
 ) -> dict[str, Any]:
+    metadata: dict[str, Any] = {}
+    if build_status is not None:
+        metadata["application_build_status"] = build_status
+    if deployment_status is not None:
+        metadata["application_deployment_status"] = deployment_status
+    if commit_sha is not None:
+        metadata["application_deployment_commit_sha"] = commit_sha
     return {
         "service_name": APP,
-        "service_type": "application",
+        "service_type": service_type,
         "state": state,
         "plan": "startup-50-1024",
+        "metadata": metadata,
         "user_config": {
             "application": {"source": {"repository_url": "https://github.com/example/app.git", "branch": "main"}}
         },
@@ -267,3 +280,57 @@ def test_service_logs_log_type(tmp_path: Path, extra_args: list[str], expected_l
 
     assert cli.run("service", "logs", "--project", PROJECT, *extra_args, APP) is None
     assert cli.session.requests[0].body.get("log_type") == expected_log_type
+
+
+SUCCEEDED = ("RUNNING", "SUCCESS", "COMPLETED")
+
+
+@pytest.mark.parametrize(
+    ("state", "build_status", "deployment_status", "outcome"),
+    [
+        ("REBUILDING", None, None, "in_progress"),
+        ("REBUILDING", "BUILDING", "IN_PROGRESS", "in_progress"),
+        ("RUNNING", "SUCCESS", "COMPLETED", "succeeded"),
+        # A failed deployment of a new revision keeps the previous revision running.
+        ("RUNNING", "SUCCESS", "FAILED", "failed"),
+        # A failed first build leaves nothing running.
+        ("POWEROFF", "FAILURE", "ABORTED", "failed"),
+        ("POWEROFF", "SUCCESS", "COMPLETED", "powered_off"),
+        ("POWEROFF", None, None, "powered_off"),
+    ],
+)
+def test_application_status_outcome(
+    state: str, build_status: str | None, deployment_status: str | None, outcome: str
+) -> None:
+    assert application_status(app_service(state, build_status, deployment_status))["outcome"] == outcome
+
+
+def test_service_application_status_json(tmp_path: Path, capsys: CaptureFixture[str]) -> None:
+    cli = build_cli(tmp_path, {("GET", SERVICE_PATH): service_response(*SUCCEEDED, commit_sha=SHA)})
+
+    assert cli.run("service", "application", "status", "--project", PROJECT, "--json", APP) is None
+
+    assert json.loads(capsys.readouterr().out) == {
+        "service_name": APP,
+        "state": "RUNNING",
+        "build_status": "SUCCESS",
+        "deployment_status": "COMPLETED",
+        "pinned_commit_sha": SHA,
+        "repository_url": "https://github.com/example/app.git",
+        "branch": "main",
+        "outcome": "succeeded",
+    }
+
+
+def test_service_application_status_table(tmp_path: Path) -> None:
+    cli = build_cli(tmp_path, {("GET", SERVICE_PATH): service_response(*SUCCEEDED, commit_sha=SHA)})
+
+    # APPLICATION_STATUS_LAYOUT may only name keys of application_status(); any other name crashes the table output.
+    assert cli.run("service", "application", "status", "--project", PROJECT, APP) is None
+
+
+def test_service_application_status_rejects_other_service_types(tmp_path: Path, caplog: LogCaptureFixture) -> None:
+    cli = build_cli(tmp_path, {("GET", SERVICE_PATH): service_response("RUNNING", service_type="pg")})
+
+    assert cli.run("service", "application", "status", "--project", PROJECT, APP) == 1
+    assert "is not an Aiven Runtime application" in caplog.text

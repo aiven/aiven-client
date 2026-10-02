@@ -148,6 +148,39 @@ def connection_lifetime_arg(value: str) -> float | None:
     return None if parsed == -1 else parsed
 
 
+def application_status(service: Mapping[str, Any]) -> dict[str, Any]:
+    """Summarize the deployment status of an Aiven Runtime application from its service response.
+
+    A failed deployment of a new revision still reports `state` RUNNING while the previous
+    revision runs, and a failed first build reports POWEROFF, so `state` alone cannot tell
+    success from failure; the build and deployment status in `metadata` can.
+    """
+    metadata = service.get("metadata") or {}
+    source = ((service.get("user_config") or {}).get("application") or {}).get("source") or {}
+    state = service.get("state")
+    build_status = metadata.get("application_build_status")
+    deployment_status = metadata.get("application_deployment_status")
+    if build_status == "FAILURE" or deployment_status in {"FAILED", "ABORTED"}:
+        outcome = "failed"
+    elif deployment_status == "COMPLETED" and state == "RUNNING":
+        outcome = "succeeded"
+    elif state == "POWEROFF":
+        outcome = "powered_off"
+    else:
+        outcome = "in_progress"
+    return {
+        "service_name": service.get("service_name"),
+        "state": state,
+        "build_status": build_status,
+        "deployment_status": deployment_status,
+        # The commit the application is pinned to; after a failed deployment the previous revision keeps running.
+        "pinned_commit_sha": metadata.get("application_deployment_commit_sha"),
+        "repository_url": source.get("repository_url"),
+        "branch": source.get("branch"),
+        "outcome": outcome,
+    }
+
+
 class ClientFactory(Protocol):
     def __call__(
         self,
@@ -853,6 +886,17 @@ class AivenCLI(argx.CommandLineTool):
             "cleanup_policy",
             "tags",
         ]
+    ]
+
+    APPLICATION_STATUS_LAYOUT: ClassVar[list[str]] = [
+        "service_name",
+        "state",
+        "build_status",
+        "deployment_status",
+        "pinned_commit_sha",
+        "repository_url",
+        "branch",
+        "outcome",
     ]
 
     @arg.project
@@ -3502,6 +3546,25 @@ ssl.truststore.type=JKS
                 self.log.info("Waiting for services to start")
 
             time.sleep(3.0)
+
+    @arg.project
+    @arg.service_name
+    @arg.json
+    def service__application__status(self) -> None:
+        """Show the build and deployment status of an Aiven Runtime application"""
+        service = self.client.get_service(project=self.get_project(), service=self.args.service_name)
+        if service.get("service_type") != "application":
+            raise argx.UserError(
+                "Service {!r} is not an Aiven Runtime application (service type {!r})".format(
+                    self.args.service_name, service.get("service_type")
+                )
+            )
+        self.print_response(
+            application_status(service),
+            json=self.args.json,
+            table_layout=self.APPLICATION_STATUS_LAYOUT,
+            single_item=True,
+        )
 
     @arg.project
     @arg.force
