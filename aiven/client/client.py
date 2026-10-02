@@ -1955,6 +1955,16 @@ class AivenClient(AivenClientBase):
             body=body,
         )
 
+    def _application_vcs_integration_path(self, organization_id: str, *parts: str) -> str:
+        return self.build_path("organization", organization_id, "application", "vcs-integrations", *parts)
+
+    def list_application_vcs_integrations(self, organization_id: str) -> Sequence[dict[str, Any]]:
+        return self.verify(
+            self.get,
+            self._application_vcs_integration_path(organization_id),
+            result_key="vcs_integrations",
+        )
+
     def get_events(self, project: str, limit: int = 100) -> Sequence[dict[str, Any]]:
         params = {"limit": limit}
         return self.verify(

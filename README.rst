@@ -386,6 +386,10 @@ Aiven Runtime Applications
 An Aiven Runtime application is a service of type ``application``. Create, update, power
 and terminate it with the ``avn service`` commands.
 
+Find the IDs to deploy from a connected GitHub account::
+
+    $ avn service application vcs-integration list --organization-id <organization id>
+
 Create an application from a JSON user configuration::
 
     $ avn service create myapp -t application --plan startup-50-1024 --cloud aws-eu-west-1 --user-config-json @app.json

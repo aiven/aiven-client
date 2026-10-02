@@ -23,6 +23,7 @@ BASE_URL = "https://api.example.invalid"
 PROJECT = "test-project"
 APP = "example-app"
 SERVICE_PATH = f"/project/{PROJECT}/service/{APP}"
+VCS_PATH = "/organization/org123/application/vcs-integrations"
 SHA = "0123456789abcdef0123456789abcdef01234567"
 
 APPLICATION_USER_CONFIG_SCHEMA = {
@@ -334,3 +335,47 @@ def test_service_application_status_rejects_other_service_types(tmp_path: Path, 
 
     assert cli.run("service", "application", "status", "--project", PROJECT, APP) == 1
     assert "is not an Aiven Runtime application" in caplog.text
+
+
+VCS_INTEGRATION = {
+    "vcs_integration_id": "vcs123",
+    "vcs_type": "github",
+    "vcs_account_name": "example",
+    "create_time": "2026-09-01T00:00:00Z",
+    "remote_configure_url": None,
+}
+
+
+@pytest.mark.parametrize(
+    ("command", "route", "response", "header"),
+    [
+        (
+            ["vcs-integration", "list"],
+            ("GET", VCS_PATH),
+            {"vcs_integrations": [VCS_INTEGRATION]},
+            ["VCS_INTEGRATION_ID", "VCS_TYPE", "VCS_ACCOUNT_NAME", "CREATE_TIME"],
+        ),
+    ],
+)
+def test_service_application_list_tables(
+    tmp_path: Path,
+    capsys: CaptureFixture[str],
+    command: list[str],
+    route: tuple[str, str],
+    response: dict[str, Any],
+    header: list[str],
+) -> None:
+    cli = build_cli(tmp_path, {route: ok(response)})
+
+    assert cli.run("service", "application", *command, "--organization-id", "org123") is None
+    header_line, _separator, *rows = capsys.readouterr().out.splitlines()
+    assert header_line.split() == header
+    assert len(rows) == 1
+
+
+def test_service_application_vcs_integration_list_json(tmp_path: Path, capsys: CaptureFixture[str]) -> None:
+    cli = build_cli(tmp_path, {("GET", VCS_PATH): ok({"vcs_integrations": [VCS_INTEGRATION]})})
+
+    args = ["vcs-integration", "list", "--organization-id", "org123", "--json"]
+    assert cli.run("service", "application", *args) is None
+    assert json.loads(capsys.readouterr().out) == [VCS_INTEGRATION]
