@@ -319,6 +319,22 @@ MANIFEST_FILE = {"file_path": "Dockerfile", "file_sha": "f1", "container_manifes
             {"container_manifest_files": [MANIFEST_FILE]},
             ["FILE_PATH", "CONTAINER_MANIFEST_TYPE", "FILE_SHA"],
         ),
+        (
+            [
+                "container-manifest",
+                "scan",
+                *MANIFEST_ARGS,
+                "--branch",
+                "main",
+                "--repository-url",
+                "u",
+                "--file-path",
+                "Dockerfile",
+            ],
+            ("POST", VCS_PATH + f"/vcs123/repositories/r1/refs/{SHA}/scan-container-manifest"),
+            {"file_scan": {"service_suggestions": [{"service_name": "app", "service_type": "application"}]}},
+            ["SERVICE_NAME", "SERVICE_TYPE"],
+        ),
     ],
 )
 def test_service_application_list_tables(
@@ -406,3 +422,25 @@ def test_service_application_container_manifest_list_json(tmp_path: Path, capsys
     args = ["--organization-id", "org123", *MANIFEST_ARGS, "--json"]
     assert cli.run("service", "application", "container-manifest", "list", *args) is None
     assert json.loads(capsys.readouterr().out) == [MANIFEST_FILE]
+
+
+def test_service_application_container_manifest_scan_sends_file_and_prints_suggestions(
+    tmp_path: Path, capsys: CaptureFixture[str]
+) -> None:
+    file_scan = {"container_manifest_type": "containerfile", "service_suggestions": [{"service_name": "app"}]}
+    path = VCS_PATH + f"/vcs123/repositories/r1/refs/{SHA}/scan-container-manifest"
+    cli = build_cli(tmp_path, {("POST", path): ok({"file_scan": file_scan})})
+
+    args = [
+        *("--organization-id", "org123", *MANIFEST_ARGS),
+        *("--branch", "main", "--repository-url", "https://github.com/example/app.git"),
+        *("--file-path", "Dockerfile", "--json"),
+    ]
+    assert cli.run("service", "application", "container-manifest", "scan", *args) is None
+
+    assert cli.session.requests[0].body == {
+        "branch": "main",
+        "file_path": "Dockerfile",
+        "repository_url": "https://github.com/example/app.git",
+    }
+    assert json.loads(capsys.readouterr().out) == file_scan

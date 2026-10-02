@@ -418,6 +418,11 @@ Update it from a JSON user configuration::
 
     $ avn service update myapp --user-config-json @app.json
 
+To get a suggested user configuration for a manifest in the repository, scan it and use a
+``service_suggestions[].user_config`` from the output::
+
+    $ avn service application container-manifest scan --organization-id <organization id> --vcs-integration-id <vcs integration id> --remote-repository-id <repository id> --commit-sha <sha> --branch <branch> --repository-url <repository url> --file-path <manifest path> --json
+
 View build logs::
 
     $ avn service logs myapp --log-type application-build
