@@ -163,27 +163,27 @@ class ClientFactory(Protocol):
 class AivenCLI(argx.CommandLineTool):
     client: AivenClient
 
-    def __init__(self, client_factory: ClientFactory = AivenClient):
-        argx.CommandLineTool.__init__(self, "avn")
+    def __init__(self, client_factory: ClientFactory = AivenClient, env: Mapping[str, str] = os.environ):
+        argx.CommandLineTool.__init__(self, "avn", env=env)
         self.client_factory = client_factory
 
     def add_args(self, parser: ArgumentParser) -> None:
         parser.add_argument(
             "--auth-ca",
             help="CA certificate to use [AIVEN_CA_CERT], default %(default)r",
-            default=envdefault.AIVEN_CA_CERT,
+            default=self.env.get("AIVEN_CA_CERT"),
             metavar="FILE",
         )
         parser.add_argument(
             "--auth-token",
             help="Client auth token to use [AIVEN_AUTH_TOKEN], [AIVEN_CREDENTIALS_FILE]",
-            default=envdefault.AIVEN_AUTH_TOKEN,
+            default=self.env.get("AIVEN_AUTH_TOKEN"),
         )
         parser.add_argument("--show-http", help="Show HTTP requests and responses", action="store_true")
         parser.add_argument(
             "--url",
             help="Server base url default %(default)r",
-            default=envdefault.AIVEN_WEB_URL,
+            default=envdefault.web_url(self.env),
         )
         parser.add_argument(
             "--request-timeout",
@@ -301,7 +301,7 @@ class AivenCLI(argx.CommandLineTool):
 
     def enter_password(self, prompt: str, var: str = "AIVEN_PASSWORD", confirm: bool = False) -> str:
         """Prompt user for a password"""
-        password = os.environ.get(var)
+        password = self.env.get(var)
         if password:
             return password
 
@@ -322,16 +322,18 @@ class AivenCLI(argx.CommandLineTool):
         print("*" * longest)
 
     def confirm(self, prompt: str = "confirm (y/N)? ") -> bool:
-        if self.args.force or is_truthy(os.environ.get("AIVEN_FORCE", "no")):
+        if self.args.force or is_truthy(self.env.get("AIVEN_FORCE", "no")):
             return True
 
         answer = input(prompt)
         return is_truthy(answer)
 
     def get_project(self, raise_if_none: bool = True, fallback_to_default_project: bool = True) -> str:
-        """Return project given as cmdline argument or the default project from config file"""
+        """Return project given as cmdline argument, AIVEN_PROJECT or the default project from config file"""
         if getattr(self.args, "project", None) and self.args.project:
             return self.args.project
+        if self.env.get("AIVEN_PROJECT"):
+            return self.env["AIVEN_PROJECT"]
 
         if fallback_to_default_project:
             default_project = self.config.get("default_project", "")
@@ -1582,7 +1584,7 @@ class AivenCLI(argx.CommandLineTool):
             )
 
         try:
-            os.execvpe(command, [command] + params + self.args.arg, dict(os.environ, **env))
+            os.execvpe(command, [command] + params + self.args.arg, dict(self.env, **env))
         except OSError as e:
             if e.errno != errno.ENOENT:
                 raise
@@ -3502,7 +3504,7 @@ ssl.truststore.type=JKS
     @arg("service_name", help="Service name", nargs="+")
     def service__terminate(self) -> None:
         """Terminate service"""
-        if not self.args.force and os.environ.get("AIVEN_FORCE") != "true":
+        if not self.args.force and self.env.get("AIVEN_FORCE") != "true":
             self.print_boxed(
                 [
                     "Please re-enter the service name(s) to confirm the service termination.",
@@ -4407,7 +4409,7 @@ ssl.truststore.type=JKS
         except client.Error as ex:
             print(ex.response.text)
             raise argx.UserError("Project '{}' update failed".format(project_name))
-        if self.args.name and self.config["default_project"] == project_name:
+        if self.args.name and self.config.get("default_project") == project_name:
             self.config["default_project"] = project["project_name"]
             self.config.save()
         self._show_projects([dict(project)])
@@ -4543,8 +4545,7 @@ ssl.truststore.type=JKS
             pass
 
     def _get_auth_token_file_name(self) -> str:
-        default_token_file_path = os.path.join(envdefault.AIVEN_CONFIG_DIR, "aiven-credentials.json")
-        return os.environ.get("AIVEN_CREDENTIALS_FILE") or default_token_file_path
+        return envdefault.credentials_file(self.env)
 
     def _get_auth_token(self) -> str | None:
         token = self.args.auth_token
