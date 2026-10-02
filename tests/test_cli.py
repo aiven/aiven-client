@@ -35,19 +35,68 @@ def test_cli() -> None:
 
 
 def test_cloud_list() -> None:
-    AivenCLI().run(args=["cloud", "list"])
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.get_clouds.return_value = [{"cloud_name": "google-europe-west1"}]
+    assert build_aiven_cli(aiven_client).run(args=["cloud", "list"]) is None
+    aiven_client.get_clouds.assert_called_once_with(project="")
 
 
-def test_service_plans() -> None:
-    AivenCLI().run(args=["service", "plans"])
+SERVICE_TYPES = {
+    "pg": {
+        "description": "PostgreSQL",
+        "service_plans": [
+            {
+                "service_type": "pg",
+                "service_plan": "startup-4",
+                "node_count": 1,
+                "regions": {
+                    "google-europe-west1": {
+                        "price_usd": "0.10",
+                        "node_cpu_count": 2,
+                        "node_memory_mb": 4096,
+                        "disk_space_mb": 81920,
+                    }
+                },
+            }
+        ],
+        "user_config_schema": {
+            "type": "object",
+            "properties": {"pg_version": {"type": "string", "title": "PostgreSQL major version"}},
+        },
+    }
+}
 
 
-def test_service_types_v() -> None:
-    AivenCLI().run(args=["service", "types", "-v"])
+def test_service_plans(capsys: CaptureFixture[str]) -> None:
+    aiven_client = mock.Mock(spec=AivenClient)
+    aiven_client.auth_token = "token"
+    aiven_client.get_service_types.return_value = SERVICE_TYPES
+    args = ["service", "plans", "--project", "myproject", "--cloud", "google-europe-west1"]
+    assert build_aiven_cli(aiven_client).run(args=args) is None
+    aiven_client.get_service_types.assert_called_once_with(project="myproject")
+    out = capsys.readouterr().out
+    assert "pg:startup-4" in out
+    assert "$0.100/h" in out
+    assert "Startup-4 (2 CPU, 4 GB RAM, 80 GB disk)" in out
+
+
+def test_service_types_v(capsys: CaptureFixture[str]) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.get_service_types.return_value = SERVICE_TYPES
+    assert build_aiven_cli(aiven_client).run(args=["service", "types", "-v", "--project", "myproject"]) is None
+    aiven_client.get_service_types.assert_called_once_with(project="myproject")
+    out = capsys.readouterr().out
+    assert "Service type 'pg' options:" in out
+    assert "pg_version" in out
 
 
 def test_service_user_create() -> None:
-    AivenCLI().run(args=["service", "user-create", "service", "--username", "username"])
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    args = ["service", "user-create", "--project", "myproject", "service", "--username", "username"]
+    assert build_aiven_cli(aiven_client).run(args=args) is None
+    aiven_client.create_service_user.assert_called_once_with(
+        project="myproject", service="service", username="username", extra_params={}
+    )
 
 
 @pytest.mark.parametrize(
@@ -522,21 +571,28 @@ def test_service_topic_get_json_includes_configs(capsys: CaptureFixture[str]) ->
 
 
 def test_service_create_from_pitr() -> None:
-    AivenCLI().run(
-        args=[
-            "service",
-            "create",
-            "service-fork",
-            "--service-type",
-            "pg",
-            "--plan",
-            "business-4",
-            "--service-to-fork-from",
-            "service",
-            "--recovery-target-time",
-            "2023-01-20 11:38:49.926085+00:00",
-        ]
-    )
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.get_service_type.return_value = {"user_config_schema": {"type": "object", "properties": {}}}
+    args = [
+        "service",
+        "create",
+        "service-fork",
+        "--project",
+        "myproject",
+        "--service-type",
+        "pg",
+        "--plan",
+        "business-4",
+        "--service-to-fork-from",
+        "service",
+        "--recovery-target-time",
+        "2023-01-20 11:38:49.926085+00:00",
+    ]
+    assert build_aiven_cli(aiven_client).run(args=args) is None
+    assert aiven_client.create_service.call_args.kwargs["user_config"] == {
+        "service_to_fork_from": "service",
+        "recovery_target_time": "2023-01-20 11:38:49.926085+00:00",
+    }
 
 
 def test_help() -> None:
