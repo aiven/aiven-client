@@ -10,7 +10,6 @@ from functools import wraps
 from typing import Any, TypeVar
 
 import json as jsonlib
-import os
 
 __all__ = [
     "arg",
@@ -141,8 +140,7 @@ arg.parent_id_mandatory = arg("--parent-id", required=True, help="Organization o
 arg.partitions = arg("--partitions", type=int, required=True, help="Number of partitions")
 arg.project = arg(
     "--project",
-    help="Project name to use, default %(default)r",
-    default=os.environ.get("AIVEN_PROJECT"),
+    help="Project name to use [AIVEN_PROJECT]",
 )
 arg.replication = arg("--replication", type=int, required=True, help="Replication factor")
 arg.retention = arg(

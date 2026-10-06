@@ -231,7 +231,8 @@ class Config(dict):
 class CommandLineTool:
     config: Config
 
-    def __init__(self, name: str, parser: argparse.ArgumentParser | None = None):
+    def __init__(self, name: str, parser: argparse.ArgumentParser | None = None, env: Mapping[str, str] = os.environ):
+        self.env = env
         self.log = logging.getLogger(name)
         self._cats: dict[tuple[str, ...], argparse._SubParsersAction] = {}
         self._extensions: list[CommandLineTool] = []
@@ -239,7 +240,7 @@ class CommandLineTool:
         self.parser.add_argument(
             "--config",
             help="config file location %(default)r",
-            default=envdefault.AIVEN_CLIENT_CONFIG,
+            default=envdefault.client_config(env),
         )
         self.parser.add_argument("--version", action="version", version="aiven-client {}".format(__version__))
         self.subparsers = self.parser.add_subparsers(title="command categories", dest="command", help="", metavar="")
