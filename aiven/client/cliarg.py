@@ -79,6 +79,11 @@ def user_config_json() -> Callable[[Callable[[CommandLineTool], T]], Callable[[C
                     self.args.user_config_json = get_json_config(self.args.user_config_json)
                 except jsonlib.decoder.JSONDecodeError as err:
                     raise UserError(f"Invalid user_config_json: {err!s}") from err
+                except (OSError, UnicodeDecodeError) as err:
+                    raise UserError(f"Cannot read user_config_json file: {err!s}") from err
+                # Checked here so that 'null' cannot pass for "not provided" (None).
+                if not isinstance(self.args.user_config_json, dict):
+                    raise UserError("Invalid user_config_json: expected a JSON object")
             return fun(self)
 
         return wrapped
@@ -242,3 +247,11 @@ arg.kafka_connect_plugin_file_id = arg("--plugin-file-id", required=True, help="
 arg.kafka_connect_plugin_class_name = arg(
     "--plugin-class-name", required=True, help="Fully-qualified Kafka Connect plugin class name"
 )
+
+arg.vcs_integration_id = arg(
+    "--vcs-integration-id", required=True, help="VCS integration ID (see 'service application vcs-integration list')"
+)
+arg.remote_repository_id = arg(
+    "--remote-repository-id", required=True, help="Repository ID (see 'service application repository list')"
+)
+arg.commit_sha = arg("--commit-sha", required=True, help="Commit SHA (see 'service application branch list')")

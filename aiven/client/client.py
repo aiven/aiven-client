@@ -1934,17 +1934,117 @@ class AivenClient(AivenClientBase):
         )
 
     def get_service_logs(
-        self, project: str, service: str, sort_order: str | None = None, offset: str | None = None, limit: int = 100
+        self,
+        project: str,
+        service: str,
+        sort_order: str | None = None,
+        offset: str | None = None,
+        limit: int = 100,
+        log_type: str | None = None,
     ) -> Mapping:
         body: dict[str, Any] = {"limit": limit}
         if offset is not None:
             body["offset"] = str(offset)
         if sort_order is not None:
             body["sort_order"] = sort_order
+        if log_type is not None:
+            body["log_type"] = log_type
         return self.verify(
             self.post,
             self.build_path("project", project, "service", service, "logs"),
             body=body,
+        )
+
+    def _application_vcs_integration_path(self, organization_id: str, *parts: str) -> str:
+        return self.build_path("organization", organization_id, "application", "vcs-integrations", *parts)
+
+    def list_application_vcs_integrations(self, organization_id: str) -> Sequence[dict[str, Any]]:
+        return self.verify(
+            self.get,
+            self._application_vcs_integration_path(organization_id),
+            result_key="vcs_integrations",
+        )
+
+    def list_application_vcs_repositories(
+        self,
+        organization_id: str,
+        vcs_integration_id: str,
+        search: str | None = None,
+        cursor: str | None = None,
+    ) -> Mapping:
+        params: dict[str, Any] = {}
+        if search is not None:
+            params["search"] = search
+        if cursor is not None:
+            params["cursor"] = cursor
+        return self.verify(
+            self.get,
+            self._application_vcs_integration_path(organization_id, vcs_integration_id, "repositories"),
+            params=params,
+        )
+
+    def list_application_vcs_branches(
+        self,
+        organization_id: str,
+        vcs_integration_id: str,
+        remote_repository_id: str,
+        cursor: str | None = None,
+    ) -> Mapping:
+        params: dict[str, Any] = {}
+        if cursor is not None:
+            params["cursor"] = cursor
+        return self.verify(
+            self.get,
+            self._application_vcs_integration_path(
+                organization_id, vcs_integration_id, "repositories", remote_repository_id, "branches"
+            ),
+            params=params,
+        )
+
+    def list_application_container_manifest_files(
+        self,
+        organization_id: str,
+        vcs_integration_id: str,
+        remote_repository_id: str,
+        commit_sha: str,
+    ) -> Sequence[dict[str, Any]]:
+        return self.verify(
+            self.get,
+            self._application_vcs_integration_path(
+                organization_id,
+                vcs_integration_id,
+                "repositories",
+                remote_repository_id,
+                "refs",
+                commit_sha,
+                "container-manifest-files",
+            ),
+            result_key="container_manifest_files",
+        )
+
+    def scan_application_container_manifest(
+        self,
+        organization_id: str,
+        vcs_integration_id: str,
+        remote_repository_id: str,
+        commit_sha: str,
+        branch: str,
+        file_path: str,
+        repository_url: str,
+    ) -> Mapping:
+        return self.verify(
+            self.post,
+            self._application_vcs_integration_path(
+                organization_id,
+                vcs_integration_id,
+                "repositories",
+                remote_repository_id,
+                "refs",
+                commit_sha,
+                "scan-container-manifest",
+            ),
+            body={"branch": branch, "file_path": file_path, "repository_url": repository_url},
+            result_key="file_scan",
         )
 
     def get_events(self, project: str, limit: int = 100) -> Sequence[dict[str, Any]]:

@@ -569,6 +569,11 @@ class AivenCLI(argx.CommandLineTool):
     )
     @arg("-n", "--limit", type=int, default=100, help="Get up to N rows of logs")
     @arg("-f", "--follow", action="store_true", default=False)
+    @arg(
+        "--log-type",
+        choices=["application-build", "application-run"],
+        help="Aiven Runtime: build or run logs (default: application-run)",
+    )
     def service__logs(self) -> None:
         """View project logs"""
         previous_offset: str | None = None
@@ -582,6 +587,7 @@ class AivenCLI(argx.CommandLineTool):
                     offset=previous_offset,
                     service=self.args.service_name,
                     sort_order=self.args.sort_order,
+                    log_type=self.args.log_type,
                 )
             except requests.RequestException as ex:
                 if not self.args.follow:
@@ -3497,6 +3503,103 @@ ssl.truststore.type=JKS
 
             time.sleep(3.0)
 
+    @arg.organization_id
+    @arg.json
+    def service__application__vcs_integration__list(self) -> None:
+        """List the VCS (GitHub) accounts connected to an organization for Aiven Runtime"""
+        integrations = self.client.list_application_vcs_integrations(organization_id=self.args.organization_id)
+        layout = ["vcs_integration_id", "vcs_type", "vcs_account_name", "create_time"]
+        self.print_response(integrations, json=self.args.json, table_layout=layout)
+
+    def _log_next_cursor(self, response: Mapping[str, Any]) -> None:
+        if response.get("next") and not self.args.json:
+            self.log.info("More results available: --cursor %s", response["next"])
+
+    @arg.organization_id
+    @arg.vcs_integration_id
+    @arg("--search", help="Search repositories by name")
+    @arg("--cursor", help="Pagination cursor from a previous page; excludes --search")
+    @arg.json
+    def service__application__repository__list(self) -> None:
+        """List repositories of a VCS integration available to Aiven Runtime"""
+        response = self.client.list_application_vcs_repositories(
+            organization_id=self.args.organization_id,
+            vcs_integration_id=self.args.vcs_integration_id,
+            search=self.args.search,
+            cursor=self.args.cursor,
+        )
+        if self.args.json:
+            self.print_response(response, json=True)
+            return
+        layout = ["remote_repository_id", "full_name", "source_url", "default_branch_name"]
+        self.print_response(response["repositories"], json=False, table_layout=layout)
+        self._log_next_cursor(response)
+
+    @arg.organization_id
+    @arg.vcs_integration_id
+    @arg.remote_repository_id
+    @arg("--cursor", help="Pagination cursor from a previous page")
+    @arg.json
+    def service__application__branch__list(self) -> None:
+        """List branches and their head commits of a repository available to Aiven Runtime"""
+        response = self.client.list_application_vcs_branches(
+            organization_id=self.args.organization_id,
+            vcs_integration_id=self.args.vcs_integration_id,
+            remote_repository_id=self.args.remote_repository_id,
+            cursor=self.args.cursor,
+        )
+        if self.args.json:
+            self.print_response(response, json=True)
+            return
+        self.print_response(response["branches"], json=False, table_layout=["name", "commit_sha"])
+        self._log_next_cursor(response)
+
+    @arg.organization_id
+    @arg.vcs_integration_id
+    @arg.remote_repository_id
+    @arg.commit_sha
+    @arg.json
+    def service__application__container_manifest__list(self) -> None:
+        """List Containerfiles, Dockerfiles and Compose files in a repository at a commit"""
+        files = self.client.list_application_container_manifest_files(
+            organization_id=self.args.organization_id,
+            vcs_integration_id=self.args.vcs_integration_id,
+            remote_repository_id=self.args.remote_repository_id,
+            commit_sha=self.args.commit_sha,
+        )
+        layout = ["file_path", "container_manifest_type", "file_sha"]
+        self.print_response(files, json=self.args.json, table_layout=layout)
+
+    @arg.organization_id
+    @arg.vcs_integration_id
+    @arg.remote_repository_id
+    @arg.commit_sha
+    @arg("--branch", required=True, help="Branch the suggested services deploy from")
+    @arg(
+        "--repository-url",
+        required=True,
+        help="Repository URL, e.g. the source_url from 'service application repository list'",
+    )
+    @arg("--file-path", required=True, help="Manifest path (see 'service application container-manifest list')")
+    @arg.json
+    def service__application__container_manifest__scan(self) -> None:
+        """Scan a container manifest and suggest Aiven Runtime application and service configurations"""
+        file_scan = self.client.scan_application_container_manifest(
+            organization_id=self.args.organization_id,
+            vcs_integration_id=self.args.vcs_integration_id,
+            remote_repository_id=self.args.remote_repository_id,
+            commit_sha=self.args.commit_sha,
+            branch=self.args.branch,
+            file_path=self.args.file_path,
+            repository_url=self.args.repository_url,
+        )
+        if self.args.json:
+            self.print_response(file_scan, json=True)
+            return
+        self.print_response(
+            file_scan.get("service_suggestions", []), json=False, table_layout=["service_name", "service_type"]
+        )
+
     @arg.project
     @arg.force
     @arg("service_name", help="Service name", nargs="+")
@@ -3903,6 +4006,7 @@ ssl.truststore.type=JKS
         default=False,
         help="do not fail if service already exists",
     )
+    @arg.user_config_json()
     @arg.user_config
     @arg(
         "--project-vpc-id",
@@ -3947,8 +4051,7 @@ ssl.truststore.type=JKS
 
         project_vpc_id = self._get_service_project_vpc_id()
         project = self.get_project()
-        user_config_schema = self._get_service_type_user_config_schema(project=project, service_type=service_type)
-        user_config = self.create_user_config(user_config_schema)
+        user_config = self._get_service_user_config(project=project, service_type=service_type)
 
         # If the user requests a specific version, check EOL status
         requested_version = self._extract_user_config_version(service_type, user_config)
@@ -4022,6 +4125,17 @@ ssl.truststore.type=JKS
         else:
             did_you_mean = ""
         return "Unknown {} {!r}{} (available options: {})".format(option_type, option, did_you_mean, ", ".join(options))
+
+    def _get_service_user_config(self, project: str, service_type: str) -> dict[str, Any]:
+        """Build user_config from --user-config-json or from -c options"""
+        user_config = self.args.user_config_json
+        if user_config is None:
+            user_config_schema = self._get_service_type_user_config_schema(project=project, service_type=service_type)
+            return self.create_user_config(user_config_schema)
+        # service create has no --remove-option.
+        if getattr(self.args, "user_option_remove", None):
+            raise argx.UserError("--remove-option and --user-config-json parameters can not be used at the same time")
+        return dict(user_config)
 
     def _get_service_type_user_config_schema(self, project: str, service_type: str) -> Mapping[str, Any]:
         try:
@@ -4130,6 +4244,7 @@ ssl.truststore.type=JKS
     @arg.service_name
     @arg("--group-name", help="New service group (deprecated)")
     @arg.cloud
+    @arg.user_config_json()
     @arg.user_config
     @arg.user_option_remove
     @arg("-p", "--plan", help="subscription plan of service", required=False)
@@ -4207,8 +4322,7 @@ ssl.truststore.type=JKS
         project = self.get_project()
         service = self.client.get_service(project=project, service=self.args.service_name)
         plan = self.args.plan or service["plan"]
-        user_config_schema = self._get_service_type_user_config_schema(project=project, service_type=service["service_type"])
-        user_config = self.create_user_config(user_config_schema)
+        user_config = self._get_service_user_config(project=project, service_type=service["service_type"])
         # If the user requests a version change, check EOL status
         service_type = service["service_type"]
         requested_version = self._extract_user_config_version(service_type, user_config)

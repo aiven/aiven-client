@@ -380,6 +380,53 @@ Delete a service integration::
 
     $ avn service integration-delete --project <project> <integration_id>
 
+Aiven Runtime Applications
+--------------------------
+
+An Aiven Runtime application is a service of type ``application``. Create, update, power
+and terminate it with the ``avn service`` commands.
+
+Find the IDs to deploy from a connected GitHub account::
+
+    $ avn service application vcs-integration list --organization-id <organization id>
+    $ avn service application repository list --organization-id <organization id> --vcs-integration-id <vcs integration id> --search <name>
+    $ avn service application branch list --organization-id <organization id> --vcs-integration-id <vcs integration id> --remote-repository-id <repository id>
+    $ avn service application container-manifest list --organization-id <organization id> --vcs-integration-id <vcs integration id> --remote-repository-id <repository id> --commit-sha <sha>
+
+Create an application from a JSON user configuration::
+
+    $ avn service create myapp -t application --plan startup-50-1024 --cloud aws-eu-west-1 --user-config-json @app.json
+
+``app.json`` holds the service ``user_config``, the same object as in the API. A minimal
+example::
+
+    {
+        "application": {
+            "source": {
+                "repository_url": "https://github.com/example/app.git",
+                "branch": "main",
+                "containerfile_path": "Dockerfile"
+            },
+            "ports": [{"name": "http", "port": 8080, "protocol": "HTTP"}]
+        }
+    }
+
+For a private repository, also set ``vcs_integration_id`` and ``remote_repository_id``
+in ``source``.
+
+Update it from a JSON user configuration::
+
+    $ avn service update myapp --user-config-json @app.json
+
+To get a suggested user configuration for a manifest in the repository, scan it and use a
+``service_suggestions[].user_config`` from the output::
+
+    $ avn service application container-manifest scan --organization-id <organization id> --vcs-integration-id <vcs integration id> --remote-repository-id <repository id> --commit-sha <sha> --branch <branch> --repository-url <repository url> --file-path <manifest path> --json
+
+View build logs::
+
+    $ avn service logs myapp --log-type application-build
+
 Custom Files
 ------------
 
