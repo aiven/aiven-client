@@ -595,6 +595,43 @@ def test_service_create_from_pitr() -> None:
     }
 
 
+@pytest.mark.parametrize("source_project", [None, "source-project"])
+@pytest.mark.parametrize("recovery_time", [None, "2023-01-20 11:38:49.926085+00:00"])
+def test_service_create_fork_project(source_project: str | None, recovery_time: str | None) -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    aiven_client.get_service_type.return_value = {"user_config_schema": {"properties": {}}}
+    args = [
+        "service",
+        "create",
+        "service-fork",
+        "--project",
+        "destination-project",
+        "--service-type",
+        "pg",
+        "--plan",
+        "business-4",
+        "--no-project-vpc",
+        "--service-to-fork-from",
+        "source-service",
+    ]
+    expected_config = {"service_to_fork_from": "source-service"}
+    if source_project is not None:
+        args.extend(["--project-to-fork-from", source_project])
+        expected_config["project_to_fork_from"] = source_project
+    if recovery_time is not None:
+        args.extend(["--recovery-target-time", recovery_time])
+        expected_config["recovery_target_time"] = recovery_time
+
+    assert build_aiven_cli(aiven_client).run(args=args) is None
+
+    aiven_client.get_service_type.assert_called_once_with(project="destination-project", service_type="pg")
+    aiven_client.create_service.assert_called_once()
+    kwargs = aiven_client.create_service.call_args.kwargs
+    assert kwargs["project"] == "destination-project"
+    assert kwargs["service"] == "service-fork"
+    assert kwargs["user_config"] == expected_config
+
+
 def test_help() -> None:
     build_aiven_cli(mock.Mock(spec_set=AivenClient)).run(args=["help"])
 

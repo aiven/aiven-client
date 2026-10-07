@@ -4041,6 +4041,7 @@ ssl.truststore.type=JKS
         help="Enable termination protection",
     )
     @arg("--service-to-fork-from", help="Service to fork from")
+    @arg("--project-to-fork-from", help="Project containing the source service; defaults to the destination project")
     @arg("--recovery-target-time", help="PITR recovery point in format 2023-02-01 11:38:49")
     @arg("--cmk-id", help="Customer Managed Key identifier (CMK ID) to encrypt the service with")
     @arg.force
@@ -4086,6 +4087,9 @@ ssl.truststore.type=JKS
             user_config["recovery_target_time"] = self.args.recovery_target_time
         elif self.args.service_to_fork_from:
             user_config["service_to_fork_from"] = self.args.service_to_fork_from
+
+        if self.args.project_to_fork_from:
+            user_config["project_to_fork_from"] = self.args.project_to_fork_from
 
         try:
             self.client.create_service(
