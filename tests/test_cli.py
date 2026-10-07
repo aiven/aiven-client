@@ -18,7 +18,9 @@ from typing import Any, cast
 from unittest import mock
 from unittest.mock import ANY, MagicMock, patch
 
+import errno
 import json
+import os
 import pytest
 import random
 import string
@@ -3446,6 +3448,92 @@ def test_service_cli(url: str, command: str) -> None:
         build_aiven_cli(aiven_client).run(args=["service", "cli", "--project", "myproject", "myservice"])
         command_called, _, _ = mock_exec.call_args[0]
         assert command_called == command
+
+
+def _service_cli_with_path(path: str) -> AivenCLI:
+    cli = AivenCLI(env={"PATH": path})
+    cli.args = Namespace(service_name="valkey://default:pwd@localhost:1234", arg=[])
+    return cli
+
+
+def test_service_cli_missing_executable(tmp_path: Path) -> None:
+    with pytest.raises(UserError, match="Executable 'valkey-cli' is not available"):
+        _service_cli_with_path(str(tmp_path)).service__cli()
+
+
+@pytest.mark.skipif(os.name != "posix", reason="Requires POSIX directory permissions")
+def test_service_cli_missing_executable_in_inaccessible_path(tmp_path: Path) -> None:
+    blocked = tmp_path / "blocked"
+    blocked.mkdir(mode=0o700)
+    blocked.chmod(0)
+    try:
+        if os.access(blocked, os.X_OK):
+            pytest.skip("Current user can bypass directory permissions")
+        cli = _service_cli_with_path(os.pathsep.join([str(blocked), str(tmp_path)]))
+        with pytest.raises(UserError, match="Executable 'valkey-cli' is not available"):
+            cli.service__cli()
+    finally:
+        blocked.chmod(0o700)
+
+
+@pytest.mark.skipif(os.name != "posix", reason="Requires POSIX executable permissions")
+@pytest.mark.parametrize("candidate_type", ["nonexecutable", "directory", "invalid_format"])
+def test_service_cli_preserves_execution_errors(tmp_path: Path, candidate_type: str) -> None:
+    candidate = tmp_path / "valkey-cli"
+    expected_errno = errno.EACCES
+    if candidate_type == "directory":
+        candidate.mkdir()
+    else:
+        candidate.write_text("not an executable format\n", encoding="utf-8")
+        candidate.chmod(0o644 if candidate_type == "nonexecutable" else 0o755)
+        if candidate_type == "invalid_format":
+            expected_errno = errno.ENOEXEC
+    with pytest.raises(OSError) as excinfo:
+        _service_cli_with_path(str(tmp_path)).service__cli()
+    assert excinfo.value.errno == expected_errno
+
+
+@pytest.mark.skipif(os.name != "posix", reason="Requires POSIX directory permissions")
+def test_service_cli_searches_after_inaccessible_path(tmp_path: Path) -> None:
+    blocked = tmp_path / "blocked"
+    blocked.mkdir(mode=0o700)
+    executable = tmp_path / "valkey-cli"
+    executable.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    executable.chmod(0o755)
+    original_execve = os.execve
+
+    def stop_at_client(path: str | bytes, args: list[str], env: Mapping[str, str]) -> None:
+        if os.fsdecode(path) == str(executable):
+            raise RuntimeError("Client selected without replacing the test process")
+        original_execve(path, args, env)
+
+    blocked.chmod(0)
+    try:
+        if os.access(blocked, os.X_OK):
+            pytest.skip("Current user can bypass directory permissions")
+        cli = _service_cli_with_path(os.pathsep.join([str(blocked), str(tmp_path)]))
+        with (
+            patch("os.execve", side_effect=stop_at_client) as execve,
+            pytest.raises(RuntimeError, match="Client selected"),
+        ):
+            cli.service__cli()
+        expected_calls = 2
+        assert len(execve.call_args_list) == expected_calls
+    finally:
+        blocked.chmod(0o700)
+
+
+def test_service_cli_missing_executable_uses_effective_environment(tmp_path: Path) -> None:
+    (tmp_path / "valkey-cli").touch()
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    cli = _service_cli_with_path(str(tmp_path))
+    with (
+        patch.object(cli, "_build_valkey_start_info", return_value=("valkey-cli", [], {"PATH": str(empty)})),
+        patch("os.execvpe", side_effect=PermissionError(errno.EACCES, "Permission denied")),
+        pytest.raises(UserError, match="Executable 'valkey-cli' is not available"),
+    ):
+        cli.service__cli()
 
 
 def test_inkless_offering_list() -> None:

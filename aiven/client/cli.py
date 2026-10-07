@@ -1589,10 +1589,16 @@ class AivenCLI(argx.CommandLineTool):
                 "Unsupported service type {}. Only PostgreSQL, MySQL, and Valkey are supported".format(service_type)
             )
 
+        effective_env = dict(self.env, **env)
         try:
-            os.execvpe(command, [command] + params + self.args.arg, dict(self.env, **env))
+            os.execvpe(command, [command] + params + self.args.arg, effective_env)
         except OSError as e:
-            if e.errno != errno.ENOENT:
+            # execvpe can retain EACCES from an inaccessible PATH directory even
+            # when the client is absent. Preserve errors for visible candidates.
+            if e.errno != errno.ENOENT and (
+                e.errno != errno.EACCES
+                or any(os.path.lexists(os.path.join(path, command)) for path in os.get_exec_path(effective_env))
+            ):
                 raise
             raise argx.UserError("Executable '{}' is not available, cannot launch {} client".format(command, service_type))
 
