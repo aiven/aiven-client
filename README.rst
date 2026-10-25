@@ -21,7 +21,7 @@ Getting Started
 
 Requirements:
 
-*  Python 3.10 or later
+*  Python 3.11 or later
 
 *  Requests_
 

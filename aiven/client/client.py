@@ -4,14 +4,13 @@
 # See the file `LICENSE` for details.
 from __future__ import annotations
 
-from ._typing import assert_never
 from .common import UNDEFINED
 from .session import DEFAULT_IDLE_TIMEOUT, DEFAULT_MAX_AGE, get_requests_session
 from collections.abc import Callable, Collection, Mapping, Sequence
 from http import HTTPStatus
 from requests import Response
 from requests_toolbelt import MultipartEncoder  # type: ignore
-from typing import TYPE_CHECKING, Any, BinaryIO, Final, Literal, NamedTuple, TypedDict
+from typing import TYPE_CHECKING, Any, BinaryIO, Final, Literal, NamedTuple, TypedDict, assert_never
 from urllib.parse import quote
 
 import datetime

@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         # only use one version for the lint step
-        python-version: ['3.10']
+        python-version: ['3.11']
 
     steps:
 
@@ -49,7 +49,6 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - '3.10'
           - '3.11'
           - '3.12'
           - '3.13'
