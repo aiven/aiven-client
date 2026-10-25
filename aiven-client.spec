@@ -6,7 +6,7 @@ Release:        %{minor_version}%{?dist}
 Url:            https://github.com/aiven/%{project}
 Source0:        rpm-src-aiven-client.tar
 Summary:        Aiven Client
-License:        ASL 2.0
+License:        Apache-2.0
 BuildArch:      noarch
 BuildRequires:  python3-devel
 BuildRequires:  python3dist(wheel)
