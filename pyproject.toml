@@ -27,7 +27,7 @@ dependencies = [
     "requests>=2.32.4",
     "requests-toolbelt>=1.0.0",
 ]
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     # Lock mypy to the same major version used in downstream build environments
     "mypy>=1.17.1,<2.0",
