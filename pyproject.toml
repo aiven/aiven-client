@@ -9,13 +9,12 @@ authors = [
 ]
 description="Aiven.io client library / command-line client"
 readme = "README.rst"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers=[
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Libraries",
     "License :: OSI Approved :: Apache Software License",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -65,7 +64,7 @@ core-metadata-version = "2.4"
 packages = ["aiven"]
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py311"
 line-length = 125
 src = ["aiven", "tests"]
 extend-exclude = [

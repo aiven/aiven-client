@@ -18,7 +18,7 @@ from argparse import ArgumentParser, ArgumentTypeError
 from ast import literal_eval
 from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from http import HTTPStatus
 from typing import IO, Any, ClassVar, Final, Protocol, TypeVar
@@ -136,7 +136,7 @@ def parse_iso8601(value: str) -> datetime:
 
 
 def get_current_date() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def connection_lifetime_arg(value: str) -> float | None:

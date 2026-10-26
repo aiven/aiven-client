@@ -15,7 +15,7 @@ import ipaddress
 import pytest
 import re
 
-SAMPLE_DATETIME = datetime.datetime(2019, 12, 23, tzinfo=datetime.timezone.utc)
+SAMPLE_DATETIME = datetime.datetime(2019, 12, 23, tzinfo=datetime.UTC)
 
 
 @pytest.mark.parametrize(

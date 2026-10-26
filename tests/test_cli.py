@@ -10,7 +10,7 @@ from aiven.client.cli import EOL_ADVANCE_WARNING_TIME, AivenCLI, ClientFactory, 
 from aiven.client.common import UNDEFINED
 from argparse import Namespace
 from collections.abc import Mapping
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from pytest import CaptureFixture, LogCaptureFixture
 from requests import Session
@@ -852,7 +852,7 @@ def test_service_task_get_migration_check() -> None:
 
 
 def test_version_eol_check() -> None:
-    fake_eol_time = datetime(2021, 9, 10, tzinfo=timezone.utc)
+    fake_eol_time = datetime(2021, 9, 10, tzinfo=UTC)
 
     fake_time_safe = fake_eol_time - EOL_ADVANCE_WARNING_TIME - timedelta(days=1)
     fake_time_soon = fake_eol_time - EOL_ADVANCE_WARNING_TIME + timedelta(days=1)
