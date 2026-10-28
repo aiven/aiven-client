@@ -2574,26 +2574,18 @@ ssl.truststore.type=JKS
         remote_storage_config = topic_config.get("remote_storage_enable", {})
         is_tiered = isinstance(remote_storage_config, Mapping) and remote_storage_config.get("value")
 
-        cgroups = []
-        for p in topic["partitions"]:
-            for cg in p["consumer_groups"]:
-                if None not in {p["latest_offset"], cg["offset"]}:
-                    lag = p["latest_offset"] - cg["offset"]
-                else:
-                    lag = "UNDEFINED"
-                cgroups.append(
-                    {
-                        "partition": p["partition"],
-                        "consumer_group": cg["group_name"],
-                        "offset": cg["offset"],
-                        "lag": lag,
-                    }
-                )
+        cgroups = self._topic_consumer_groups(topic)
+        sgroups = self._topic_share_groups(topic)
 
         if self.args.json:
             # If JSON output is requested, output the entire object in a single step
             self.print_response(
-                {"config": topic_config, "partitions": topic["partitions"], "consumer_groups": cgroups},
+                {
+                    "config": topic_config,
+                    "partitions": topic["partitions"],
+                    "consumer_groups": cgroups,
+                    "share_groups": sgroups,
+                },
                 json=True,
             )
         else:
@@ -2613,15 +2605,62 @@ ssl.truststore.type=JKS
             )
             print()
 
-            if not cgroups:
-                print("(No consumer groups)")
-            else:
-                self.print_response(
-                    cgroups,
-                    format=self.args.format,
-                    json=self.args.json,
-                    table_layout=[["partition", "consumer_group", "offset", "lag"]],
+            self._print_topic_groups(cgroups, sgroups)
+
+    @staticmethod
+    def _topic_consumer_groups(topic: Mapping[str, Any]) -> list[dict[str, Any]]:
+        cgroups = []
+        for p in topic["partitions"]:
+            for cg in p["consumer_groups"]:
+                if None not in {p["latest_offset"], cg["offset"]}:
+                    lag = p["latest_offset"] - cg["offset"]
+                else:
+                    lag = "UNDEFINED"
+                cgroups.append(
+                    {
+                        "partition": p["partition"],
+                        "consumer_group": cg["group_name"],
+                        "offset": cg["offset"],
+                        "lag": lag,
+                    }
                 )
+        return cgroups
+
+    @staticmethod
+    def _topic_share_groups(topic: Mapping[str, Any]) -> list[dict[str, Any]]:
+        return [
+            {
+                "partition": p["partition"],
+                "share_group": sg["group_name"],
+                "start_offset": sg.get("start_offset"),
+                "lag": sg.get("lag"),
+            }
+            for p in topic["partitions"]
+            for sg in p.get("share_groups") or []
+        ]
+
+    def _print_topic_groups(self, cgroups: list[dict[str, Any]], sgroups: list[dict[str, Any]]) -> None:
+        if not cgroups and not sgroups:
+            print("(No consumer groups)")
+            return
+
+        if cgroups:
+            self.print_response(
+                cgroups,
+                format=self.args.format,
+                json=self.args.json,
+                table_layout=[["partition", "consumer_group", "offset", "lag"]],
+            )
+        if cgroups and sgroups:
+            print()
+
+        if sgroups:
+            self.print_response(
+                sgroups,
+                format=self.args.format,
+                json=self.args.json,
+                table_layout=[["partition", "share_group", "start_offset", "lag"]],
+            )
 
     @arg.project
     @arg.service_name

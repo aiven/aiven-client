@@ -544,6 +544,7 @@ def test_service_topic_get_json_includes_configs(capsys: CaptureFixture[str]) ->
         "partitions": [
             {
                 "consumer_groups": [{"group_name": "group1", "offset": 40}],
+                "share_groups": [{"group_name": "sg1", "start_offset": 37, "lag": 5}],
                 "earliest_offset": 0,
                 "isr": 3,
                 "latest_offset": 42,
@@ -568,6 +569,7 @@ def test_service_topic_get_json_includes_configs(capsys: CaptureFixture[str]) ->
     assert data["config"] == {"cleanup_policy": {"value": "delete", "source": "DYNAMIC_TOPIC_CONFIG"}}
     assert data["consumer_groups"] == [{"consumer_group": "group1", "lag": 2, "offset": 40, "partition": 0}]
     assert data["partitions"][0]["groups"] == 1
+    assert data["share_groups"] == [{"share_group": "sg1", "lag": 5, "start_offset": 37, "partition": 0}]
 
 
 def test_service_create_from_pitr() -> None:
