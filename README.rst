@@ -321,6 +321,9 @@ For Valkey services it's possible to create users with ACLs_::
 
   $ avn service user-create --username new_user --valkey-acl-keys="prefix* another_key" --valkey-acl-commands="+set" --valkey-acl-categories="-@all +@admin" --valkey-acl-channels="prefix* some_chan" my-valkey-service
 
+On Valkey 9.1 and later, ``--valkey-acl-databases="0 3"`` limits the user to the given databases.
+``alldbs`` grants all databases and ``resetdbs`` grants none.
+
 .. _`ACLs`: https://valkey.io/docs/topics/acl
 
 Service users are created with strong random passwords.

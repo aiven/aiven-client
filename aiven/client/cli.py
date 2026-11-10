@@ -48,6 +48,7 @@ VALKEY_ACL_ARGS = [
     "valkey_acl_commands",
     "valkey_acl_categories",
     "valkey_acl_channels",
+    "valkey_acl_databases",
 ]
 
 
@@ -1794,6 +1795,10 @@ class AivenCLI(argx.CommandLineTool):
     @arg("--valkey-acl-commands", help="ACL rules for commands (Valkey only)")
     @arg("--valkey-acl-categories", help="ACL rules for command categories (Valkey only)")
     @arg("--valkey-acl-channels", help="ACL rules for channels (Valkey only)")
+    @arg(
+        "--valkey-acl-databases",
+        help="Database ids the user can access, or 'alldbs' / 'resetdbs' (Valkey 9.1 or later only)",
+    )
     @arg.json
     def service__user_create(self) -> None:
         """Create service user"""
@@ -1835,6 +1840,7 @@ class AivenCLI(argx.CommandLineTool):
                     "access_control.valkey_acl_commands",
                     "access_control.valkey_acl_categories",
                     "access_control.valkey_acl_channels",
+                    "access_control.valkey_acl_databases",
                 ]
             )
         self.print_response(
@@ -2035,6 +2041,10 @@ ssl.truststore.type=JKS
     @arg("--valkey-acl-commands", help="ACL rules for commands (Valkey only)")
     @arg("--valkey-acl-categories", help="ACL rules for command categories (Valkey only)")
     @arg("--valkey-acl-channels", help="ACL rules for channels (Valkey only)")
+    @arg(
+        "--valkey-acl-databases",
+        help="Database ids the user can access, or 'alldbs' / 'resetdbs' (Valkey 9.1 or later only)",
+    )
     @arg.json
     def service__user_set_access_control(self) -> None:
         """Set Valkey service user access control"""
