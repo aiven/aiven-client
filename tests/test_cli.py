@@ -3459,6 +3459,23 @@ def test_inkless_offering_list() -> None:
             "compute_tier": 1,
             "max_ingress_mbps": 60,
             "max_egress_mbps": 180,
+            "node_count": 3,
+            "volume_count": 3,
+            "volume_size": 1024,
+            "node_info": [
+                {
+                    "cloud_provider": "google",
+                    "memory": 1024,
+                    "cpu_count": 3,
+                    "max_partitions": 1000,
+                },
+                {
+                    "cloud_provider": "aws",
+                    "memory": 2048,
+                    "cpu_count": 2,
+                    "max_partitions": 2000,
+                },
+            ],
             "available_clouds": ["google-europe-west1", "aws-us-east-1"],
         },
         {
@@ -3466,6 +3483,17 @@ def test_inkless_offering_list() -> None:
             "compute_tier": 2,
             "max_ingress_mbps": 120,
             "max_egress_mbps": 360,
+            "node_count": 3,
+            "volume_count": 3,
+            "volume_size": 1024,
+            "node_info": [
+                {
+                    "cloud_provider": "aws",
+                    "memory": 1024,
+                    "cpu_count": 3,
+                    "max_partitions": 1000,
+                }
+            ],
             "available_clouds": ["google-europe-west1"],
         },
         {
@@ -3473,6 +3501,17 @@ def test_inkless_offering_list() -> None:
             "compute_tier": 3,
             "max_ingress_mbps": 30,
             "max_egress_mbps": 90,
+            "node_count": 3,
+            "volume_count": 3,
+            "volume_size": 1024,
+            "node_info": [
+                {
+                    "cloud_provider": "aws",
+                    "memory": 1024,
+                    "cpu_count": 3,
+                    "max_partitions": 1000,
+                }
+            ],
             "available_clouds": ["aws-us-east-1"],
         },
     ]
