@@ -6678,10 +6678,66 @@ ssl.truststore.type=JKS
         offerings = sorted(offerings, key=lambda x: x.get("compute_tier", 0))
         if self.args.ingress is not None:
             offerings = [offering for offering in offerings if offering.get("max_ingress_mbps", 0) >= self.args.ingress]
+
         layout = [
-            ["offering_name", "max_ingress_mbps", "max_egress_mbps"],
+            [
+                "offering_name",
+                "max_ingress_mbps",
+                "max_egress_mbps",
+                "node_count",
+                "volume_size",
+                "cpu_count",
+                "memory",
+                "max_partitions",
+            ]
         ]
-        self.print_response(offerings, json=self.args.json, table_layout=layout)
+
+        response = []
+        for offering in offerings:
+            volume_size = offering.get("volume_size")
+            volume_count = offering.get("volume_count")
+            volume_info = (
+                f"{round(units.convert_bytes_to_gib(float(volume_size)))} GiB (x{volume_count})" if volume_size else None
+            )
+
+            cpu_by_provider = {}
+            memory_by_provider = {}
+            max_partitions_by_provider = {}
+
+            for info in offering.get("node_info", []):
+                provider = info.get("cloud_provider")
+                memory = info.get("memory")
+                cpu_by_provider[provider] = info.get("cpu_count")
+                memory_by_provider[provider] = round(units.convert_bytes_to_gib(float(memory))) if memory else None
+                max_partitions_by_provider[provider] = info.get("max_partitions")
+
+            cpu_info = ", ".join(
+                [f"{provider}: {cpu_count}" for provider, cpu_count in sorted(cpu_by_provider.items(), key=lambda p: p)]
+            )
+            memory_info = ", ".join(
+                [f"{provider}: {memory} GiB" for provider, memory in sorted(memory_by_provider.items(), key=lambda p: p)]
+            )
+            max_partitions_info = ", ".join(
+                [
+                    f"{provider}: {max_partitions}"
+                    for provider, max_partitions in sorted(max_partitions_by_provider.items(), key=lambda p: p)
+                ]
+            )
+
+            response.append(
+                {
+                    "offering_name": offering.get("offering_name"),
+                    "max_ingress_mbps": offering.get("max_ingress_mbps"),
+                    "max_egress_mbps": offering.get("max_egress_mbps"),
+                    "node_count": offering.get("node_count"),
+                    "volume_size": volume_info,
+                    "cpu_count": cpu_info,
+                    "memory": memory_info,
+                    "max_partitions": max_partitions_info,
+                }
+            )
+
+        self.print_response(response, json=self.args.json, table_layout=layout)
 
     @arg.json
     @arg.organization_id
