@@ -42,10 +42,10 @@ def format_uri(
     if netloc is None:
         bits = []
         if username is not None:
-            bits.append(urllib.parse.quote(username))
+            bits.append(urllib.parse.quote(username, safe=""))
         if password is not None:
             bits.append(":")
-            bits.append(urllib.parse.quote(password))
+            bits.append(urllib.parse.quote(password, safe=""))
         if username is not None or password is not None:
             bits.append("@")
         if host is not None:
