@@ -99,6 +99,52 @@ def test_service_user_create() -> None:
     )
 
 
+def test_service_user_create_valkey_acl_databases() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    args = [
+        "service",
+        "user-create",
+        "--project",
+        "myproject",
+        "service",
+        "--username",
+        "username",
+        "--valkey-acl-keys",
+        "prefix*",
+        "--valkey-acl-databases",
+        "0 3",
+    ]
+    assert build_aiven_cli(aiven_client).run(args=args) is None
+    aiven_client.create_service_user.assert_called_once_with(
+        project="myproject",
+        service="service",
+        username="username",
+        extra_params={"access_control": {"valkey_acl_keys": ["prefix*"], "valkey_acl_databases": ["0", "3"]}},
+    )
+
+
+def test_service_user_set_access_control_valkey_acl_databases() -> None:
+    aiven_client = mock.Mock(spec_set=AivenClient)
+    args = [
+        "service",
+        "user-set-access-control",
+        "--project",
+        "myproject",
+        "service",
+        "--username",
+        "username",
+        "--valkey-acl-databases",
+        "resetdbs",
+    ]
+    assert build_aiven_cli(aiven_client).run(args=args) is None
+    aiven_client.set_service_user_access_control.assert_called_once_with(
+        project="myproject",
+        service="service",
+        username="username",
+        access_control={"valkey_acl_databases": ["resetdbs"]},
+    )
+
+
 @pytest.mark.parametrize(
     "command_line, expected_post_data",
     [
