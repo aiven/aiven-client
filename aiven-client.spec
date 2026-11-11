@@ -9,14 +9,7 @@ Summary:        Aiven Client
 License:        Apache-2.0
 BuildArch:      noarch
 BuildRequires:  python3-devel
-BuildRequires:  python3dist(wheel)
-BuildRequires:  python3dist(hatchling)
-BuildRequires:  python3dist(hatch-vcs)
-BuildRequires:  python3dist(mypy)
 BuildRequires:  python3dist(pytest)
-BuildRequires:  python3dist(requests)
-BuildRequires:  python3dist(pymysql)
-BuildRequires:  python3dist(certifi)
 
 
 %description

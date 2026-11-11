@@ -19,7 +19,7 @@ Alternatively, with ``pyenv`` and the ``pyenv-virtualenv`` plugin, create a proj
 
     pyenv virtualenv 3.13 aiven-client
     pyenv local aiven-client
-    python -m pip install -e .[dev]
+    python -m pip install -e . --group dev
 
 ``pyenv local`` writes a ``.python-version`` file that auto-activates the virtual environment when you enter the directory, provided ``eval "$(pyenv virtualenv-init -)"`` is in your shell startup.
 
