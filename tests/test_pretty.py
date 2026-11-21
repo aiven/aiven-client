@@ -246,3 +246,18 @@ def test_yield_table() -> None:
         "myuser    regular",
         "    access_control.valkey_acl_keys = key1, key2",
     ]
+
+
+def test_yield_table_field_without_values() -> None:
+    rows = [{"name": "kafka-1", "state": "RUNNING"}, {"name": "pg-1", "state": "POWEROFF"}]
+
+    result = yield_table(rows, table_layout=[["name", "description", "state"]])
+    assert list(result) == [
+        "NAME     DESCRIPTION  STATE   ",
+        "=======  ===========  ========",
+        "kafka-1               RUNNING",
+        "pg-1                  POWEROFF",
+    ]
+
+    result = yield_table(rows, table_layout=["name", "description"], header=False)
+    assert list(result) == ["kafka-1", "pg-1"]

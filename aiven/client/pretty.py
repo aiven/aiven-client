@@ -163,6 +163,9 @@ def yield_table(  # noqa
         table_layout = [cast(list[str], table_layout)]
 
     horizontal_fields: Collection[str] = next(iter(table_layout), [])
+    # A field in the layout that no row has a value for still gets a column as wide as its name
+    for field in horizontal_fields:
+        widths.setdefault(field, len(field))
     if header:
         yield "  ".join(f.upper().ljust(widths[f]) for f in horizontal_fields)
         yield "  ".join("=" * widths[f] for f in horizontal_fields)
