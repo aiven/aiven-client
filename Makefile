@@ -6,7 +6,8 @@ PYTHON_DIRS = aiven tests
 all: install-py validate-style lint test
 
 install-py:
-	$(PYTHON) -m pip install -e .[dev]
+	$(PYTHON) -m pip install "pip>=25.1"
+	$(PYTHON) -m pip install -e . --group dev
 
 test: pytest
 
@@ -46,18 +47,14 @@ clean:
 build-dep-fedora:
 	sudo dnf install -y --best --allowerasing \
 		python3-devel \
-		python3-certifi \
 		python3-hatch-vcs \
 		python3-hatchling \
-		python3-PyMySQL \
-		python3-wheel \
 		python3-mypy \
 		python3-pytest \
 		python3-requests \
 		python3-requests-toolbelt \
 		python3-ruff \
 		python3-types-requests \
-		python3-setuptools_scm \
 		rpmdevtools \
 		tar
 

@@ -13,6 +13,7 @@ Pipfile*
 __pycache__/
 .mypy_cache/
 .pytest_cache/
+.coverage
 .ruff_cache/
 .vscode
 venv
