@@ -6,6 +6,7 @@ PYTHON_DIRS = aiven tests
 all: install-py validate-style lint test
 
 install-py:
+	$(PYTHON) -m pip install "pip>=25.1"
 	$(PYTHON) -m pip install -e . --group dev
 
 test: pytest
